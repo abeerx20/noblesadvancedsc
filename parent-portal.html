@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>بوابة ولي الأمر | MyNas</title>
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/portal.css">
+</head>
+<body>
+  <div id="parentPortal" class="portal">
+    <header class="portal-header no-print">
+      <div class="header-brand">
+        <button id="mobileMenuButton" class="mobile-menu" type="button" aria-label="فتح قائمة الخدمات" aria-expanded="false"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></button>
+        <a class="brand" href="mynas.html" aria-label="العودة إلى بوابة MyNas"><img class="brand-full-logo" src="assets/images/logocopy.png" alt="مدارس النبلاء المتقدمة"></a>
+      </div>
+      <div class="header-actions"><a class="header-mynas-link" href="mynas.html">MyNas</a><button id="logoutButton" class="btn btn-secondary btn-small" type="button">تسجيل الخروج</button></div>
+    </header>
+    <div class="portal-strip no-print"><div class="semester"><span class="semester-icon" aria-hidden="true"></span><span>الفصل الدراسي الحالي</span></div><div class="ticker"><span class="ticker-label">بوابة ولي الأمر</span><span class="ticker-text">الخدمات المرتبطة بأبنائك</span></div></div>
+    <aside class="sidebar no-print" aria-label="قائمة خدمات ولي الأمر">
+      <a class="side-mynas-link" href="mynas.html"><span aria-hidden="true">←</span><span>العودة إلى MyNas</span></a>
+      <nav id="parentSidebarMenu" aria-label="أقسام البوابة"></nav>
+    </aside>
+    <button id="sidebarBackdrop" class="sidebar-backdrop no-print" type="button" aria-label="إغلاق قائمة الخدمات"></button>
+    <div class="portal-main">
+      <main id="parentMainContent" class="portal-content" tabindex="-1"><div class="content-card page-card"><p class="loading-line">جارٍ تحميل بوابة ولي الأمر...</p></div></main>
+      <footer class="portal-footer">جميع الحقوق محفوظة لمدارس النبلاء المتقدمة</footer>
+    </div>
+  </div>
+  <script type="module" src="assets/js/parent-portal.js?v=5"></script>
+</body>
+</html>
+

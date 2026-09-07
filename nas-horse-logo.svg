@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 560" role="img" aria-labelledby="title desc">
+  <title id="title">مدارس النبلاء المتقدمة</title>
+  <desc id="desc">شعار مدرسة النبلاء المتقدمة مع حصان بيضاوي</desc>
+
+  <defs>
+    <path id="upperArc" d="M 160 250 A 210 210 0 1 1 600 250" fill="none"/>
+    <path id="lowerArc" d="M 160 250 A 210 210 0 1 0 600 250" fill="none"/>
+    <style>
+      .outline { fill: none; stroke: #ffffff; stroke-width: 10; stroke-linecap: round; stroke-linejoin: round; }
+      .thin { fill: none; stroke: #ffffff; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+      .text { font-family: Arial, Tahoma, sans-serif; font-weight: 700; letter-spacing: 10px; fill: #ffffff; }
+      .arabic { font-family: Tahoma, Arial, sans-serif; font-weight: 700; fill: #ffffff; }
+    </style>
+  </defs>
+
+  <g transform="translate(0 20)">
+    <circle cx="380" cy="210" r="170" class="outline"/>
+
+    <path d="M292 223c-8-42 16-91 52-111 20-11 40-14 58-11 31 6 61 27 77 60 13 28 17 57 10 82-11 40-50 77-97 85-34 5-81-11-98-46-7-14-9-36-2-59Z" class="outline"/>
+
+    <path d="M320 180c-17-10-37-16-55-17 30-18 64-29 98-31 41-3 81 9 105 36 8 9 13 23 17 39-7-5-18-9-26-10-16-2-31 3-45 11-17 10-34 24-40 44-7 23-2 48 10 66-20-4-39-16-54-33-22-25-30-52-10-65Z" class="outline"/>
+
+    <path d="M418 170l34-44 30 6-16 46-48-8Z" class="outline"/>
+    <path d="M465 159c15 7 28 16 39 29 17 20 27 46 28 75" class="thin"/>
+    <path d="M290 245c30-19 64-30 103-27 60 4 105 38 127 91" class="thin"/>
+    <path d="M321 271c36 29 76 41 123 36 38-4 70-17 99-43" class="thin"/>
+    <path d="M382 247c-10 28-12 59-8 88" class="thin"/>
+    <path d="M335 332c33-4 62 8 87 34" class="thin"/>
+    <path d="M383 219c7-19 18-35 35-48" class="thin"/>
+
+    <circle cx="380" cy="214" r="8" fill="#ffffff"/>
+    <path d="M420 202c0 19-17 34-37 34-20 0-37-15-37-34 0-19 17-34 37-34 20 0 37 15 37 34Z" fill="none" stroke="#ffffff" stroke-width="8"/>
+
+    <text font-size="24" class="text" textLength="520">
+      <textPath href="#upperArc" startOffset="50%" text-anchor="middle">NOBLES ADVANCED SCHOOLS</textPath>
+    </text>
+
+    <text font-size="24" class="text" textLength="520">
+      <textPath href="#lowerArc" startOffset="50%" text-anchor="middle">NOBLES ADVANCED SCHOOLS</textPath>
+    </text>
+  </g>
+
+  <g transform="translate(0 0)">
+    <text x="380" y="470" text-anchor="middle" font-size="50" class="arabic">مدارس النبلاء المتقدمة</text>
+    <text x="380" y="515" text-anchor="middle" font-size="38" class="text" style="letter-spacing: 4px;">NOBLES ADVANCED SCHOOLS</text>
+  </g>
+</svg>

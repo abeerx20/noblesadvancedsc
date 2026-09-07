@@ -1,0 +1,23 @@
+{
+  "indexes": [
+    { "collectionGroup": "academicClasses", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "stage", "order": "ASCENDING" }, { "fieldPath": "grade", "order": "ASCENDING" }, { "fieldPath": "section", "order": "ASCENDING" }, { "fieldPath": "gender", "order": "ASCENDING" }
+    ]},
+    { "collectionGroup": "teacherSchedule", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "teacherUid", "order": "ASCENDING" }, { "fieldPath": "active", "order": "ASCENDING" }
+    ]},
+    { "collectionGroup": "teacherSchedule", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "day", "order": "ASCENDING" }, { "fieldPath": "active", "order": "ASCENDING" }
+    ]},
+    { "collectionGroup": "teacherSchedule", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "classId", "order": "ASCENDING" }, { "fieldPath": "day", "order": "ASCENDING" }, { "fieldPath": "periodNumber", "order": "ASCENDING" }, { "fieldPath": "active", "order": "ASCENDING" }
+    ]},
+    { "collectionGroup": "attendance", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "classId", "order": "ASCENDING" }, { "fieldPath": "date", "order": "ASCENDING" }
+    ]},
+    { "collectionGroup": "attendance", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "teacherUid", "order": "ASCENDING" }, { "fieldPath": "date", "order": "ASCENDING" }
+    ]}
+  ],
+  "fieldOverrides": []
+}

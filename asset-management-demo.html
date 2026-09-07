@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إدارة العهد - نسخة محسّنة</title>
+  <style>
+    /* ===== Base Styles ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --green-50: #f0f6f4;
+      --green-700: #0f7560;
+      --green-900: #063d38;
+      --green-900-alt: #0b5c49;
+      --line: #dde6e2;
+      --muted: #71807b;
+      --ink: #1a1a1a;
+    }
+
+    html {
+      font-size: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background: #f4f7f6;
+      color: var(--ink);
+      line-height: 1.6;
+    }
+
+    .demo-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .demo-header {
+      background: #fff;
+      border-bottom: 2px solid var(--green-700);
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .demo-header h1 {
+      color: var(--green-900);
+      margin-bottom: 8px;
+      font-size: 24px;
+    }
+
+    .demo-header p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* ===== Table Styles ===== */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 11px;
+      border: 1px solid var(--line);
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-spacing: 0;
+    }
+
+    thead {
+      background: var(--green-50);
+      border-bottom: 2px solid var(--green-700);
+    }
+
+    th {
+      padding: 12px 14px;
+      text-align: right;
+      font-weight: 600;
+      color: var(--green-900);
+      font-size: 12px;
+      letter-spacing: 0.3px;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #e7edea;
+      color: var(--ink);
+      font-size: 11px;
+    }
+
+    tbody tr {
+      transition: background-color 150ms ease;
+    }
+
+    tbody tr:hover {
+      background-color: #f9fbfa;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    /* ===== Action Buttons ===== */
+    .action-buttons {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .icon-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--green-700);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 150ms ease;
+      padding: 0;
+      font-weight: 500;
+      position: relative;
+    }
+
+    .icon-button:hover {
+      background: var(--green-50);
+      border-color: var(--green-700);
+      transform: scale(1.05);
+    }
+
+    .icon-button:active {
+      transform: scale(0.95);
+    }
+
+    .icon-button:focus {
+      outline: 2px solid var(--green-700);
+      outline-offset: 2px;
+    }
+
+    .icon-button.danger {
+      color: #d32f2f;
+      border-color: #ffcdd2;
+    }
+
+    .icon-button.danger:hover {
+      background: #ffebee;
+      border-color: #d32f2f;
+    }
+
+    /* Tooltip */
+    .icon-button[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      white-space: nowrap;
+      background: rgba(0, 0, 0, 0.9);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      z-index: 100;
+      pointer-events: none;
+      animation: tooltipFadeIn 150ms ease;
+    }
+
+    @keyframes tooltipFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== Dialog Styles ===== */
+    dialog {
+      padding: 0;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 90vw;
+      width: auto;
+    }
+
+    dialog[open] {
+      animation: dialogSlideIn 300ms ease-out;
+    }
+
+    @keyframes dialogSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.5);
+      animation: backdropFadeIn 300ms ease-out;
+    }
+
+    @keyframes backdropFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-dialog {
+      width: 90vw;
+      max-width: 500px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .modal-form {
+      display: contents;
+    }
+
+    .modal-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid #e7edea;
+      padding: 20px 24px;
+      background: #f9fbfa;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      color: var(--green-900);
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .modal-close {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--green-900);
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 150ms ease;
+      padding: 0;
+    }
+
+    .modal-close:hover {
+      background: var(--green-50);
+      border-color: var(--green-700);
+    }
+
+    .modal-body {
+      padding: 24px;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .asset-info {
+      display: block;
+      margin: 0 0 16px 0;
+      padding: 12px 14px;
+      background: var(--green-50);
+      border-radius: 8px;
+      border-right: 3px solid var(--green-700);
+      font-size: 12px;
+    }
+
+    .asset-info strong {
+      color: var(--green-900);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      color: var(--green-900);
+      font-weight: 500;
+      font-size: 12px;
+    }
+
+    .form-control {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-family: inherit;
+      transition: all 150ms ease;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--green-700);
+      box-shadow: 0 0 0 3px rgba(15, 117, 96, 0.1);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 80px;
+      max-height: 200px;
+    }
+
+    .alert {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .alert-danger {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
+      border-right: 3px solid #d32f2f;
+    }
+
+    .alert-title {
+      margin: 0 0 4px 0;
+      font-weight: 600;
+    }
+
+    .alert-message {
+      margin: 0;
+      color: var(--ink);
+    }
+
+    .alert-hint {
+      margin: 4px 0 0 0;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      border-top: 1px solid #e7edea;
+      padding: 16px 24px;
+      background: #fafbfb;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 150ms ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .btn:focus {
+      outline: 2px solid var(--green-700);
+      outline-offset: 2px;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--green-700);
+      color: #fff;
+      border-color: var(--green-700);
+    }
+
+    .btn-primary:hover {
+      background: var(--green-900);
+      border-color: var(--green-900);
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--green-900);
+      border-color: var(--line);
+    }
+
+    .btn-secondary:hover {
+      background: var(--green-50);
+      border-color: var(--green-700);
+    }
+
+    .btn-danger {
+      background: #d32f2f;
+      color: #fff;
+      border-color: #d32f2f;
+    }
+
+    .btn-danger:hover {
+      background: #b71c1c;
+      border-color: #b71c1c;
+    }
+
+    /* Success/Error Dialogs */
+    .modal-success .modal-header {
+      background: #e8f5e9;
+      border-bottom-color: #4caf50;
+    }
+
+    .modal-success .modal-header h2 {
+      color: #2e7d32;
+    }
+
+    .success-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      background: #e8f5e9;
+      color: #4caf50;
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    .modal-success h2 {
+      color: #2e7d32;
+    }
+
+    .modal-error .modal-header {
+      background: #ffebee;
+      border-bottom-color: #d32f2f;
+    }
+
+    .modal-error .modal-header h2 {
+      color: #c62828;
+    }
+
+    .error-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      background: #ffebee;
+      color: #d32f2f;
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    .modal-error h2 {
+      color: #c62828;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      table {
+        min-width: 500px;
+      }
+
+      .icon-button {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+      }
+
+      .action-buttons {
+        gap: 4px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      dialog {
+        max-width: 95vw;
+      }
+
+      .modal-header {
+        padding: 16px 16px;
+      }
+
+      .modal-body {
+        padding: 16px;
+      }
+
+      .btn {
+        flex: 1;
+        min-width: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <div class="demo-header">
+      <h1>🎯 إدارة العهد - نسخة محسّنة</h1>
+      <p>اضغط على الأزرار لاختبار dialogs الجديدة</p>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>اسم العهدة</th>
+            <th>الفئة</th>
+            <th>الحالة</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>جهاز كمبيوتر محمول</td>
+            <td>🖥️ أجهزة</td>
+            <td>🟢 نشطة</td>
+            <td>
+              <div class="action-buttons">
+                <button class="icon-button" title="تحديث الحالة" onclick="showStatusDialog({id: 1, assetName: 'جهاز كمبيوتر محمول', status: 'نشطة'})">📝</button>
+                <button class="icon-button" title="تعديل البيانات" onclick="showEditDialog({id: 1, assetName: 'جهاز كمبيوتر محمول'})">✏️</button>
+                <button class="icon-button danger" title="حذف العهدة" onclick="showDeleteDialog({id: 1, assetName: 'جهاز كمبيوتر محمول'})">🗑️</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>طابعة ليزر</td>
+            <td>🖥️ أجهزة</td>
+            <td>🟡 مسترجعة</td>
+            <td>
+              <div class="action-buttons">
+                <button class="icon-button" title="تحديث الحالة" onclick="showStatusDialog({id: 2, assetName: 'طابعة ليزر', status: 'مسترجعة'})">📝</button>
+                <button class="icon-button" title="تعديل البيانات" onclick="showEditDialog({id: 2, assetName: 'طابعة ليزر'})">✏️</button>
+                <button class="icon-button danger" title="حذف العهدة" onclick="showDeleteDialog({id: 2, assetName: 'طابعة ليزر'})">🗑️</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>مكتب خشبي</td>
+            <td>🪑 أثاث</td>
+            <td>🟢 نشطة</td>
+            <td>
+              <div class="action-buttons">
+                <button class="icon-button" title="تحديث الحالة" onclick="showStatusDialog({id: 3, assetName: 'مكتب خشبي', status: 'نشطة'})">📝</button>
+                <button class="icon-button" title="تعديل البيانات" onclick="showEditDialog({id: 3, assetName: 'مكتب خشبي'})">✏️</button>
+                <button class="icon-button danger" title="حذف العهدة" onclick="showDeleteDialog({id: 3, assetName: 'مكتب خشبي'})">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Dialogs -->
+
+  <!-- Dialog: تحديث الحالة -->
+  <dialog id="statusDialog" class="modal-dialog" role="alertdialog" aria-labelledby="statusDialogTitle">
+    <form method="dialog" class="modal-form" id="statusForm">
+      <div class="modal-header">
+        <h2 id="statusDialogTitle">تحديث حالة العهدة</h2>
+        <button type="button" class="modal-close" aria-label="إغلاق النافذة">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="asset-info">
+          <strong>العهدة:</strong> <span id="statusAssetName">--</span>
+        </p>
+        <div class="form-group">
+          <label for="statusSelect" class="form-label">الحالة الجديدة:</label>
+          <select id="statusSelect" class="form-control" required>
+            <option value="">-- اختر الحالة --</option>
+            <option value="نشطة">🟢 نشطة</option>
+            <option value="مسترجعة">🟡 مسترجعة</option>
+            <option value="تالفة">🔴 تالفة</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="statusNotes" class="form-label">ملاحظات (اختياري):</label>
+          <textarea id="statusNotes" class="form-control" rows="3" placeholder="أضف أي ملاحظات إضافية..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('statusDialog').close('cancel')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dialog: تعديل العهدة -->
+  <dialog id="editDialog" class="modal-dialog" role="dialog" aria-labelledby="editDialogTitle">
+    <form method="dialog" class="modal-form" id="editForm">
+      <div class="modal-header">
+        <h2 id="editDialogTitle">تعديل بيانات العهدة</h2>
+        <button type="button" class="modal-close" aria-label="إغلاق النافذة">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="editAssetName" class="form-label">اسم العهدة:</label>
+          <input type="text" id="editAssetName" class="form-control" required placeholder="أدخل اسم العهدة">
+        </div>
+        <div class="form-group">
+          <label for="editAssetDescription" class="form-label">الوصف:</label>
+          <textarea id="editAssetDescription" class="form-control" rows="3" placeholder="وصف العهدة (اختياري)"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('editDialog').close('cancel')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dialog: تأكيد الحذف -->
+  <dialog id="deleteDialog" class="modal-dialog modal-danger" role="alertdialog" aria-labelledby="deleteDialogTitle">
+    <form method="dialog" class="modal-form" id="deleteForm">
+      <div class="modal-header">
+        <h2 id="deleteDialogTitle">تأكيد حذف العهدة</h2>
+        <button type="button" class="modal-close" aria-label="إغلاق النافذة">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger" role="alert">
+          <span aria-hidden="true">⚠️</span>
+          <div>
+            <p class="alert-title">تحذير!</p>
+            <p class="alert-message">
+              هل أنتِ متأكدة من حذف العهدة <strong id="deleteAssetName">--</strong>؟
+            </p>
+            <p class="alert-hint">هذا الإجراء لا يمكن التراجع عنه.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('deleteDialog').close('cancel')">إلغاء</button>
+        <button type="submit" class="btn btn-danger">نعم، احذفيها</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dialog: النجاح -->
+  <dialog id="successDialog" class="modal-dialog modal-success" role="alertdialog" aria-labelledby="successDialogTitle">
+    <form method="dialog" class="modal-form">
+      <div class="modal-body">
+        <div class="success-icon" aria-hidden="true">✓</div>
+        <h2 id="successDialogTitle">نجح!</h2>
+        <p id="successMessage">تم تنفيذ العملية بنجاح.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">حسناً</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    // Status Dialog
+    function showStatusDialog(asset) {
+      document.getElementById('statusAssetName').textContent = asset.assetName;
+      document.getElementById('statusSelect').value = asset.status || '';
+      document.getElementById('statusNotes').value = '';
+
+      document.getElementById('statusForm').onsubmit = (e) => {
+        e.preventDefault();
+        const status = document.getElementById('statusSelect').value;
+        const notes = document.getElementById('statusNotes').value;
+        document.getElementById('statusDialog').close();
+        showSuccess(`تم تحديث حالة "${asset.assetName}" إلى "${status}" بنجاح`);
+      };
+
+      document.getElementById('statusDialog').querySelector('.modal-close').onclick = () => {
+        document.getElementById('statusDialog').close('cancel');
+      };
+
+      document.getElementById('statusDialog').showModal();
+    }
+
+    // Edit Dialog
+    function showEditDialog(asset) {
+      document.getElementById('editAssetName').value = asset.assetName || '';
+      document.getElementById('editAssetDescription').value = '';
+
+      document.getElementById('editForm').onsubmit = (e) => {
+        e.preventDefault();
+        const name = document.getElementById('editAssetName').value;
+        document.getElementById('editDialog').close();
+        showSuccess(`تم تحديث بيانات "${name}" بنجاح`);
+      };
+
+      document.getElementById('editDialog').querySelector('.modal-close').onclick = () => {
+        document.getElementById('editDialog').close('cancel');
+      };
+
+      document.getElementById('editDialog').showModal();
+    }
+
+    // Delete Dialog
+    function showDeleteDialog(asset) {
+      document.getElementById('deleteAssetName').textContent = asset.assetName;
+
+      document.getElementById('deleteForm').onsubmit = (e) => {
+        e.preventDefault();
+        document.getElementById('deleteDialog').close();
+        showSuccess(`تم حذف "${asset.assetName}" بنجاح`);
+      };
+
+      document.getElementById('deleteDialog').querySelector('.modal-close').onclick = () => {
+        document.getElementById('deleteDialog').close('cancel');
+      };
+
+      document.getElementById('deleteDialog').showModal();
+    }
+
+    // Success Message
+    function showSuccess(message) {
+      document.getElementById('successMessage').textContent = message;
+      document.getElementById('successDialog').showModal();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>مدارس النبلاء المتقدمة</title>
+
+  <!-- <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" /> -->
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="assets/css/site.css" />
+</head>
+
+<body data-page="home">
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container header-wrapper">
+
+      <!-- اليسار -->
+      <div class="header-actions">
+        <a href="login.html" class="action-link">
+              
+
+          MyNAS</a>
+        <a href="#" class="action-link">
+          
+          English</a>
+        <a href="#" class="action-link">
+          <span>بحث</span>
+          🔍
+        </a>
+      </div>
+
+      <!-- الوسط -->
+      <nav class="navbar" id="navbar">
+        <button class="close-menu" id="closeMenu" type="button">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <ul class="nav-list">
+
+          <li>
+            <a href="index.html" class="nav-link active" data-page-link="home">
+              الصفحة الرئيسية
+            </a>
+          </li>
+
+          <li class="dropdown">
+            <a href="#" class="nav-link" data-page-link="about">
+              نبذة عنا
+              <i class="fa-solid fa-chevron-down"></i>
+            </a>
+
+            <div class="mega-menu">
+              <a href="principal-message.html">رسالة مديرة المدارس</a>
+              <a href="vision.html">رؤيتنا ورسالتنا وقيمنا</a>
+              <a href="#">سياستنا</a>
+            </div>
+          </li>
+
+          <li class="dropdown">
+            <a href="admissions.html" class="nav-link" data-page-link="admissions">
+              القبول والتسجيل
+              <i class="fa-solid fa-chevron-down"></i>
+            </a>
+
+            <div class="mega-menu">
+              <a href="admissions.html">سياسة القبول والتسجيل</a>
+              <a href="admissions.html">إجراءات القبول والتسجيل</a>
+              <a href="admissions.html">الرسوم الدراسية</a>
+            </div>
+          </li>
+
+          <li class="dropdown">
+            <a href="learning.html" class="nav-link" data-page-link="learning">
+              رحلة التعلم
+              <i class="fa-solid fa-chevron-down"></i>
+            </a>
+
+            <div class="mega-menu">
+              <a href="#">المنهج</a>
+              <a href="#">الأنشطة المعززة للمنهج</a>
+              <a href="#">الحماية وجودة الحياة الدراسية</a>
+            </div>
+          </li>
+
+          <li class="dropdown">
+            <a href="services.html" class="nav-link" data-page-link="services">
+              خدماتنا
+              <i class="fa-solid fa-chevron-down"></i>
+            </a>
+
+            <div class="mega-menu">
+              <a href="#">خدمات الطلاب</a>
+              <a href="#">خدمات المنسوبين</a>
+              <a href="#">خدمات أولياء الأمور</a>
+            </div>
+          </li>
+
+        </ul>
+      </nav>
+
+      <!-- اليمين -->
+      <a href="index.html" class="logo">
+        <img src="./assets/images/logo3.png" alt="مدارس النبلاء المتقدمة" />
+      </a>
+
+      <button class="menu-toggle" id="menuToggle" type="button">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+    </div>
+  </header>
+
+  <div class="menu-backdrop" id="menuBackdrop"></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <!-- Main -->
+  <main>
+
+    <section class="home-slider">
+
+      <div class="slide active">
+        <div class="slide-inner">
+          <div class="slide-image">
+            <img src="./assets/images/hero.png" alt="مدارس النبلاء" />
+          </div>
+
+          <div class="slide-content">
+            <h1>مرحباً بكم في مدارس النبلاء المتقدمة</h1>
+            <p>حيث نمزج الأصالة والابتكار لإعداد قادة المستقبل</p>
+            <a href="admissions.html" class="slide-btn">سجل الآن</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide">
+        <div class="slide-inner">
+          <div class="slide-image">
+            <img src="ads/ad2.png" alt="القبول والتسجيل" />
+          </div>
+
+          <div class="slide-content">
+            <h1>القبول والتسجيل</h1>
+            <p>ابدأ رحلة تعليمية مميزة مع مدارس النبلاء المتقدمة</p>
+            <a href="admissions.html" class="slide-btn">تعرف أكثر</a>
+          </div>
+        </div>
+      </div>
+
+
+
+
+
+<!-- slideالاعلانات -->
+
+      <div class="slide">
+        <div class="slide-inner">
+          <div class="slide-image">
+            <img src="ads/ad3.png" alt="رحلة التعلم" />
+          </div>
+
+          <div class="slide-content">
+            <h1>رحلة التعلم</h1>
+            <p>تعليم متكامل يجمع بين المعرفة والمهارات والقيم</p>
+            <a href="learning.html" class="slide-btn">اكتشف الرحلة</a>
+          </div>
+        </div>
+      </div>
+
+      <button class="slider-arrow prev" id="prevSlide" type="button">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+
+      <button class="slider-arrow next" id="nextSlide" type="button">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+
+      <div class="slider-dots" id="sliderDots"></div>
+
+    </section>
+
+<!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++= -->
+
+
+    <section class="section-title">
+    <h2>فلسفتنا التعليمية</h2>
+    <div class="title-line"></div>
+</section>
+
+<section class="quick-links">
+    <div class="container quick-grid">
+
+        <!-- الكارد الأول -->
+        <div class="quick-card philosophy-card">
+            <img src="./assets/images/2.png" alt="فلسفتنا التعليمية" class="card-img">
+
+            <p>
+                في مدارس النبلاء المتقدمة، نؤمن بأن كل طفل يحمل طاقة كامنة، وفضولاً معرفيًا متقدًا، وقدرة حقيقية على التعلم والتميّز.
+                هنا ينبض التعلم بالحياة من خلال توفير خبرات تعليمية ذات مغزى تتمحور حول الطالب وترتبط بواقعه اليومي.
+                نستند إلى أحدث الأبحاث التربوية، ونعزز ذلك بتكامل هادف مع التقنية الحديثة، لنصمم بيئة تعليمية حيوية
+                تُمكّن طلابنا من البحث والإبداع والقيادة بثقة وكفاءة.
+            </p>
+        </div>
+
+        <!-- الكارد الثاني -->
+        <div class="quick-card philosophy-card">
+            <img src="./assets/images/3.png" alt="التعلم التكاملي" class="card-img">
+
+            <p>
+                تؤدي معلماتنا دورًا تربويًا تكامليًا يتجاوز نقل المعرفة إلى التوجيه والتيسير والمشاركة الفاعلة في العملية التعليمية،
+                إذ يُوجَّه الطالب نحو استكشاف المفاهيم وصياغة الأسئلة التحليلية وتنمية مهارات التفكير النقدي المنهجي.
+                ويُعد التعلم القائم على المشاريع أحد الركائز الأساسية في الممارسات الصفية.
+            </p>
+        </div>
+
+        <!-- الكارد الثالث -->
+        <div class="quick-card philosophy-card">
+            <img src="./assets/images/1.png" alt="تنمية الشخصية" class="card-img">
+
+            <p>
+                نحرص على تنمية الشخصية وتحمل المسؤولية وتعزيز روح التكافل والتعاون لدى طلابنا،
+                بما يؤهلهم للنمو كقادة يتحلون بالمسؤولية والوعي الأخلاقي.
+                وانطلاقًا من التزامنا الراسخ بقيمنا وهويتنا السعودية، نغرس في طلابنا شعور الانتماء
+                والاعتزاز بهويتهم الوطنية وثقافتهم مع إعدادهم بمهارات وكفاءات عالمية.
+            </p>
+        </div>
+
+    </div>
+</section>
+
+<!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+  <div class="footer-grid">
+
+    <div class="footer-brand">
+      <img src="./assets/images/logo3.png" alt="مدارس النبلاء المتقدمة">
+      <p>
+        مدارس النبلاء المتقدمة بيئة تعليمية ملهمة تجمع بين الأصالة والابتكار
+        لبناء مستقبل أبنائنا وبناتنا.
+      </p>
+
+     <div class="footer-social">
+    <a href="#" aria-label="Instagram">
+        <i class="fab fa-instagram"></i>
+    </a>
+
+    <a href="#" aria-label="TikTok">
+        <i class="fab fa-tiktok"></i>
+    </a>
+
+    <a href="#" aria-label="Snapchat">
+        <i class="fab fa-snapchat"></i>
+    </a>
+</div>
+    </div>
+
+    <div class="footer-col">
+      <h3>روابط رئيسية</h3>
+      <a href="index.html">الصفحة الرئيسية</a>
+      <a href="#">نبذة عنا</a>
+      <a href="admissions.html">القبول والتسجيل</a>
+      <a href="learning.html">رحلة التعلم</a>
+      <a href="services.html">خدماتنا</a>
+    </div>
+
+    <div class="footer-col">
+      <h3>روابط مهمة</h3>
+      <a href="principal-message.html">رسالة المديرة</a>
+      <a href="vision.html">رؤيتنا ورسالتنا</a>
+      <a href="requirements.html">شروط القبول</a>
+      <a href="activities.html">الأنشطة التعليمية</a>
+    </div>
+
+    <div class="footer-contact">
+      <h3>تواصل معنا</h3>
+
+      <div class="contact-item">
+        ☎
+        <span>+966537052188</span>
+      </div>
+
+      <div class="contact-item">
+        ✉
+        <span>info@nas.edu.sa</span>
+      </div>
+
+      <div class="contact-item">
+        📍
+        <span>مواقعنا</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-bottom">
+    <p>© 2026 مدارس النبلاء المتقدمة - جميع الحقوق محفوظة</p>
+  </div>
+</footer>
+
+<script src="assets/js/language.js"></script>
+</body>
+</html>
+
