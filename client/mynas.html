@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MyNas | بوابتي</title>
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/mynas.css">
+</head>
+<body>
+  <header class="mynas-header">
+    <div class="mynas-topbar container">
+      <a class="brand" href="mynas.html"><span class="brand-mark">My</span><span class="brand-name"><strong>MyNas</strong><span>مدارس النبلاء المتقدمة</span></span></a>
+      <div class="top-actions"><button class="text-button" type="button">English</button><button id="logoutButton" class="btn btn-secondary btn-small" type="button">تسجيل الخروج</button></div>
+    </div>
+  </header>
+  <main class="mynas-main container">
+    <div id="pageNotice" class="notice" role="alert"></div>
+    <section class="welcome-row"><div><h1 id="welcomeName">مرحبًا بكِ</h1><p>اختاري الخدمة التي تريدين الوصول إليها.</p></div><span id="semesterText" class="status">جارٍ تحميل بيانات الفصل...</span></section>
+    <h2 class="section-title">خدماتي</h2>
+    <section id="servicesGrid" class="services-grid" aria-label="الخدمات"></section>
+  </main>
+  <script type="module" src="assets/js/mynas.js"></script>
+</body>
+</html>

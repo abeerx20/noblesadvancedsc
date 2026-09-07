@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-labelledby="title">
+  <title id="title">بوابة الموظفة</title>
+  <g fill="none" stroke="#064236" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7">
+    <path d="M3 21h18M5 21V9l7-5 7 5v12"/>
+    <path d="M9 21v-5h6v5M8 11h2M14 11h2"/>
+  </g>
+</svg>

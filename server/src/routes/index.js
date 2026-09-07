@@ -1,0 +1,46 @@
+import { Router } from "express";
+import { profileRoutes } from "./profileRoutes.js";
+import { classRoutes } from "./classRoutes.js";
+import { studentRoutes } from "./studentRoutes.js";
+import { attendanceRoutes } from "./attendanceRoutes.js";
+import { scheduleRoutes } from "./scheduleRoutes.js";
+import { requestRoutes } from "./requestRoutes.js";
+import { employeeRoutes } from "./employeeRoutes.js";
+import { announcementRoutes } from "./announcementRoutes.js";
+import { fileRoutes } from "./fileRoutes.js";
+import { parentRoutes } from "./parentRoutes.js";
+import { studentReportRoutes } from "./studentReportRoutes.js";
+import { parentAdminRoutes } from "./parentAdminRoutes.js";
+import { supportRoutes } from "./supportRoutes.js";
+import { studentRosterRoutes } from "./studentRosterRoutes.js";
+import { materialsRoutes } from "./materialsRoutes.js";
+import { communityPartnershipRoutes } from "./communityPartnershipRoutes.js";
+import { notificationRoutes } from "./notificationRoutes.js";
+import { siteSettingsRoutes } from "./siteSettingsRoutes.js";
+import { invoiceRoutes } from "./invoiceRoutes.js";
+
+export const apiRouter = Router();
+
+apiRouter.get("/health", (_req, res) => {
+  res.json({ success: true, data: { status: "ok", service: "mynas-api" } });
+});
+apiRouter.use(profileRoutes);
+apiRouter.use("/academic-classes", classRoutes);
+apiRouter.use("/students", studentRoutes);
+apiRouter.use("/student-rosters", studentRosterRoutes);
+apiRouter.use("/attendance", attendanceRoutes);
+apiRouter.use("/schedules", scheduleRoutes);
+apiRouter.use("/requests", requestRoutes);
+apiRouter.use("/employees", employeeRoutes);
+apiRouter.use("/announcements", announcementRoutes);
+apiRouter.use("/files", fileRoutes);
+apiRouter.use("/parent", parentRoutes);
+apiRouter.use("/student-reports", studentReportRoutes);
+apiRouter.use("/parent-admin", parentAdminRoutes);
+apiRouter.use("/support-tickets", supportRoutes);
+console.log("MATERIALS ROUTES LOADED");
+apiRouter.use("/materials", materialsRoutes);
+apiRouter.use("/community-partnerships", communityPartnershipRoutes);
+apiRouter.use("/notifications", notificationRoutes);
+apiRouter.use("/site-settings", siteSettingsRoutes);
+apiRouter.use("/invoices", invoiceRoutes);

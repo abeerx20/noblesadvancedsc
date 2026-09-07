@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { authenticate } from "../middleware/authenticate.js";
+import { requirePermission } from "../middleware/authorize.js";
+import { validate } from "../middleware/validate.js";
+import { communityPartnershipSchema } from "../validators/schemas.js";
+import * as c from "../controllers/communityPartnershipController.js";
+export const communityPartnershipRoutes = Router();
+communityPartnershipRoutes.use(authenticate);
+communityPartnershipRoutes.get("/", requirePermission("view_community_partnerships"), c.index);
+communityPartnershipRoutes.post("/", requirePermission("manage_community_partnerships"), validate(communityPartnershipSchema), c.create);
+communityPartnershipRoutes.put("/:id", requirePermission("manage_community_partnerships"), validate(communityPartnershipSchema), c.update);
+communityPartnershipRoutes.delete("/:id", requirePermission("manage_community_partnerships"), c.remove);

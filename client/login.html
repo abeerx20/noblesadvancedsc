@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>تسجيل الدخول | MyNas</title>
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/login.css">
+</head>
+<body>
+  <main class="auth-layout">
+    <section class="auth-side">
+      <div class="auth-side-top">
+        <a class="brand" href="index.html" aria-label="العودة للصفحة الرئيسية">
+          <img src="assets/images/image-removebg-preview (2).png" alt="مدارس النبلاء المتقدمة" />
+        </a>
+      </div>
+
+      <div class="auth-message">
+        <h1>مرحبا بكِ في بوابة<br><span>MyNas</span></h1>
+        <p>لا تشاركي كلمة المرور أو رمز تسجيل الدخول مع أي شخص.<br>استخدمي بريدك الوظيفي وكلمة المرور المعتمدة للدخول إلى خدماتك.</p>
+      </div>
+    </section>
+    <section class="auth-main">
+      <div class="auth-card page-card">
+        <h2>تسجيل الدخول</h2>
+        <p>اختاري نوع الحساب الخاص بكِ ثم ادخلي بيانات الحساب.</p>
+        <p id="demoHint" hidden>للتجربة: رقم الهوية <strong>1234567890</strong> وكلمة المرور <strong>Parent@123</strong>.</p>
+        <div class="auth-tabs" role="tablist" aria-label="نوع الحساب">
+          <button type="button" class="auth-tab active" data-account-type="employee" role="tab" aria-selected="true">موظفة</button>
+          <button type="button" class="auth-tab" data-account-type="parent" role="tab" aria-selected="false">ولي الأمر</button>
+        </div>
+        <div id="authNotice" class="notice" role="alert" aria-live="polite"></div>
+        <form id="loginForm" class="auth-form" novalidate>
+          <div class="field"><label for="identifier">البريد الإلكتروني</label><input id="identifier" name="identifier" type="text" autocomplete="username" inputmode="text" required maxlength="160" placeholder="أدخلي البريد الإلكتروني أو رقم الهوية"></div>
+          <div id="passwordField" class="field">
+            <label for="password">كلمة المرور</label>
+            <div class="password-input-wrap">
+              <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128">
+              <button id="togglePassword" class="password-toggle" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false">👁</button>
+            </div>
+          </div>
+          <label class="remember-me" for="rememberMe">
+            <input id="rememberMe" name="rememberMe" type="checkbox">
+            <span>تذكرني</span>
+          </label>
+          <button id="loginButton" class="btn" type="submit">دخول</button>
+        </form>
+        <a class="back-link" href="index.html">العودة إلى الموقع الرسمي</a>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="assets/js/login.js"></script>
+</body>
+</html>
+
