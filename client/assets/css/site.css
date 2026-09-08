@@ -348,6 +348,64 @@ img {
 }
 
 @media (max-width: 768px) {
+    .header-actions {
+        width: auto;
+        gap: 10px;
+    }
+
+    .action-link {
+        font-size: 12px;
+        gap: 3px;
+    }
+
+    .logo {
+        width: 150px;
+    }
+
+    .logo img {
+        width: 150px;
+    }
+
+    .home-slider {
+        height: auto;
+        min-height: 620px;
+    }
+
+    .slide-inner {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 32px 16px 76px;
+    }
+
+    .slide-image img {
+        max-width: 320px;
+    }
+
+    .slide-content h1 {
+        font-size: 32px;
+    }
+
+    .slide-content p {
+        font-size: 17px;
+    }
+
+    .quick-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .section-title {
+        margin: 48px 0 32px;
+    }
+
+    .section-title h2 {
+        font-size: 36px;
+    }
+
+    .title-line {
+        width: min(440px, 80vw);
+    }
+
     .navbar {
         position: fixed;
         top: 0;
