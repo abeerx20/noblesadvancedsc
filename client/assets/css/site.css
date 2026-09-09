@@ -762,7 +762,7 @@ img {
 .page-back-wrap {
     display: flex;
     justify-content: center;
-    padding: 20px 0 30px;
+    padding: 8px 0 24px;
     background: #f7faf8;
 }
 
@@ -773,12 +773,13 @@ img {
     min-width: 150px;
     padding: 12px 26px;
     border-radius: 999px;
-    background: #0d5a47;
-    color: #fff;
+    background: #fff;
+    border: 1px solid #d4a72c;
+    color: #0d5a47;
     font-size: 18px;
     font-weight: 700;
     text-decoration: none;
-    box-shadow: 0 12px 24px rgba(13, 90, 71, 0.18);
+    box-shadow: 0 8px 18px rgba(13, 90, 71, 0.12);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
