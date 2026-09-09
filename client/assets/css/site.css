@@ -1403,3 +1403,33 @@ img {
         line-height: 1.85;
     }
 }
+
+@media screen and (max-device-width: 768px) {
+    .home-slider {
+        height: 420px !important;
+    }
+
+    .slide-inner {
+        padding: 14px 10px 46px !important;
+    }
+
+    .slide-image img {
+        width: 52% !important;
+        max-width: 150px !important;
+    }
+
+    .slide-content h1 {
+        width: 260px !important;
+        font-size: 20px !important;
+        line-height: 1.4 !important;
+    }
+
+    .slide-content p {
+        width: 270px !important;
+        font-size: 12px !important;
+    }
+
+    .section-title h2 {
+        font-size: 25px !important;
+    }
+}
