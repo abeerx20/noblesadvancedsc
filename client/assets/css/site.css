@@ -1275,3 +1275,126 @@ img {
     font-size: 24px;
     color: #006b4f
 }
+
+@media (max-width: 768px) {
+
+    .site-header,
+    .header-wrapper {
+        height: 78px;
+    }
+
+    .header-wrapper {
+        width: 94%;
+    }
+
+    .header-actions {
+        width: auto;
+        gap: 8px;
+    }
+
+    .action-link {
+        font-size: 11px;
+    }
+
+    .logo,
+    .logo img {
+        width: 132px;
+    }
+
+    .home-slider {
+        height: 520px;
+        min-height: 0;
+    }
+
+    .slide-inner {
+        height: 100%;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 22px 18px 62px;
+    }
+
+    .slide-image img {
+        width: 78%;
+        max-width: 250px;
+    }
+
+    .slide-content {
+        max-width: 100%;
+    }
+
+    .slide-content h1 {
+        margin-bottom: 8px;
+        font-size: 29px;
+        line-height: 1.35;
+    }
+
+    .slide-content p {
+        margin-bottom: 10px;
+        font-size: 15px;
+        line-height: 1.7;
+    }
+
+    .slide-btn {
+        min-width: 130px;
+        height: 44px;
+        padding: 0 22px;
+        font-size: 16px;
+    }
+
+    .slider-arrow {
+        width: 36px;
+        height: 36px;
+    }
+
+    .prev {
+        right: 12px;
+    }
+
+    .next {
+        left: 12px;
+    }
+
+    .slider-dots {
+        bottom: 16px;
+    }
+
+    .section-title {
+        margin: 42px 0 26px;
+    }
+
+    .section-title h2 {
+        font-size: 32px;
+        line-height: 1.3;
+    }
+
+    .title-line {
+        width: 72vw;
+        height: 4px;
+        margin-top: 16px;
+    }
+
+    .quick-links {
+        padding: 28px 0 44px;
+    }
+
+    .quick-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .quick-card {
+        border-radius: 14px;
+        padding: 22px 18px;
+    }
+
+    .card-img {
+        width: 104px;
+        height: 104px;
+        margin: 8px auto 16px;
+    }
+
+    .philosophy-card p {
+        font-size: 16px;
+        line-height: 1.85;
+    }
+}
