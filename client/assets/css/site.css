@@ -712,7 +712,7 @@ img {
 
 .message-page {
     background: linear-gradient(180deg, #f7faf8 0%, #eef7f1 100%);
-    padding: 70px 0 100px;
+    padding: 70px 0 24px;
 }
 
 .message-shell {
@@ -762,7 +762,7 @@ img {
 .page-back-wrap {
     display: flex;
     justify-content: center;
-    padding: 8px 0 24px;
+    padding: 0 0 24px;
     background: #f7faf8;
 }
 
