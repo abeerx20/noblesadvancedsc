@@ -6174,3 +6174,62 @@ label:has(#agreement) {
   overflow-wrap: anywhere;
   text-align: center;
 }
+
+@media (max-width: 560px) {
+  .portal-header {
+    min-height: 66px;
+  }
+
+  .portal-header .brand-full-logo {
+    width: 150px;
+    height: 46px;
+  }
+
+  .portal-header .brand-name {
+    display: none;
+  }
+
+  .portal-header .header-actions {
+    gap: 5px;
+  }
+
+  .portal-header .header-actions .btn {
+    min-height: 32px;
+    padding: 6px 8px;
+    font-size: 9px;
+  }
+
+  .portal-strip {
+    top: 66px;
+  }
+
+  .portal-main {
+    min-height: calc(100vh - 104px);
+  }
+
+  .content-card {
+    padding: 13px;
+  }
+
+  .page-heading h1 {
+    line-height: 1.6;
+  }
+
+  .form-actions .btn,
+  .form-actions .btn-secondary {
+    width: 100%;
+  }
+
+  .table-wrap {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-wrap table {
+    min-width: 640px;
+  }
+
+  .modal-card,
+  dialog {
+    max-width: calc(100vw - 24px);
+  }
+}

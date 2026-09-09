@@ -166,6 +166,35 @@
     .welcome-row {
         align-items: flex-start;
     }
+
+    .mynas-topbar {
+        min-height: 62px;
+        gap: 8px;
+    }
+
+    .mynas-topbar .brand-full-logo {
+        width: 150px;
+        height: 46px;
+    }
+
+    .top-actions {
+        gap: 4px;
+    }
+
+    .top-actions .btn,
+    .top-actions .text-button {
+        min-height: 32px;
+        padding: 6px 8px;
+        font-size: 10px;
+    }
+
+    .mynas-main {
+        padding: 22px 0 38px;
+    }
+
+    .welcome-row h1 {
+        font-size: 22px;
+    }
 }
 
 /* تنسيق بطاقة بيانات الموظفة */

@@ -232,4 +232,41 @@
     .auth-main {
         padding: 24px 14px;
     }
+
+    .auth-side {
+        min-height: 190px;
+        gap: 20px;
+        padding: 20px 18px;
+    }
+
+    .auth-side-top {
+        min-height: 0;
+    }
+
+    .auth-side .brand img {
+        max-width: 150px;
+    }
+
+    .auth-message {
+        position: static;
+        width: 100%;
+        max-width: none;
+        transform: none;
+    }
+
+    .auth-message h1 {
+        font-size: 28px;
+    }
+
+    .auth-message h1 span {
+        font-size: 30px;
+    }
+
+    .auth-message p {
+        display: none;
+    }
+
+    .auth-card {
+        padding: 24px 18px;
+    }
 }
