@@ -426,7 +426,7 @@ function page(title, description, body) {
   const backButton = routeName === "dashboard"
     ? ""
     : '<button id="pageBackButton" class="btn btn-secondary btn-small no-print" type="button">رجوع</button>';
-  content.innerHTML = `<section class="content-card page-card page-card-${routeName}">${breadcrumb}<div class="page-heading"><div><h1>${title}</h1><p>${description}</p></div>${backButton}</div><div id="pageNotice" class="notice" role="alert" aria-live="polite"></div>${body}</section>`;
+  content.innerHTML = `<section class="content-card page-card page-card-${routeName}">${breadcrumb}<div class="page-heading"><div><h1>${title}</h1></div>${backButton}</div><div id="pageNotice" class="notice" role="alert" aria-live="polite"></div>${body}</section>`;
   setupDateInputs(content);
   document.querySelector("#pageBackButton")?.addEventListener("click", () => {
     const linksContainer = document.querySelector("#linksContainer");
