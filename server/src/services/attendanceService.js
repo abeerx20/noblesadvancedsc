@@ -20,7 +20,19 @@ async function firstPeriodTeacher(classId, date) {
   return firstPeriod?.data() ?? null;
 }
 
+function attendanceOpensAtNine() {
+  const hour = Number(new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Riyadh",
+    hour: "2-digit",
+    hour12: false
+  }).format(new Date()));
+  return hour >= 9;
+}
+
 export async function attendanceEligibility(user, classId, date) {
+  if (!attendanceOpensAtNine()) {
+    return { allowed: false, reason: "إدخال الغياب متاح ابتداءً من الساعة 9:00 صباحًا بتوقيت مكة.", subject: null };
+  }
   await getClassOrThrow(classId);
   const override = user.permissions.includes("manage_attendance") || user.permissions.includes("attendance_override");
   if (override) {

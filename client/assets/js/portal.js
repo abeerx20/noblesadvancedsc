@@ -2024,7 +2024,7 @@ async function renderAttendancePortal() {
 
 async function renderAttendance() {
   page("إدخال الغياب", "تتاح العملية لمعلمة الحصة الأولى أو للمستخدمة المخولة.", `
-    <aside class="attendance-warning"><strong>تنبيه</strong><span>يرجى التأكد من صحة بيانات الغياب ومراجعتها قبل الإرسال، فالالتزام برفع الغياب في الوقت المحدد مسؤولية.</span></aside>
+    <aside class="attendance-warning"><strong>تنبيه</strong><span>يبدأ إدخال الغياب الساعة 9:00 صباحًا بتوقيت مكة. يرجى التأكد من صحة البيانات ومراجعتها قبل الإرسال.</span></aside>
     <section class="attendance-data-section"><h2>بيانات الغياب</h2>
       <div class="form-grid attendance-entry-grid">
         <div class="field"><label>اسم المعلمة</label><input id="attendanceTeacher" readonly></div>
