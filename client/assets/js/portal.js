@@ -352,7 +352,7 @@ function setupDateInputs(root) {
     if (input.dataset.dateInputReady) return;
     input.dataset.dateInputReady = "true";
     input.dataset.dateInputType = input.type;
-    input.setAttribute("placeholder", "سنة / شهر / يوم");
+    input.setAttribute("placeholder", "YYYY / MM / DD");
     input.setAttribute("lang", "ar");
     input.setAttribute("dir", "ltr");
     input.style.textAlign = "right";
