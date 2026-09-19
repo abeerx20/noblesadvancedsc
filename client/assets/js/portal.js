@@ -360,6 +360,23 @@ function setupDateInputs(root) {
     input.type = "text";
     input.inputMode = "numeric";
     input.value = formatDisplayDate(input.value);
+    const picker = document.createElement("input");
+    picker.type = "date";
+    picker.className = "date-picker-native";
+    picker.tabIndex = -1;
+    picker.setAttribute("aria-hidden", "true");
+    picker.value = normalizeDisplayDate(input.value);
+    const pickerButton = document.createElement("button");
+    pickerButton.type = "button";
+    pickerButton.className = "date-picker-button";
+    pickerButton.textContent = "📅";
+    pickerButton.setAttribute("aria-label", "اختيار التاريخ من التقويم");
+    input.insertAdjacentElement("afterend", pickerButton);
+    pickerButton.insertAdjacentElement("afterend", picker);
+    pickerButton.addEventListener("click", () => picker.showPicker?.());
+    picker.addEventListener("change", () => {
+      input.value = formatDisplayDate(picker.value);
+    });
     input.addEventListener("input", () => {
       const digits = input.value.replace(/\D/g, "").slice(0, 8);
       input.value = formatDisplayDateDigits(digits);
