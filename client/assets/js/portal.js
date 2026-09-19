@@ -352,9 +352,9 @@ function setupDateInputs(root) {
     if (input.dataset.dateInputReady) return;
     input.dataset.dateInputReady = "true";
     input.dataset.dateInputType = input.type;
-    input.setAttribute("placeholder", "يوم/شهر/سنة");
+    input.setAttribute("placeholder", "سنة / شهر / يوم");
     input.setAttribute("lang", "ar");
-    input.setAttribute("dir", "rtl");
+    input.setAttribute("dir", "ltr");
     input.style.textAlign = "right";
     input.type = "text";
     input.inputMode = "numeric";
@@ -368,7 +368,7 @@ function setupDateInputs(root) {
       if (!input.value) {
         input.type = "text";
         input.setAttribute("lang", "ar");
-        input.setAttribute("dir", "rtl");
+        input.setAttribute("dir", "ltr");
         input.style.textAlign = "right";
       }
     });
@@ -6588,7 +6588,7 @@ async function renderEmployeeManagementPage(mode) {
       englishNameInput.style.textAlign = "right";
     }
     const roleSelect = document.querySelector("#employeeRoleInput");
-    roleSelect.previousElementSibling?.querySelector("label")?.replaceChildren(document.createTextNode("المسمى الوظيفي"));
+    roleSelect.closest(".field")?.querySelector("label")?.replaceChildren(document.createTextNode("المسمى الوظيفي"));
     roleSelect.querySelector('option[value=""]')?.replaceChildren(document.createTextNode("اختاري المسمى الوظيفي"));
     if (!roleSelect.querySelector('option[value="resource_user"]')) {
       roleSelect.insertAdjacentHTML("beforeend", '<option value="resource_user">الموارد البشرية والمالية</option>');
