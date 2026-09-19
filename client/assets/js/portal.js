@@ -352,8 +352,8 @@ function setupDateInputs(root) {
     if (input.dataset.dateInputReady) return;
     input.dataset.dateInputReady = "true";
     input.dataset.dateInputType = input.type;
-    input.setAttribute("placeholder", "YYYY / MM / DD");
-    input.setAttribute("lang", "ar");
+    input.setAttribute("placeholder", "DD / MM / YYYY");
+    input.setAttribute("lang", "en-GB");
     input.setAttribute("dir", "ltr");
     input.style.textAlign = "right";
     input.type = "text";
