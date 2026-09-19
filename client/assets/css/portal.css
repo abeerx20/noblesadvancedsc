@@ -1301,14 +1301,14 @@ input[type="month"] {
   min-width: 220px;
 }
 
-.field:has(.date-picker-button) {
+.date-picker-control {
   position: relative;
 }
 
 .date-picker-button {
   position: absolute;
   left: 10px;
-  top: calc(100% - 22px);
+  top: 50%;
   z-index: 1;
   border: 0;
   padding: 2px;
@@ -1318,7 +1318,7 @@ input[type="month"] {
   transform: translateY(-50%);
 }
 
-.field:has(.date-picker-button) input {
+.date-picker-control input {
   direction: ltr;
   text-align: right;
   padding-left: 42px;

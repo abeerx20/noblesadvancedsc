@@ -371,8 +371,10 @@ function setupDateInputs(root) {
     pickerButton.className = "date-picker-button";
     pickerButton.textContent = "▣";
     pickerButton.setAttribute("aria-label", "اختيار التاريخ من التقويم");
-    input.insertAdjacentElement("afterend", pickerButton);
-    pickerButton.insertAdjacentElement("afterend", picker);
+    const dateControl = document.createElement("div");
+    dateControl.className = "date-picker-control";
+    input.before(dateControl);
+    dateControl.append(input, pickerButton, picker);
     pickerButton.addEventListener("click", () => {
       if (picker.showPicker) picker.showPicker();
       else picker.click();
