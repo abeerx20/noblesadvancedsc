@@ -17,7 +17,7 @@ profileRoutes.get("/me", authenticate, asyncHandler(async (req, res) => {
         nameAr: employee.nameAr,
         nameEn: employee.nameEn,
         nationalId: employee.nationalId,
-        employeeNumber: employee.employeeNumber,
+        employeeNumber: employee.employeeNumber ?? employee.employeeId ?? employee.number ?? "—",
         role: employee.role,
         department: employee.department,
         email: employee.email,

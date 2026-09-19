@@ -49,8 +49,9 @@ async function init() {
       document.querySelector("#semesterText").textContent = "الفصل الدراسي الحالي";
     } else {
       data = (await api.get("/me")).data;
-      const firstName = data.employee.nameAr?.split(" ")[0] ?? "";
-      document.querySelector("#welcomeName").textContent = `مرحبًا بكِ، ${firstName}`;
+      const nameParts = (data.employee.nameAr ?? "").trim().split(/\s+/).filter(Boolean);
+      const employeeName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[nameParts.length - 1]}` : nameParts[0] ?? "";
+      document.querySelector("#welcomeName").textContent = `مرحبًا بكِ، ${employeeName}`;
     }
     const isParent = data.userType === "parent";
 
@@ -74,8 +75,10 @@ async function init() {
 }
 
 document.querySelector("#logoutButton").addEventListener("click", async () => {
+  sessionStorage.removeItem("nas-login-redirecting");
   await logout();
-  window.location.replace("login.html");
+  const current = window.location.pathname.split("/").pop() || "index.html";
+  if (current !== "login.html") window.location.replace("login.html");
 });
 
 init();

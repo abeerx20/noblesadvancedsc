@@ -152,6 +152,14 @@ button:disabled {
   background: var(--danger);
 }
 
+.btn-success {
+  background: var(--success);
+}
+
+.btn-success:hover {
+  background: #0f7a4d;
+}
+
 .btn-small {
   min-height: 34px;
   padding: 5px 11px;

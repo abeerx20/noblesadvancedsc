@@ -176,12 +176,15 @@
 
 .password-input-wrap input {
     width: 100%;
-    padding-left: 42px;
+    padding-left: 14px;
+    padding-right: 42px;
+    text-align: right;
+    direction: rtl;
 }
 
 .password-toggle {
     position: absolute;
-    left: 10px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
     width: 28px;

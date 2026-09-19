@@ -1,6 +1,5 @@
 import { api } from "./api.js";
-import { firebaseAuth, loginWithEmail } from "./firebase-client.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import { configurationReady, firebaseAuth, loginWithEmail } from "./firebase-client.js";
 import { clearNotice, setNotice, submitSafely } from "./ui.js";
 
 const form = document.querySelector("#loginForm");
@@ -19,6 +18,25 @@ const demoMode = new URLSearchParams(location.search).get("demo") === "1";
 const demoParentId = "1234567890";
 const demoParentPassword = "Parent@123";
 let selectedAccountType = "employee";
+let navigationLocked = false;
+
+if (location.pathname.endsWith("login.html")) {
+  sessionStorage.removeItem("nas-login-redirecting");
+}
+
+function safeNavigate(target) {
+  const targetPath = target.split("?")[0];
+  const currentPath = location.pathname.split("/").pop() || "index.html";
+  if (currentPath === targetPath) return;
+  window.location.replace(target);
+}
+
+function navigateToDashboardOnce() {
+  if (navigationLocked) return;
+  navigationLocked = true;
+  sessionStorage.setItem("nas-login-redirecting", "1");
+  safeNavigate("mynas.html");
+}
 
 function setSelectedTab(nextType) {
   selectedAccountType = nextType;
@@ -110,18 +128,19 @@ if (demoMode) {
 async function goToDashboardAfterLogin() {
   try {
     const { data } = await api.get("/me");
-    const destination = data.userType === "parent" ? "mynas.html" : "mynas.html";
-    window.location.replace(destination);
-  } catch {
-    window.location.replace("mynas.html");
+    if (data?.userType === "parent" || data?.userType === "employee") {
+      navigateToDashboardOnce();
+      return;
+    }
+    navigateToDashboardOnce();
+  } catch (error) {
+    const code = error?.code ?? "";
+    const message = code === "INVALID_TOKEN"
+      ? "تم تسجيل الدخول في المتصفح، لكن السيرفر لا يصدّق الجلسة الحالية. تحقق من إعدادات Firebase في السيرفر."
+      : "تم تسجيل الدخول في المتصفح، لكن لا يمكن فتح MyNas الآن لأن الخادم غير مُهيأ بشكل صحيح.";
+    setNotice(notice, "error", message);
   }
 }
-
-onAuthStateChanged(firebaseAuth, (user) => {
-  if (user) {
-    goToDashboardAfterLogin();
-  }
-});
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -142,9 +161,16 @@ form.addEventListener("submit", async (event) => {
         passwordInput.focus();
         return;
       }
-      window.location.replace("mynas.html?demo=1&parent=1");
+      navigationLocked = true;
+      sessionStorage.setItem("nas-login-redirecting", "1");
+      safeNavigate("mynas.html?demo=1&parent=1");
       return;
     }
+  }
+
+  if (!configurationReady) {
+    setNotice(notice, "error", "إعدادات Firebase في الواجهة غير مكتملة. أكملي ملف firebase-config.js قبل المحاولة مرة أخرى.");
+    return;
   }
 
   const email = identifier.toLowerCase();
@@ -157,15 +183,20 @@ form.addEventListener("submit", async (event) => {
         localStorage.removeItem(STORAGE_KEY);
       }
       await loginWithEmail(email, password);
+      sessionStorage.setItem("nas-login-redirecting", "1");
       await goToDashboardAfterLogin();
     } catch (error) {
+      const key = error?.code ?? error?.message ?? "";
       const messages = {
-        FIREBASE_CONFIG_REQUIRED: "يجب أولًا إدخال إعدادات Firebase العامة في ملف firebase-config.js.",
-        "auth/invalid-credential": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
-        "auth/too-many-requests": "تمت محاولات دخول كثيرة. انتظري قليلًا ثم حاولي مجددًا.",
-        "auth/user-disabled": "هذا الحساب موقوف. تواصلي مع مسؤولة النظام."
+        FIREBASE_CONFIG_REQUIRED: "إعدادات Firebase في الخادم غير مكتملة. أضف ملف خدمة Firebase أو حدّث GOOGLE_APPLICATION_CREDENTIALS قبل تسجيل الدخول.",
+        "auth/invalid-credential": "البريد الإلكتروني أو كلمة المرور غير صحيحة. تأكدي من البيانات ثم حاولي مرة أخرى.",
+        "auth/too-many-requests": "تم تسجيل محاولات كثيرة مؤخرًا. انتظري قليلًا ثم حاولي مرة أخرى.",
+        "auth/user-disabled": "هذا الحساب موقوف. تواصلي مع مسؤولة النظام.",
+        INVALID_TOKEN: "تم تسجيل الدخول في المتصفح، لكن الخادم لا يصدّق الجلسة. تأكدي من إعدادات Firebase في السيرفر.",
+        AUTH_REQUIRED: "يجب تسجيل الدخول للمتابعة.",
+        "تعذر تسجيل الدخول. تحققي من البيانات وحاولي مجددًا.": "تعذر تسجيل الدخول. تحققي من البيانات وحاولي مجددًا."
       };
-      setNotice(notice, "error", messages[error.code ?? error.message] ?? "تعذر تسجيل الدخول. تحققي من البيانات وحاولي مجددًا.");
+      setNotice(notice, "error", messages[key] ?? "تعذر تسجيل الدخول. تحققي من البيانات وحاولي مجددًا.");
     }
   });
 });

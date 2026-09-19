@@ -9,7 +9,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 export const attendanceRoutes = Router();
 attendanceRoutes.use(authenticate);
 attendanceRoutes.get("/eligibility", requirePermission("enter_attendance", "manage_attendance", "attendance_override"), validate(attendanceEligibilitySchema, "query"), asyncHandler(controller.eligibility));
-attendanceRoutes.get("/", requirePermission("view_attendance", "manage_attendance"), validate(attendanceQuerySchema, "query"), asyncHandler(controller.index));
+attendanceRoutes.get("/", requirePermission("view_attendance", "manage_attendance", "manage_absence"), validate(attendanceQuerySchema, "query"), asyncHandler(controller.index));
 attendanceRoutes.post("/", requirePermission("enter_attendance", "manage_attendance", "attendance_override"), validate(attendanceSchema), asyncHandler(controller.create));
-attendanceRoutes.put("/:id", requirePermission("manage_attendance"), validate(idParamSchema, "params"), validate(attendanceEntriesSchema), asyncHandler(controller.update));
+attendanceRoutes.put("/:id", requirePermission("manage_attendance", "manage_absence"), validate(idParamSchema, "params"), validate(attendanceEntriesSchema), asyncHandler(controller.update));
 

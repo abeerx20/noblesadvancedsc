@@ -18,6 +18,7 @@ import { communityPartnershipRoutes } from "./communityPartnershipRoutes.js";
 import { notificationRoutes } from "./notificationRoutes.js";
 import { siteSettingsRoutes } from "./siteSettingsRoutes.js";
 import { invoiceRoutes } from "./invoiceRoutes.js";
+import { coverageRoutes } from "./coverageRoutes.js";
 
 export const apiRouter = Router();
 
@@ -30,6 +31,7 @@ apiRouter.use("/students", studentRoutes);
 apiRouter.use("/student-rosters", studentRosterRoutes);
 apiRouter.use("/attendance", attendanceRoutes);
 apiRouter.use("/schedules", scheduleRoutes);
+apiRouter.use("/coverage", coverageRoutes);
 apiRouter.use("/requests", requestRoutes);
 apiRouter.use("/employees", employeeRoutes);
 apiRouter.use("/announcements", announcementRoutes);

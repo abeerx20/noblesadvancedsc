@@ -121,6 +121,35 @@ export const scheduleQuerySchema = z.object({
   day: z.enum(["sunday", "monday", "tuesday", "wednesday", "thursday"]).optional()
 }).strict();
 
+export const coverageQuerySchema = z.object({
+  from: date,
+  to: date
+}).strict().superRefine((value, ctx) => {
+  if (value.to < value.from) ctx.addIssue({ code: "custom", path: ["to"], message: "نهاية الفترة يجب ألا تسبق بدايتها." });
+});
+
+export const coverageSchema = z.object({
+  date,
+  absenceReportId: id,
+  scheduleId: id,
+  substituteUid: id,
+  status: z.enum(["مكلف", "مؤكد", "مكتمل", "ملغى"]).default("مكلف"),
+  notes: clean(0, 500, "الملاحظات").optional()
+}).strict();
+
+export const coverageUpdateSchema = z.object({
+  substituteUid: id.optional(),
+  status: z.enum(["مكلف", "مؤكد", "مكتمل", "ملغى"]).optional(),
+  notes: clean(0, 500, "الملاحظات").optional()
+}).strict();
+
+export const coverageAbsenceSchema = z.object({
+  employeeUid: id,
+  absenceType: z.enum(["sick", "emergency", "personal", "other"]),
+  date,
+  reason: clean(3, 500, "السبب")
+}).strict();
+
 export const limitQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(100),
   scope: z.enum(["mine", "all"]).optional()
@@ -134,8 +163,8 @@ export const leaveQuerySchema = z.object({
 export const scheduleSchema = z.object({
   blockType: z.enum(["class", "break"]),
   day: z.enum(["sunday", "monday", "tuesday", "wednesday", "thursday"]),
-  periodNumber: z.coerce.number().int().min(1).max(12).optional(),
-  periodName: clean(1, 40, "اسم الحصة أو الفترة"),
+  periodNumber: z.coerce.number().int().min(1).max(8).optional(),
+  periodName: clean(1, 40, "اسم الحصة أو الفترة").optional(),
   startTime: time,
   endTime: time,
   teacherUid: id,
@@ -143,8 +172,8 @@ export const scheduleSchema = z.object({
   classId: id.optional(),
   location: clean(1, 80, "المكان").optional()
 }).strict().superRefine((value, ctx) => {
-  if (value.blockType === "class" && (!value.classId || !value.subject || !value.periodNumber)) {
-    ctx.addIssue({ code: "custom", path: ["classId"], message: "الفصل والمادة ورقم الحصة مطلوبة للحصة الدراسية." });
+  if (value.blockType === "class" && (!value.classId || !value.subject)) {
+    ctx.addIssue({ code: "custom", path: ["classId"], message: "الفصل والمادة مطلوبة للحصة الدراسية." });
   }
   if (value.blockType === "break" && (value.classId || value.subject || value.periodNumber)) {
     ctx.addIssue({ code: "custom", path: ["blockType"], message: "المناوبة لا تقبل بيانات الفصل أو المادة أو رقم الحصة." });
@@ -301,6 +330,10 @@ export const siteSettingsSchema = z.object({
   hijriYear: clean(4, 20, "السنة الهجرية")
 });
 
+export const passwordResetSchema = z.object({
+  password: z.string().trim().min(6).max(128, "كلمة المرور طويلة جدًا.")
+}).strict();
+
 export const accessUpdateSchema = z.object({
   active: z.boolean().optional(),
   view_students: z.boolean().optional(),
@@ -309,10 +342,12 @@ export const accessUpdateSchema = z.object({
   view_attendance: z.boolean().optional(),
   manage_attendance: z.boolean().optional(),
   enter_attendance: z.boolean().optional(),
+  manage_absence: z.boolean().optional(),
   attendance_override: z.boolean().optional(),
   view_schedules: z.boolean().optional(),
   view_all_schedules: z.boolean().optional(),
   manage_schedules: z.boolean().optional(),
+  view_substitution_assignments: z.boolean().optional(),
   request_leave: z.boolean().optional(),
   manage_leave_requests: z.boolean().optional(),
   manage_leave_hr_requests: z.boolean().optional(),
@@ -329,6 +364,7 @@ export const accessUpdateSchema = z.object({
   manage_announcements: z.boolean().optional(),
   request_materials: z.boolean().optional(),
   manage_materials: z.boolean().optional(),
+  manage_invoices: z.boolean().optional(),
   request_suggestions: z.boolean().optional(),
   request_support: z.boolean().optional(),
   manage_support: z.boolean().optional()
@@ -342,7 +378,7 @@ export const employeeSchema = z.object({
   password: z.string().trim().min(6).max(128).optional(),
   phone: z.string().trim().regex(/^(?:9665\d{8}|05\d{8})$/, "رقم الجوال غير صالح."),
   employeeNumber: clean(1, 30, "الرقم الوظيفي"),
-  role: z.enum(["teacher", "principal", "vice_principal", "hr", "it", "it_teacher", "admin", "registrar", "accountant", "counselor", "doctor", "system_admin", "schedule_admin", "upper_management"]),
+  role: z.enum(["teacher", "principal", "vice_principal", "hr", "resource_user", "it", "it_teacher", "admin", "registrar", "accountant", "counselor", "doctor", "system_admin", "schedule_admin", "upper_management"]),
   department: clean(2, 100, "القسم"),
   hireDate: date,
   employmentType: z.enum(["full_time", "part_time", "contract"], { error: "نوع العقد مطلوب." }),

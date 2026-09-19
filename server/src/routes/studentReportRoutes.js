@@ -7,5 +7,5 @@ import { studentReportSchema } from "../validators/schemas.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const studentReportRoutes = Router();
-studentReportRoutes.use(authenticate, requireRole("system_admin", "principal", "vice_principal", "admin"));
+studentReportRoutes.use(authenticate, requireRole("system_admin", "principal", "vice_principal", "admin", "upper_management"));
 studentReportRoutes.post("/", validate(studentReportSchema), asyncHandler(controller.create));

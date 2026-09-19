@@ -59,9 +59,9 @@ requestRoutes.get("/suggestions-complaints", requirePermission("request_suggesti
 requestRoutes.post("/suggestions-complaints", requirePermission("request_suggestions"), validate(suggestionSchema), asyncHandler(controller.createSuggestionRequest));
 requestRoutes.get("/assets", requirePermission("request_assets", "manage_assets"), validate(limitQuerySchema, "query"), asyncHandler(controller.assetIndex));
 requestRoutes.post("/assets", requirePermission("request_assets"), validate(assetRequestSchema), asyncHandler(controller.createAsset));
-requestRoutes.post("/assets/manage", requireRole("system_admin", "admin"), requirePermission("manage_assets"), validate(assignedAssetSchema), asyncHandler(controller.createAssignedAssetRequest));
-requestRoutes.patch("/asset/:id", requireRole("system_admin", "admin"), requirePermission("manage_assets"), validate(assetUpdateSchema), asyncHandler(controller.updateAssignedAssetRequest));
-requestRoutes.delete("/asset/:id", requireRole("system_admin", "admin"), requirePermission("manage_assets"), asyncHandler(controller.deleteAssignedAssetRequest));
+requestRoutes.post("/assets/manage", requireRole("system_admin", "admin", "resource_user", "upper_management"), requirePermission("manage_assets"), validate(assignedAssetSchema), asyncHandler(controller.createAssignedAssetRequest));
+requestRoutes.patch("/asset/:id", requireRole("system_admin", "admin", "resource_user", "upper_management"), requirePermission("manage_assets"), validate(assetUpdateSchema), asyncHandler(controller.updateAssignedAssetRequest));
+requestRoutes.delete("/asset/:id", requireRole("system_admin", "admin", "resource_user", "upper_management"), requirePermission("manage_assets"), validate(idParamSchema, "params"), asyncHandler(controller.deleteAssignedAssetRequest));
 // أضفه هنا (بعد test-materials)
 // requestRoutes.get("/test-materials", (_req, res) => { res.json({ ok: true }); });
 // ✅ أضف هالسطر الجديد:
@@ -72,10 +72,10 @@ requestRoutes.get("/test-materials", (req, res) => {
   console.log("TEST MATERIAL ROUTE WORKS"); res.json({ ok: true });
 });
 requestRoutes.get("/materials-list", asyncHandler(controller.getMaterials));
-requestRoutes.post("/materials/manage", requireRole("system_admin", "admin"), asyncHandler(controller.addMaterial));
-requestRoutes.patch("/materials/:id", requireRole("system_admin", "admin"), asyncHandler(controller.updateMaterial));
-requestRoutes.delete("/materials/:id", requireRole("system_admin", "admin"), asyncHandler(controller.deleteMaterial));
-requestRoutes.post("/materials/import", requireRole("system_admin", "admin"), materialImportUpload.single("file"), asyncHandler(controller.importMaterials));
+requestRoutes.post("/materials/manage", requireRole("system_admin", "admin", "resource_user", "upper_management"), requirePermission("manage_materials"), asyncHandler(controller.addMaterial));
+requestRoutes.patch("/materials/:id", requireRole("system_admin", "admin", "resource_user", "upper_management"), requirePermission("manage_materials"), asyncHandler(controller.updateMaterial));
+requestRoutes.delete("/materials/:id", requireRole("system_admin", "admin", "resource_user", "upper_management"), requirePermission("manage_materials"), asyncHandler(controller.deleteMaterial));
+requestRoutes.post("/materials/import", requireRole("system_admin", "admin", "resource_user", "upper_management"), requirePermission("manage_materials"), materialImportUpload.single("file"), asyncHandler(controller.importMaterials));
 
 requestRoutes.get(
   "/community",
@@ -93,7 +93,7 @@ requestRoutes.post(
 
 requestRoutes.get("/loans", requirePermission("request_loans", "manage_loans"), validate(limitQuerySchema, "query"), asyncHandler(controller.loanIndex));
 requestRoutes.post("/loans", requirePermission("request_loans"), validate(loanInquirySchema), asyncHandler(controller.createLoan));
-requestRoutes.patch("/loan/:id", requireRole("system_admin", "admin"), requirePermission("manage_loans"), validate(loanUpdateSchema), asyncHandler(controller.updateLoanRequest));
+requestRoutes.patch("/loan/:id", requireRole("system_admin", "admin", "upper_management"), requirePermission("manage_loans"), validate(loanUpdateSchema), asyncHandler(controller.updateLoanRequest));
 requestRoutes.get("/assignments", validate(limitQuerySchema, "query"), asyncHandler(controller.assignmentIndex));
 requestRoutes.get(
   "/statistics",

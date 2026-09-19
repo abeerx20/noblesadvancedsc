@@ -1,10 +1,18 @@
 import { APP_CONFIG } from "./app-config.js";
 import { firebaseAuth, waitForUser } from "./firebase-client.js";
 
+function safeRedirectToLogin() {
+  const current = window.location.pathname.split("/").pop() || "index.html";
+  if (current === "login.html") return;
+  if (sessionStorage.getItem("nas-login-redirecting") === "1") return;
+  if (document.querySelector("#loginForm")) return;
+  window.location.replace("login.html");
+}
+
 export async function apiFetch(path, options = {}) {
   const user = firebaseAuth.currentUser ?? await waitForUser();
   if (!user) {
-    window.location.replace("login.html");
+    safeRedirectToLogin();
     throw new Error("AUTH_REQUIRED");
   }
   const headers = new Headers(options.headers ?? {});
@@ -27,7 +35,7 @@ export async function apiFetch(path, options = {}) {
   const contentType = response.headers.get("content-type") ?? "";
   const body = contentType.includes("application/json") ? await response.json() : null;
   if (!response.ok) {
-    if (response.status === 401) window.location.replace("login.html");
+    if (response.status === 401) safeRedirectToLogin();
     const error = new Error(body?.error?.message ?? "تعذر إكمال العملية.");
     error.code = body?.error?.code;
     error.details = body?.error?.details;

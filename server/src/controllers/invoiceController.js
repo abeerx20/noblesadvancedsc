@@ -20,23 +20,41 @@ export async function index(req, res) {
 
 export async function create(req, res) {
     requireEmployee(req);
-    if (!bucket) throw new AppError(503, "STORAGE_NOT_CONFIGURED", "تخزين الفواتير غير مفعّل في إعدادات الخادم.");
-    if (!req.file) throw new AppError(422, "FILE_REQUIRED", "اختاري ملف الفاتورة للرفع.");
-
     const supplierName = String(req.body.supplierName ?? "").trim();
     const invoiceNumber = String(req.body.invoiceNumber ?? "").trim();
     const invoiceDate = String(req.body.invoiceDate ?? "").trim();
     const amount = String(req.body.amount ?? "").trim();
+    const invoiceLink = String(req.body.invoiceLink ?? "").trim();
+
     if (!supplierName || !invoiceNumber || !invoiceDate) throw new AppError(422, "INVOICE_FIELDS_REQUIRED", "أكملي اسم المورد ورقم الفاتورة وتاريخها.");
     if (amount && (!/^\d+(\.\d{1,2})?$/.test(amount) || Number(amount) < 0)) throw new AppError(422, "INVALID_INVOICE_AMOUNT", "أدخلي مبلغًا صحيحًا.");
 
-    const extension = path.extname(req.file.originalname).toLowerCase();
-    const objectPath = `invoices/${req.user.uid}/${crypto.randomUUID()}${extension}`;
-    await bucket.file(objectPath).save(req.file.buffer, {
-        resumable: false,
-        contentType: req.file.mimetype,
-        metadata: { cacheControl: "private, max-age=0, no-store", metadata: { ownerUid: req.user.uid, originalName: req.file.originalname.slice(0, 160) } }
-    });
+    let filePath = null;
+    let storageSummary = null;
+
+    if (req.file) {
+        if (!bucket) throw new AppError(503, "STORAGE_NOT_CONFIGURED", "تخزين الفواتير غير مفعّل في إعدادات الخادم.");
+
+        const extension = path.extname(req.file.originalname).toLowerCase();
+        const objectPath = `invoices/${req.user.uid}/${crypto.randomUUID()}${extension}`;
+        await bucket.file(objectPath).save(req.file.buffer, {
+            resumable: false,
+            contentType: req.file.mimetype,
+            metadata: { cacheControl: "private, max-age=0, no-store", metadata: { ownerUid: req.user.uid, originalName: req.file.originalname.slice(0, 160) } }
+        });
+        filePath = objectPath;
+        storageSummary = { filePath: objectPath };
+    } else if (invoiceLink) {
+        try {
+            new URL(invoiceLink);
+        } catch {
+            throw new AppError(422, "INVALID_INVOICE_LINK", "رابط الفاتورة غير صحيح. تأكدي من كتابة رابط كامل مثل https://example.com/invoice.pdf.");
+        }
+        filePath = invoiceLink;
+        storageSummary = { invoiceLink };
+    } else {
+        throw new AppError(422, "INVOICE_LINK_OR_FILE_REQUIRED", "إما أن ترفعي ملف الفاتورة أو تضيفي رابطها.");
+    }
 
     const invoice = {
         supplierName,
@@ -44,13 +62,14 @@ export async function create(req, res) {
         invoiceDate,
         amount: amount || null,
         notes: String(req.body.notes ?? "").trim().slice(0, 500),
-        filePath: objectPath,
+        invoiceLink: invoiceLink || null,
+        filePath,
         uploaderUid: req.user.uid,
         uploaderName: req.user.employee?.nameAr ?? req.user.email,
         status: "مرفوعة",
         createdAt: new Date()
     };
     const reference = await db.collection("invoices").add(invoice);
-    await writeAudit({ req, action: "create", entityType: "invoice", entityId: reference.id, summary: { invoiceNumber, filePath: objectPath } });
+    await writeAudit({ req, action: "create", entityType: "invoice", entityId: reference.id, summary: { invoiceNumber, ...storageSummary } });
     res.status(201).json({ success: true, data: { id: reference.id, ...invoice }, message: "تم رفع الفاتورة بنجاح." });
 }

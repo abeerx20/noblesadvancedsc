@@ -19,7 +19,7 @@ const excelUpload = multer({
 
 export const studentRoutes = Router();
 studentRoutes.use(authenticate);
-studentRoutes.get("/", requirePermission("view_students", "manage_students", "enter_attendance", "manage_attendance", "attendance_override"), validate(studentQuerySchema, "query"), asyncHandler(controller.index));
+studentRoutes.get("/", requirePermission("view_students", "manage_students", "enter_attendance", "manage_attendance", "manage_absence", "attendance_override"), validate(studentQuerySchema, "query"), asyncHandler(controller.index));
 studentRoutes.get("/export", requirePermission("view_students", "manage_students"), validate(studentQuerySchema.pick({ classId: true }).required(), "query"), asyncHandler(controller.exportClass));
 studentRoutes.post("/import", requirePermission("manage_students"), excelUpload.single("file"), asyncHandler(controller.importClass));
 studentRoutes.post("/import-school", requirePermission("manage_students"), excelUpload.single("file"), asyncHandler(controller.importSchool));

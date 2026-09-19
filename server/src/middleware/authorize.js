@@ -37,7 +37,8 @@ export function requireAllPermissions(...requiredPermissions) {
 export function requireRole(...allowedRoles) {
   return function roleGuard(req, _res, next) {
     const role = req.user?.employee?.role;
-    if (!role || !allowedRoles.includes(role)) {
+    const inheritedAdminRole = role === "upper_management" && allowedRoles.includes("admin");
+    if (!role || (!allowedRoles.includes(role) && !inheritedAdminRole)) {
       return next(new AppError(403, "FORBIDDEN", "لا توجد لديك صلاحية لتنفيذ هذه العملية."));
     }
     next();

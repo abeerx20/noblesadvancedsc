@@ -22,7 +22,7 @@ html {
 
 body {
     font-family: "Noto Kufi Arabic", "Tajawal", sans-serif;
-    background: #fff;
+    background: #eef2ef;
     color: var(--text);
     overflow-x: hidden;
 }
@@ -649,6 +649,16 @@ img {
     gap: 28px;
 }
 
+.philosophy-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 26px;
+    max-width: 1280px;
+    margin: 0 auto 80px;
+    padding: 0 18px;
+    align-items: stretch;
+}
+
 .quick-card {
     background: #fff;
     border: 1px solid var(--line);
@@ -711,16 +721,19 @@ img {
 }
 
 .message-page {
-    background: linear-gradient(180deg, #f7faf8 0%, #eef7f1 100%);
-    padding: 70px 0 24px;
+    background: #edf2ee;
+    padding: 24px 0 26px;
 }
 
 .message-shell {
-    background: rgba(255, 255, 255, 0.94);
-    border: 1px solid #e4efe8;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid #d5e4d8;
     border-radius: 30px;
-    box-shadow: 0 18px 50px rgba(1, 68, 50, 0.08);
-    padding: 42px 32px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    padding: 24px 34px 20px;
+    max-width: 94%;
+    margin: 0 auto;
+    min-height: 510px;
 }
 
 .message-layout {
@@ -732,57 +745,65 @@ img {
 }
 
 .message-kicker {
-    display: inline-block;
-    background: #edf7f1;
-    color: #0d5a47;
-    border: 1px solid #d3e5da;
-    border-radius: 999px;
-    padding: 8px 18px;
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f7faf8;
+    color: #1d6c5a;
+    border: 1px solid #b9d7c8;
+    border-radius: 14px;
+    padding: 8px 20px;
+    font-size: 18px;
     font-weight: 700;
-    margin-bottom: 18px;
+    margin: 0 0 26px auto;
+    width: fit-content;
+    min-width: 170px;
+    box-shadow: 0 1px 0 rgba(13, 90, 71, 0.06);
 }
 
 .message-content h1 {
-    color: #0a5e45;
-    font-size: clamp(30px, 3vw, 48px);
-    line-height: 1.5;
-    margin-bottom: 22px;
-    font-weight: 700;
+    color: #0b5d49;
+    font-size: clamp(30px, 3vw, 54px);
+    line-height: 1.6;
+    margin: 10px auto 28px;
+    font-weight: 800;
+    text-align: center;
+    letter-spacing: -0.02em;
 }
 
 .message-content p {
-    color: #143f36;
-    font-size: 20px;
-    line-height: 2.2;
+    color: #183e38;
+    font-size: 19px;
+    line-height: 2.0;
     margin-bottom: 18px;
     text-align: justify;
+    max-width: 100%;
 }
 
 .page-back-wrap {
     display: flex;
     justify-content: center;
-    padding: 0 0 24px;
+    padding: 0 0 26px;
     margin-top: 0;
     position: relative;
     z-index: 2;
-    background: #f7faf8;
+    background: transparent;
 }
 
 .page-back-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 150px;
-    padding: 12px 26px;
+    min-width: 130px;
+    padding: 12px 24px;
     border-radius: 999px;
-    background: #fff;
-    border: 1px solid #d4a72c;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid #d4b15a;
     color: #0d5a47;
     font-size: 18px;
     font-weight: 700;
     text-decoration: none;
-    box-shadow: 0 8px 18px rgba(13, 90, 71, 0.12);
+    box-shadow: 0 8px 18px rgba(13, 90, 71, 0.08);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -792,16 +813,37 @@ img {
 }
 
 .vision-shell {
-    background: #ffffff;
-    border: 1px solid #e9efeb;
-    border-radius: 28px;
-    box-shadow: 0 12px 36px rgba(7, 48, 38, 0.05);
-    padding: 42px 28px 30px;
+    background: linear-gradient(180deg, #ffffff 0%, #f9fbfa 100%);
+    border: 1px solid #e6eee8;
+    border-radius: 30px;
+    box-shadow: 0 20px 50px rgba(7, 48, 38, 0.08);
+    padding: 42px 28px 32px;
 }
 
 .vision-header {
     text-align: center;
     margin-bottom: 30px;
+    position: relative;
+}
+
+.message-kicker {
+    display: inline-block;
+    background: rgba(14, 88, 67, 0.08);
+    color: #0d5a47;
+    border: 1px solid rgba(14, 88, 67, 0.12);
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.vision-header h1 {
+    margin: 18px 0 0;
+    font-size: clamp(30px, 3vw, 48px);
+    color: #0b4d3b;
+    font-weight: 800;
+    line-height: 1.5;
 }
 
 .vision-grid {
@@ -829,6 +871,14 @@ img {
     grid-column: 1 / -1;
 }
 
+.about-featured-card {
+    background: #ffffff;
+    border: 1px solid rgba(13, 90, 71, 0.35);
+    border-radius: 18px;
+    padding: 30px 28px;
+    box-shadow: 0 6px 18px rgba(13, 90, 71, 0.07);
+}
+
 .vision-card h2 {
     color: #0b4d3b;
     font-size: 28px;
@@ -849,10 +899,27 @@ img {
 
 .vision-card p,
 .vision-card li {
-    color: #18463f;
-    font-size: 20px;
-    line-height: 2.0;
-    text-align: justify;
+    color: #0d5a47;
+    font-size: 19px;
+    line-height: 2.1;
+    text-align: right;
+    margin: 0 0 12px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    font-weight: 400;
+}
+
+.vision-card .lead-paragraph {
+    font-size: 21px;
+    font-weight: 400;
+    color: #0d5a47;
+    background: transparent;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 .values-list {
@@ -976,6 +1043,32 @@ img {
     border-bottom: none;
 }
 
+.about-links-list {
+    list-style: none;
+    padding: 0;
+    margin: 18px 0 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.about-links-list li {
+    margin: 0;
+    background: rgba(13, 90, 71, 0.06);
+    border: 1px solid rgba(13, 90, 71, 0.12);
+    border-radius: 999px;
+    padding: 8px 14px;
+}
+
+.about-links-list a {
+    color: #0d5a47;
+    font-weight: 600;
+}
+
+.about-links-list a:hover {
+    text-decoration: underline;
+}
+
 @media (max-width: 768px) {
     .policy-shell {
         padding: 26px 18px 20px;
@@ -1005,6 +1098,7 @@ img {
     font-size: 18px;
     line-height: 1.8;
     text-align: left;
+    font-weight: 700;
 }
 
 .signature-block strong {
@@ -1053,17 +1147,51 @@ img {
 }
 
 .philosophy-card {
-    cursor: default;
-    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 22px;
+    background: #f3f4f3;
+    border: 1px solid #dfeae4;
+    border-radius: 26px;
+    padding: 22px 18px 26px;
+    box-shadow: 0 8px 18px rgba(18, 39, 30, 0.04);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    min-height: 430px;
 }
 
+.philosophy-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 26px rgba(18, 39, 30, 0.08);
+}
 
+.philosophy-copy {
+    direction: rtl;
+    width: 100%;
+}
 
 .philosophy-card p {
-    font-size: 20px;
-    line-height: 2;
-    color: #064236;
+    margin: 0;
+    font-size: 17px;
+    line-height: 2.2;
     text-align: center;
+    font-weight: 600;
+    color: #1f4d3f;
+    font-family: "Noto Kufi Arabic", "Tajawal", sans-serif;
+    padding: 0 6px;
+}
+
+.card-img {
+    width: 230px;
+    height: 230px;
+    border-radius: 50%;
+    object-fit: contain;
+    display: block;
+    border: 4px solid rgba(123, 171, 155, 0.8);
+    background: rgba(255, 255, 255, 0.15);
+    padding: 18px;
+    box-shadow: inset 0 0 0 1px rgba(123, 171, 155, 0.35);
 }
 
 

@@ -30,7 +30,7 @@ const state = {
 
 const labels = {
   role: {
-    teacher: "معلمة", principal: "مديرة المدرسة", vice_principal: "وكيلة", hr: "الموارد البشرية", it: "تقنية المعلومات",
+    teacher: "معلمة", principal: "مديرة المدرسة", vice_principal: "وكيلة", hr: "الموارد البشرية", resource_user: "الموارد البشرية والمالية", it: "تقنية المعلومات",
     it_teacher: "تقنية المعلومات", admin: "إدارية", registrar: "القبول والتسجيل", accountant: "المحاسبة",
     doctor: "طبيبة", system_admin: "مسؤولة النظام", schedule_admin: "مسؤولة الجداول", upper_management: "الإدارة العليا"
   },
@@ -62,11 +62,13 @@ const menuGroups = [
           {
             route: "attendance",
             label: "إدخال الغياب",
+            roleLabels: { admin: "متابعة الغياب" },
             any: [
               "enter_attendance",
               "attendance_override",
               "view_attendance",
-              "manage_attendance"
+              "manage_attendance",
+              "manage_absence"
             ]
           }
         ]
@@ -82,7 +84,7 @@ const menuGroups = [
               "view_all_schedules",
               "manage_schedules"
             ]
-          }
+          },
         ]
       },
       {
@@ -91,7 +93,7 @@ const menuGroups = [
           {
             route: "reports",
             label: "التقارير",
-            any: ["view_students", "manage_students", "enter_attendance", "manage_attendance", "view_schedules"]
+            roles: ["teacher", "principal", "vice_principal", "admin", "system_admin", "upper_management"]
           }
         ]
       }
@@ -107,7 +109,7 @@ const menuGroups = [
         title: "الملف الوظيفي",
         items: [
           { route: "employee-data", label: "بيانات الموظفة" },
-          { route: "performance", label: "الأداء الوظيفي" }
+          { route: "performance", label: "الأداء الوظيفي", roles: ["teacher", "principal", "vice_principal", "admin", "system_admin", "it_teacher", "schedule_admin", "upper_management"] }
         ]
       },
       {
@@ -119,15 +121,15 @@ const menuGroups = [
       {
         title: "التطوير المهني",
         items: [
-          { route: "training", label: "التدريب", any: ["request_training", "manage_training_requests"] }
+          { route: "training", label: "التدريب", any: ["request_training"] }
         ]
       },
       {
         title: "النماذج والاستعلامات",
         items: [
           { route: "forms", label: "النماذج" },
-          { route: "assets", label: "الاستعلام عن العهد", any: ["request_assets", "manage_assets"] },
-          { route: "loans", label: "الاستعلام عن السلف", any: ["request_loans", "manage_loans"] }
+          { route: "assets", label: "الاستعلام عن العهد", any: ["request_assets"] },
+          { route: "loans", label: "الاستعلام عن السلف", any: ["request_loans"] }
         ]
       },
       {
@@ -137,7 +139,8 @@ const menuGroups = [
           {
             route: "employees",
             label: "إدارة الموظفات والصلاحيات",
-            roles: ["system_admin", "principal", "admin"],
+            roleLabels: { resource_user: "بيانات الموظفات" },
+            roles: ["system_admin", "principal", "admin", "resource_user", "upper_management"],
             any: ["manage_employees"]
           },
           {
@@ -159,13 +162,13 @@ const menuGroups = [
     key: "self-service", title: "خدمات ذاتية", sections: [
       {
         title: "طلباتي", items: [
-          { route: "leave", label: "الإجازات", any: ["request_leave", "manage_leave_requests", "manage_leave_hr_requests"], roleAny: ["hr"] },
+          { route: "leave", label: "الإجازات", any: ["request_leave", "manage_leave_requests", "manage_leave_hr_requests"], roleAny: ["hr", "resource_user"] },
           { route: "permission", label: "الاستئذان", any: ["request_leave", "manage_leave_requests"] },
           { route: "approvals", label: "الموافقات على الطلبات", roles: ["system_admin", "principal", "vice_principal", "admin", "upper_management"], any: ["manage_leave_requests", "manage_training_requests"], roleAny: ["system_admin"] },
-          { route: "materials", label: "طلب المواد", any: ["request_assets", "manage_assets", "request_materials", "manage_materials"] },
+          { route: "materials", label: "طلب المواد", any: ["request_assets", "request_materials"] },
           { route: "absence-report", label: "تبليغ الغياب", any: ["request_absence", "request_leave", "manage_absence", "manage_leave_requests"] },
           { route: "suggestions-complaints", label: "الاقتراحات والشكاوي", any: ["request_suggestions", "request_support", "manage_support"] },
-          { route: "training-course", label: "دورة تدريبية", any: ["request_training", "manage_training_requests"] },
+          { route: "training-course", label: "دورة تدريبية", any: ["request_training"] },
           { route: "community", label: "الشراكة المجتمعية" },
         ]
       },
@@ -184,7 +187,12 @@ function has(permission) {
 }
 
 function hasRole(...roles) {
-  return roles.includes(state.me?.employee?.role);
+  const role = state.me?.employee?.role;
+  return roles.includes(role) || (role === "upper_management" && roles.includes("admin"));
+}
+
+function isTeachingRole() {
+  return hasRole("teacher", "it_teacher", "system_admin", "معلمة", "مسؤولة النظام");
 }
 
 function canSee(item) {
@@ -218,14 +226,18 @@ const parentRouteByPage = Object.freeze({
   "schedule-my": "schedule",
   "schedule-all": "schedule",
   "schedule-manage": "schedule",
+  coverage: "schedule",
+  "coverage-mine": "coverage-mine",
   "employee-data-view": "employee-data",
-  "employee-add": "employee-data",
-  "employee-account-add": "employee-data",
-  "employee-accounts": "employee-data",
-  "employee-permissions": "employee-data",
-  employees: "employee-data",
+  "employee-add": "employees",
+  "employee-account-add": "employees",
+  "employee-account-import": "employees",
+  "employee-accounts": "employees",
+  "employee-permissions": "employees",
+  employees: "employees",
   "parent-add": "parents",
-  "parent-list": "parents"
+  "parent-list": "parents",
+  "parent-import": "parents"
   , "assignment-issue": "assignments"
   , "assignment-my": "assignments"
   , "training-admin": "training"
@@ -294,13 +306,21 @@ const scheduleBreadcrumbs = {
   schedule: ["أكاديمي", "الجداول", "الجدول الدراسي"],
   "schedule-my": ["أكاديمي", "الجداول", "الجدول الدراسي", "عرض الجدول الدراسي"],
   "schedule-all": ["أكاديمي", "الجداول", "الجدول الدراسي", "عرض جميع الجداول الدراسية"],
-  "schedule-manage": ["أكاديمي", "الجداول", "الجدول الدراسي", "إدارة الجدول الدراسي"]
+  "schedule-manage": ["أكاديمي", "الجداول", "الجدول الدراسي", "إدارة الجدول الدراسي"],
+  coverage: ["أكاديمي", "الجداول", "جدول الانتظار"]
 };
 const administrativeBreadcrumbs = {
   "employee-data": ["إداري", "الخدمات الإدارية", "بيانات الموظفة"],
   "employee-data-view": ["إداري", "الخدمات الإدارية", "بيانات الموظفة", "عرض بياناتي الوظيفية"],
-  "employee-add": ["إداري", "الخدمات الإدارية", "بيانات الموظفة", "إضافة موظفة وإدخال بياناتها"],
+  "employee-add": ["إداري", "إدارة النظام", "إدارة الموظفات والصلاحيات", "إضافة موظفة وإدخال بياناتها"],
+  "employee-account-add": ["إداري", "إدارة النظام", "إدارة الموظفات والصلاحيات", "إضافة حساب الموظفة"],
+  "employee-account-import": ["إداري", "إدارة النظام", "إدارة الموظفات والصلاحيات", "استيراد حسابات الموظفات"],
+  "employee-accounts": ["إداري", "إدارة النظام", "إدارة الموظفات والصلاحيات", "عرض حسابات الموظفات"],
+  "employee-permissions": ["إداري", "إدارة النظام", "إدارة الموظفات والصلاحيات", "صلاحيات الموظفات"],
   employees: ["إداري", "إدارة النظام", "إدارة الموظفات والصلاحيات"]
+  , "parent-add": ["إداري", "إدارة النظام", "إدارة أولياء الأمور", "إضافة ولي أمر"]
+  , "parent-list": ["إداري", "إدارة النظام", "إدارة أولياء الأمور", "عرض أولياء الأمور"]
+  , "parent-import": ["إداري", "إدارة النظام", "إدارة أولياء الأمور", "استيراد أولياء الأمور"]
   , assignments: ["إداري", "التكليف", "تكليف بالعمل"]
   , "assignment-issue": ["إداري", "التكليف", "تكليف بالعمل", "إصدار تكليف"]
   , "assignment-my": ["إداري", "التكليف", "تكليف بالعمل", "عرض تكليفاتي"]
@@ -393,6 +413,16 @@ function page(title, description, body) {
       state.certificates = null;
     }
 
+    if (routeName === "coverage") {
+      window.location.hash = "schedule";
+      return;
+    }
+
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+
     window.location.hash = parentRouteByPage[routeName] ?? "dashboard";
   });
 
@@ -426,7 +456,13 @@ async function printPortalPage(button = null) {
 
 function showError(error) {
   const notice = document.querySelector("#pageNotice");
-  if (notice) setNotice(notice, "error", error.message ?? "تعذر إكمال العملية.");
+  if (!notice) return;
+
+  const message = error?.code === "NOT_FOUND" || /المسار المطلوب غير موجود/.test(error?.message ?? "")
+    ? "هذا الرابط غير موجود أو تم حذف الموظفة سابقًا."
+    : error?.message ?? "تعذر إكمال العملية.";
+
+  setNotice(notice, "error", message);
 }
 
 function renderMenu() {
@@ -454,7 +490,7 @@ function renderMenu() {
     visibleSections.forEach((section) => {
       const subtitle = document.createElement("span"); subtitle.className = "menu-subtitle"; subtitle.textContent = section.title; items.append(subtitle);
       section.items.forEach((item) => {
-        const link = document.createElement("a"); link.className = "menu-link"; link.href = `#${item.route}`; link.textContent = item.label; items.append(link);
+        const link = document.createElement("a"); link.className = "menu-link"; link.href = `#${item.route}`; link.textContent = item.roleLabels?.[state.me?.employee?.role] ?? item.label; items.append(link);
       });
     });
     button.addEventListener("click", () => {
@@ -507,8 +543,10 @@ async function loadClasses() {
   return state.classes;
 }
 
-async function loadEmployees() {
-  if (!state.employees) state.employees = (await api.get("/employees?limit=200")).data;
+async function loadEmployees(forceRefresh = false) {
+  if (forceRefresh || !state.employees) {
+    state.employees = (await api.get("/employees?limit=200")).data ?? [];
+  }
   return state.employees;
 }
 
@@ -646,11 +684,12 @@ async function renderDashboard() {
   document.querySelector("#dashEmployeeName").textContent = employee.nameAr;
   document.querySelector("#dashEmployeeName").textContent = employee.nameAr;
   document.querySelector("#dashEmployeeNameEn").textContent = employee.nameEn || "غير مسجل";
-  document.querySelector("#dashNumber").textContent = employee.employeeNumber;
+  document.querySelector("#dashNumber").textContent = String(employee.employeeNumber ?? employee.employeeId ?? employee.number ?? "—");
   document.querySelector("#dashRole").textContent = labels.role[employee.role] ?? employee.role;
   document.querySelector("#dashEmail").textContent = state.me.email ?? "—";
+  const absenceMonitorOnly = hasRole("admin") && has("manage_absence") && !has("enter_attendance");
   const quick = [
-    ["attendance", "إدخال الغياب", "تسجيل حالات طلاب الحصة الأولى", ["enter_attendance", "manage_attendance"]],
+    ["attendance", absenceMonitorOnly ? "متابعة الغياب" : "إدخال الغياب", absenceMonitorOnly ? "مراجعة وتعديل حالات الطلاب" : "تسجيل حالات طلاب الحصة الأولى", ["enter_attendance", "manage_attendance", "manage_absence"]],
     ["leave", "طلب إجازة", "إرسال طلب ومتابعة حالته", ["request_leave"]],
     ["schedule", "جدولي الدراسي", "عرض الحصص والمناوبات", ["view_schedules", "manage_schedules"]],
   ];
@@ -731,12 +770,12 @@ function renderReportsHub() {
     links.push(studentHubLink("skill-entry", "إدخال الدرجات", "اختيار الصف والشعبة والطالب ثم تسجيل التقييم"));
   }
 
-  if (hasRole("principal", "vice_principal", "admin", "system_admin")) {
+  if (hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management")) {
     links.push(studentHubLink("skill-approval", "تقارير المدير", "مراجعة التقارير المعتمدة أو إعادة التعديل"));
   }
 
-  if (hasRole("parent") || has("view_students")) {
-    links.push(studentHubLink("skill-parent", "التقييمات المعتمدة", "عرض المهارات المعتمدة للطلاب"));
+  if (hasRole("teacher", "principal", "vice_principal", "admin", "system_admin", "upper_management")) {
+    links.push(studentHubLink("skill-parent", "التقييمات المعتمدة", "عرض أسماء الطلاب وتقييماتهم المعتمدة"));
   }
 
   if (!links.length) {
@@ -1040,88 +1079,42 @@ function renderSkillApprovalPage() {
 }
 
 function renderSkillParentPage() {
-  const reports = JSON.parse(localStorage.getItem("nas-skill-reports") || "[]");
-  const approved = reports.filter((item) => item.status === "معتمد");
+  const teachingUser = hasRole("teacher", "it_teacher");
+  const currentUserId = state.me?.uid;
+  const reports = JSON.parse(localStorage.getItem("nas-skill-reports") || "[]")
+    .filter((item) => item.status === "معتمد")
+    .filter((item) => !teachingUser || item.teacherUid === currentUserId);
 
-  page("التقييمات المعتمدة", "عرض تقييمات الأبناء بعد اعتماد المديرة.", `
-    <div class="skill-parent-stack">
-      ${approved.length ? approved.map((item) => `
-        <div class="skill-parent-report">
-          <div class="skill-parent-header">
-            <div><strong>اسم الطالب:</strong> ${item.studentName}</div>
-            <div><strong>الفصل:</strong> ${item.className}</div>
-            <div><strong>التاريخ:</strong> ${item.date}</div>
-            <div><strong>المعلمة:</strong> ${item.teacherName || "—"}</div>
-            <div><strong>المادة:</strong> ${item.subjectName || "—"}</div>
-          </div>
-
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>المهارة</th>
-                  <th>التقييم</th>
-                  <th>الملاحظات</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${item.skills.map((skill) => `
-                  <tr>
-                    <td>${skill.name}</td>
-                    <td>${skill.level}</td>
-                    <td>${skill.note || "—"}</td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
-          </div>
-
-          <form class="skill-parent-feedback" data-report-id="${item.id}">
-            <label for="parentComment-${item.id}">تعليق ولي الأمر</label>
-            <textarea id="parentComment-${item.id}" rows="3" placeholder="اكتب تعليقك هنا...">${item.parentReply?.comment || ""}</textarea>
-
-            <label class="checkbox-row">
-              <input type="checkbox" ${item.parentReply?.acknowledged ? "checked" : ""}>
-              <span>تم الاطلاع على التقرير</span>
-            </label>
-
-            <div class="form-actions">
-              <button type="submit" class="btn btn-small">إرسال</button>
-            </div>
-          </form>
-        </div>
-      `).join("") : `<div class="empty-state">لا توجد تقارير معتمدة حتى الآن.</div>`}
+  page("التقييمات المعتمدة", "أسماء الطلاب والمهارات التي تم تقييمها ومستوى كل تقييم.", `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>اسم الطالب</th>
+            <th>المادة</th>
+            <th>الفصل</th>
+            <th>التاريخ</th>
+            <th>المهارة</th>
+            <th>التقييم</th>
+            <th>الملاحظات</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${reports.length ? reports.flatMap((report) => report.skills.map((skill) => `
+            <tr>
+              <td>${report.studentName || "—"}</td>
+              <td>${report.subjectName || "—"}</td>
+              <td>${report.className || "—"}</td>
+              <td>${report.date || "—"}</td>
+              <td>${skill.name || "—"}</td>
+              <td><strong>${skill.level || "—"}</strong></td>
+              <td>${skill.note || "—"}</td>
+            </tr>
+          `)).join("") : `<tr><td colspan="7"><div class="empty-state">لا توجد تقييمات معتمدة حتى الآن.</div></td></tr>`}
+        </tbody>
+      </table>
     </div>
   `);
-
-  document.querySelectorAll(".skill-parent-feedback").forEach((form) => {
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const reportId = form.dataset.reportId;
-      const checkbox = form.querySelector("input[type='checkbox']");
-      const textarea = form.querySelector("textarea");
-
-      if (!checkbox.checked) {
-        setNotice(document.querySelector("#pageNotice"), "error", "يرجى تأكيد أنه تم الاطلاع على التقرير قبل الإرسال.");
-        return;
-      }
-
-      const reportsList = JSON.parse(localStorage.getItem("nas-skill-reports") || "[]");
-      const target = reportsList.find((item) => item.id === reportId);
-      if (!target) return;
-
-      target.parentReply = {
-        comment: textarea.value.trim(),
-        acknowledged: true,
-        sentAt: new Date().toISOString()
-      };
-      target.parentReplySentTo = ["مديرة", "معلمة"];
-      target.parentViewedAt = new Date().toISOString();
-      localStorage.setItem("nas-skill-reports", JSON.stringify(reportsList));
-      setNotice(document.querySelector("#pageNotice"), "success", "تم إرسال تعليق ولي الأمر إلى المديرة والمعلمة.");
-      renderSkillParentPage();
-    });
-  });
 }
 
 async function renderStudents() {
@@ -1960,7 +1953,7 @@ async function renderAttendancePortal() {
   const links = [];
 
   if (
-    hasRole("teacher", "system_admin") &&
+    hasRole("teacher", "system_admin", "upper_management") &&
     (has("enter_attendance") || has("attendance_override"))
   ) {
     links.push(
@@ -1973,8 +1966,8 @@ async function renderAttendancePortal() {
   }
 
   if (
-    hasRole("principal", "vice_principal", "admin", "system_admin") &&
-    (has("view_attendance") || has("manage_attendance"))
+    hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management") &&
+    (has("view_attendance") || has("manage_attendance") || has("manage_absence"))
   ) {
     links.push(
       studentHubLink(
@@ -1985,7 +1978,8 @@ async function renderAttendancePortal() {
     );
   }
 
-  page("إدخال الغياب", "اختاري الخدمة المطلوبة.", `
+  const monitorOnly = hasRole("admin") && has("manage_absence") && !has("manage_attendance") && !has("enter_attendance");
+  page(monitorOnly ? "متابعة الغياب" : "إدخال الغياب", monitorOnly ? "عرض وتعديل حالات الطلاب المسجلة." : "اختاري الخدمة المطلوبة.", `
     <nav class="student-services-list" aria-label="خدمات الحضور والغياب">
       ${links.join("")}
     </nav>
@@ -2080,9 +2074,89 @@ async function renderAttendanceMonitor() {
   document.querySelector("#loadAttendanceRecords").addEventListener("click", async () => {
     try {
       const query = new URLSearchParams();["date", "classId", "status"].forEach((key, index) => { const value = document.querySelector(["#monitorDate", "#monitorClass", "#monitorStatus"][index]).value; if (value) query.set(key, value); });
-      const rows = (await api.get(`/attendance?${query}`)).data; renderSimpleTable("#attendanceRecords", ["التاريخ", "الفصل", "المعلمة", "الأسبوع", "عدد الطلاب"], rows, (item) => [item.date, item.className, item.teacherName, item.weekNumber, item.entries?.length ?? 0]);
+      const rows = (await api.get(`/attendance?${query}`)).data;
+      renderAttendanceRecords(rows);
     } catch (error) { showError(error); }
   });
+}
+
+function renderAttendanceRecords(records) {
+  const wrap = document.querySelector("#attendanceRecords");
+  wrap.replaceChildren();
+  if (!records.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "لا توجد بيانات مطابقة.";
+    wrap.append(empty);
+    return;
+  }
+  const table = document.createElement("table");
+  table.innerHTML = "<thead><tr><th>اسم الطالب</th><th>التاريخ</th><th>الفصل</th><th>المعلمة</th><th>الحالة</th><th>الإجراء</th></tr></thead>";
+  const body = document.createElement("tbody");
+  records.forEach((record) => {
+    const row = document.createElement("tr");
+    [record.studentName, record.date, record.className, record.teacherName, attendanceStatusLabel(record.status)].forEach((value) => row.append(createCell(value)));
+    const actionCell = document.createElement("td");
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "btn btn-secondary btn-small";
+    editButton.textContent = "تعديل";
+    editButton.addEventListener("click", () => editAttendanceRecord(record, row));
+    actionCell.append(editButton);
+    if (["excused", "unexcused", "late"].includes(record.status)) {
+      const whatsappButton = document.createElement("a");
+      whatsappButton.className = "btn btn-secondary btn-small";
+      whatsappButton.textContent = "واتساب";
+      whatsappButton.target = "_blank";
+      whatsappButton.rel = "noopener noreferrer";
+      const message = `تنبيه حضور من المدرسة:\nالطالب: ${record.studentName}\nالفصل: ${record.className}\nالحالة: ${attendanceStatusLabel(record.status)}\nالتاريخ: ${record.date}\n\nللاستفسار يرجى التواصل مع المدرسة.`;
+      whatsappButton.href = `https://wa.me/966560203300?text=${encodeURIComponent(message)}`;
+      actionCell.append(whatsappButton);
+    }
+    row.append(actionCell);
+    body.append(row);
+  });
+  table.append(body);
+  wrap.append(table);
+}
+
+async function editAttendanceRecord(record, row) {
+  try {
+    const editorRow = document.createElement("tr");
+    const editorCell = document.createElement("td");
+    editorCell.colSpan = 6;
+    const form = document.createElement("form");
+    form.className = "form-grid";
+    const field = document.createElement("label");
+    field.className = "field";
+    field.textContent = record.studentName;
+    const select = document.createElement("select");
+    select.dataset.studentId = record.studentId;
+    [["present", "حاضر"], ["excused", "غائب بعذر"], ["unexcused", "غائب دون عذر"], ["late", "متأخر"]].forEach(([value, label]) => select.append(new Option(label, value, value === record.status)));
+    field.append(select);
+    form.append(field);
+    const save = document.createElement("button");
+    save.type = "submit";
+    save.className = "btn btn-small";
+    save.textContent = "حفظ التعديل";
+    form.append(save);
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await submitSafely(save, async () => {
+        try {
+          const entries = (record.entries ?? []).map((entry) => entry.studentId === record.studentId
+            ? { ...entry, status: select.value }
+            : entry);
+          const result = await api.put(`/attendance/${encodeURIComponent(record.id)}`, { entries });
+          setNotice(document.querySelector("#pageNotice"), "success", result.message);
+          editorRow.remove();
+        } catch (error) { showError(error); }
+      });
+    });
+    editorCell.append(form);
+    editorRow.append(editorCell);
+    row.after(editorRow);
+  } catch (error) { showError(error); }
 }
 
 function renderSimpleTable(selector, headings, rows, values) {
@@ -2092,10 +2166,244 @@ function renderSimpleTable(selector, headings, rows, values) {
   const body = document.createElement("tbody"); rows.forEach((item) => { const tr = document.createElement("tr"); values(item).forEach((value) => tr.append(createCell(value))); body.append(tr); }); table.append(head, body); wrap.append(table);
 }
 
+function coverageWeek(dateValue) {
+  const start = new Date(`${dateValue}T12:00:00Z`);
+  start.setUTCDate(start.getUTCDate() - start.getUTCDay());
+  const days = Array.from({ length: 5 }, (_, index) => {
+    const date = new Date(start);
+    date.setUTCDate(start.getUTCDate() + index);
+    return { date: date.toISOString().slice(0, 10), day: Object.keys(labels.day)[index] };
+  });
+  return { from: days[0].date, to: days[4].date, days };
+}
+
+async function renderCoverage() {
+  const isManager = hasRole("principal", "vice_principal", "admin", "system_admin", "schedule_admin", "upper_management");
+  if (!isManager && has("view_substitution_assignments")) {
+    await renderMyCoverage();
+    return;
+  }
+
+  page("جدول الانتظار", "إدخال بيانات حصص الانتظار والإقرار من قبل المعلمة المختارة.", `
+    <div class="page-card" style="padding: 22px 20px 18px;">
+      <div class="toolbar no-print" style="justify-content: flex-end; margin: 0 0 18px;">
+        <button id="printCoverage" class="btn btn-secondary btn-small" type="button">طباعة</button>
+      </div>
+
+      <form id="coverageAssignmentForm" class="form-grid coverage-entry-form" novalidate>
+        <div class="field"><label for="coverageDate">التاريخ</label><input id="coverageDate" type="date" required value="${localDate()}"></div>
+        <div class="field"><label for="coverageDay">اليوم</label><select id="coverageDay" required>
+          <option value="">اختر اليوم</option>
+          <option value="الأحد">الأحد</option>
+          <option value="الاثنين">الاثنين</option>
+          <option value="الثلاثاء">الثلاثاء</option>
+          <option value="الأربعاء">الأربعاء</option>
+          <option value="الخميس">الخميس</option>
+        </select></div>
+
+        <div class="field"><label for="coveragePeriod">الحصة</label><select id="coveragePeriod" required>
+          <option value="">اختر الحصة</option>
+          ${Array.from({ length: 8 }, (_, index) => `<option value="${index + 1}">${index + 1}</option>`).join("")}
+        </select></div>
+        <div class="field"><label for="coverageAbsentTeacher">المعلمة الغائبة</label><select id="coverageAbsentTeacher" required><option value="">اختر المعلمة</option></select></div>
+
+        <div class="field"><label for="coverageSubject">المادة</label><input id="coverageSubject" maxlength="80" required></div>
+        <div class="field"><label for="coverageClass">الصف/الفصل</label><input id="coverageClass" maxlength="120" required></div>
+
+        <div class="field"><label for="coverageSubstitute">معلمة الانتظار</label><select id="coverageSubstitute" required><option value="">اختر المعلمة</option></select></div>
+        <div class="field"><label for="coverageStatus">حالة الانتظار</label><select id="coverageStatus" required>
+          <option value="تم">تم</option>
+          <option value="لم يتم" selected>لم يتم</option>
+        </select></div>
+
+        <div class="form-actions span-2" style="justify-content: flex-end; margin-top: 6px;">
+          <button id="saveCoverageAssignment" class="btn" type="submit">حفظ</button>
+        </div>
+      </form>
+    </div>
+  `);
+
+  const employees = await loadEmployees();
+  const teachingEmployees = scheduleTeacherOptions(employees);
+  fillSelect(document.querySelector("#coverageAbsentTeacher"), teachingEmployees, (item) => item.authUid ?? item.id, (item) => item.nameAr, "اختر المعلمة");
+  fillSelect(document.querySelector("#coverageSubstitute"), teachingEmployees, (item) => item.authUid ?? item.id, (item) => item.nameAr, "اختر المعلمة");
+
+  const syncCoverageDay = () => {
+    const chosenDate = value("coverageDate");
+    if (!chosenDate) return;
+    const dayName = new Date(`${chosenDate}T12:00:00Z`);
+    const weekday = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][dayName.getUTCDay()];
+    document.querySelector("#coverageDay").value = dayName.getUTCDay() < 5 ? weekday : "";
+  };
+
+  document.querySelector("#coverageDate").addEventListener("change", syncCoverageDay);
+  syncCoverageDay();
+
+  document.querySelector("#coverageAssignmentForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (!form.reportValidity()) return;
+
+    const data = {
+      التاريخ: value("coverageDate"),
+      اليوم: value("coverageDay"),
+      الحصة: value("coveragePeriod"),
+      المعلمة_الغائبة: value("coverageAbsentTeacher"),
+      المادة: value("coverageSubject"),
+      الصف_الفصل: value("coverageClass"),
+      معلمة_الانتظار: value("coverageSubstitute"),
+      حالة_الانتظار: value("coverageStatus")
+    };
+
+    setNotice(document.querySelector("#pageNotice"), "success", "تم حفظ بيانات جدول الانتظار.");
+    console.log("coverage assignment saved", data);
+    form.reset();
+    document.querySelector("#coverageStatus").value = "لم يتم";
+  });
+
+  document.querySelector("#printCoverage").addEventListener("click", (event) => printPortalPage(event.currentTarget));
+}
+
+async function renderMyCoverage() {
+  const week = coverageWeek(localDate());
+  page("حصص الانتظار", "تراجعي بيانات الحصص المكلفة لكِ، ثم أقرّي بها بوضع علامة ✓ عند الإقرار.", `<div id="myCoverageDays" class="coverage-days"><div class="empty-state">جارٍ التحميل...</div></div>`);
+  try {
+    const rows = (await api.get(`/coverage/mine?from=${week.from}&to=${week.to}`)).data ?? [];
+    const wrap = document.querySelector("#myCoverageDays");
+    wrap.replaceChildren();
+    week.days.forEach(({ date, day }) => {
+      const section = document.createElement("section");
+      section.className = "subsection coverage-day";
+      const heading = document.createElement("h2");
+      heading.textContent = `${labels.day[day]} - ${date}`;
+      section.append(heading);
+      const dayRows = rows.filter((row) => row.date === date);
+      if (!dayRows.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "لا توجد حصص انتظار مكلفة لهذا اليوم.";
+        section.append(empty);
+      } else {
+        const table = document.createElement("table");
+        table.innerHTML = "<thead><tr><th>الوقت</th><th>الحصة / المكان</th><th>المعلمة الغائبة</th><th>المعلمة البديلة</th><th>الإقرار</th></tr></thead>";
+        const body = document.createElement("tbody");
+        dayRows.forEach((row) => {
+          const tr = document.createElement("tr");
+          [`${row.startTime} - ${row.endTime}`, row.subject || row.location || "—", row.absentTeacherName, row.substituteName].forEach((item) => tr.append(createCell(item)));
+          const action = document.createElement("td");
+          if (row.acknowledgedAt || row.status === "مؤكد") {
+            action.innerHTML = "<span aria-label=\"تم الإقرار\">✓</span> تم الإقرار";
+          } else {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "btn btn-success btn-small";
+            button.textContent = "✓ إقرار";
+            button.title = "إقرار الاطلاع على الحصة";
+            button.addEventListener("click", async () => {
+              button.disabled = true;
+              try {
+                const result = await api.patch(`/coverage/${encodeURIComponent(row.id)}/acknowledge`, {});
+                setNotice(document.querySelector("#pageNotice"), "success", result.message);
+                await renderMyCoverage();
+              } catch (error) {
+                button.disabled = false;
+                showError(error);
+              }
+            });
+            action.append(button);
+          }
+          tr.append(action);
+          body.append(tr);
+        });
+        table.append(body);
+        section.append(table);
+      }
+      wrap.append(section);
+    });
+  } catch (error) {
+    showError(error);
+  }
+}
+
+function drawCoverageDays(selectedDate, selectedTeacherUid, rows, substitutes) {
+  const wrap = document.querySelector("#coverageDays");
+  wrap.replaceChildren();
+  const filteredRows = rows.filter((row) => row.date === selectedDate && (!selectedTeacherUid || row.absentTeacherUid === selectedTeacherUid));
+  if (!filteredRows.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "لا توجد حصص مسجلة لهذا اليوم للمعلمة المختارة. تأكدي من إضافة غياب المعلمة أولًا.";
+    wrap.append(empty);
+    return;
+  }
+
+  const table = document.createElement("table");
+  const head = document.createElement("thead");
+  head.innerHTML = "<tr><th>اسم الحصة</th><th>الصف / المكان</th><th>الوقت</th><th>البديلة</th><th>الحالة</th><th class=\"no-print\">إجراء</th></tr>";
+  table.append(head);
+
+  const body = document.createElement("tbody");
+  filteredRows.forEach((row) => {
+    const tr = document.createElement("tr");
+    const subjectCell = document.createElement("td");
+    subjectCell.textContent = row.subject || row.periodName || "حصة";
+
+    const classCell = document.createElement("td");
+    classCell.textContent = row.classId || row.location || "—";
+
+    const timeCell = document.createElement("td");
+    timeCell.textContent = `${row.startTime || "—"} - ${row.endTime || "—"}`;
+
+    const substitute = document.createElement("select");
+    substitute.className = "coverage-substitute";
+    substitute.append(new Option("اختاري البديلة", ""));
+    substitutes.filter((item) => item.uid !== row.absentTeacherUid).forEach((item) => substitute.append(new Option(item.nameAr, item.uid)));
+    substitute.value = row.substituteUid;
+
+    const status = document.createElement("select");
+    ["مكلف", "مؤكد", "مكتمل", "ملغى"].forEach((item) => status.append(new Option(item, item)));
+    status.value = row.assigned ? row.status : "مكلف";
+
+    const actionCell = document.createElement("td");
+    actionCell.className = "no-print";
+    const save = document.createElement("button");
+    save.type = "button";
+    save.className = "btn btn-small";
+    save.textContent = row.assigned ? "حفظ التعديل" : "تعيين البديلة";
+    save.addEventListener("click", async () => {
+      if (!substitute.value) {
+        setNotice(document.querySelector("#pageNotice"), "error", "اختاري المعلمة البديلة أولًا.");
+        return;
+      }
+      save.disabled = true;
+      try {
+        const payload = { date: row.date, absenceReportId: row.absenceReportId, scheduleId: row.scheduleId, substituteUid: substitute.value, status: status.value };
+        const result = row.assigned
+          ? await api.patch(`/coverage/${encodeURIComponent(row.id)}`, { substituteUid: substitute.value, status: status.value })
+          : await api.post("/coverage", payload);
+        setNotice(document.querySelector("#pageNotice"), "success", result.message);
+        const week = coverageWeek(selectedDate);
+        const refreshed = await api.get(`/coverage?from=${week.from}&to=${week.to}`);
+        drawCoverageDays(selectedDate, selectedTeacherUid, refreshed.data?.rows ?? [], refreshed.data?.substitutes ?? []);
+      } catch (error) {
+        save.disabled = false;
+        showError(error);
+      }
+    });
+    actionCell.append(save);
+
+    tr.append(subjectCell, classCell, timeCell, substitute, status, actionCell);
+    body.append(tr);
+  });
+
+  table.append(body);
+  wrap.append(table);
+}
+
 async function renderSchedule() {
   const links = [];
 
-  if (has("view_schedules") && hasRole("teacher", "it_teacher", "system_admin")) {
+  if (has("view_schedules") && isTeachingRole()) {
     links.push(
       studentHubLink(
         "schedule-my",
@@ -2121,6 +2429,21 @@ async function renderSchedule() {
         "schedule-manage",
         "إدارة الجدول الدراسي",
         "ترتيب حصص المعلمات والمناوبات وإدارتها"
+      )
+    );
+    links.push(
+      studentHubLink(
+        "coverage",
+        "جدول الانتظار",
+        "تسجيل غياب المعلمة وتوزيع حصصها ومناوباتها على البديلات"
+      )
+    );
+  } else if (has("view_substitution_assignments")) {
+    links.push(
+      studentHubLink(
+        "coverage-mine",
+        "جدول الانتظار",
+        "عرض حصص الانتظار المكلفة لكِ والإقرار بالاطلاع"
       )
     );
   }
@@ -2166,13 +2489,7 @@ function canViewAllSchedulesPage() {
 }
 
 function scheduleTeacherOptions(employees) {
-  const teachingRoles = new Set([
-    "teacher",
-    "it_teacher",
-    "system_admin",
-    "معلمة",
-    "مسؤولة النظام"
-  ]);
+  const teachingRoles = new Set(["teacher", "it_teacher", "system_admin", "معلمة", "مسؤولة النظام"]);
   const inactiveStatuses = new Set(["inactive", "غير نشط", "موقوف"]);
   return employees.filter((employee) =>
     !inactiveStatuses.has(employee.status)
@@ -2199,7 +2516,6 @@ function getStageForClass(classes, grade) {
 function setupScheduleClassSelectors(classes) {
   const grade = document.querySelector("#classScheduleGrade");
   const section = document.querySelector("#classScheduleSection");
-  const gender = document.querySelector("#classScheduleGender");
   const subject = document.querySelector("#classScheduleSubject");
   const unique = (items) => [...new Set(items)];
 
@@ -2210,16 +2526,6 @@ function setupScheduleClassSelectors(classes) {
     "اختاري الصف"
   );
 
-  const refreshGender = () => {
-    const matching = classes.filter((item) => item.grade === grade.value && item.section === section.value);
-    const values = unique(matching.map((item) => item.gender));
-    setScheduleSelectOptions(gender, values, (item) => labels.gender[item] ?? item, "اختاري الجنس");
-    if (values.length === 1) {
-      gender.value = values[0];
-      gender.disabled = true;
-    }
-  };
-
   const refreshSubjects = () => {
     const stage = getStageForClass(classes, grade.value);
     const subjectsForStage = stageSubjectMap[stage] ?? [];
@@ -2227,19 +2533,14 @@ function setupScheduleClassSelectors(classes) {
   };
 
   grade.addEventListener("change", () => {
-    const values = unique(classes.filter((item) => item.grade === grade.value).map((item) => item.section));
-    setScheduleSelectOptions(section, values, (item) => item, "اختاري الفصل");
-    setScheduleSelectOptions(gender, [], (item) => item, "اختاري الجنس");
+    const matching = classes.filter((item) => item.grade === grade.value);
+    setScheduleSelectOptions(section, matching, (item) => item.id, (item) => `${item.section} - ${labels.gender[item.gender] ?? item.gender}`, "اختاري الفصل");
     refreshSubjects();
   });
-  section.addEventListener("change", refreshGender);
 }
 
 function selectedScheduleClass(classes) {
-  const grade = value("classScheduleGrade");
-  const section = value("classScheduleSection");
-  const gender = document.querySelector("#classScheduleGender")?.value ?? "";
-  return classes.find((item) => item.grade === grade && item.section === section && item.gender === gender);
+  return classes.find((item) => item.id === value("classScheduleSection"));
 }
 
 async function fetchScheduleRows(scope = "mine", teacherUid = "") {
@@ -2251,7 +2552,7 @@ async function fetchScheduleRows(scope = "mine", teacherUid = "") {
 }
 
 async function renderMySchedule() {
-  if (!(has("view_schedules") && hasRole("teacher", "it_teacher", "system_admin"))) {
+  if (!(has("view_schedules") && isTeachingRole())) {
     throw new Error("عرض جدول المعلمة متاح للمعلمة المخولة فقط.");
   }
   await renderScheduleViewer({
@@ -2279,6 +2580,7 @@ async function renderScheduleViewer({ title, description, scope, showTeacherFilt
     <div class="schedule-tabs no-print" role="tablist" aria-label="نوع الجدول">
       <button class="schedule-tab active" type="button" data-schedule-view="class" role="tab" aria-selected="true">الحصص الدراسية</button>
       <button class="schedule-tab" type="button" data-schedule-view="break" role="tab" aria-selected="false">المناوبات</button>
+      <button class="schedule-tab" type="button" data-schedule-view="coverage" role="tab" aria-selected="false">جدول الانتظار</button>
     </div>
     ${showTeacherFilter ? `<div class="schedule-view-filter no-print"><div class="field"><label for="scheduleViewTeacher">المعلمة</label><select id="scheduleViewTeacher"><option value="">جميع المعلمات</option></select></div></div>` : ""}
     <div class="table-wrap"><div id="scheduleGrid" class="schedule-grid" data-schedule-scope="${scope}"></div></div>
@@ -2310,10 +2612,54 @@ async function loadAndDrawSchedule() {
     const type = document.querySelector("[data-schedule-view].active")?.dataset.scheduleView ?? "class";
     const teacherUid = document.querySelector("#scheduleViewTeacher")?.value ?? "";
     const scope = document.querySelector("#scheduleGrid")?.dataset.scheduleScope ?? "mine";
-    const [rows, classes] = await Promise.all([fetchScheduleRows(scope, teacherUid), loadClasses()]);
-    const classNames = new Map(classes.map((item) => [item.id, classLabel(item)]));
     const grid = document.querySelector("#scheduleGrid");
     grid.replaceChildren();
+
+    if (type === "coverage") {
+      const week = coverageWeek(localDate());
+      const result = await api.get(`/coverage?from=${week.from}&to=${week.to}`);
+      const rows = result.data?.rows ?? [];
+      if (!rows.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "لا توجد سجلات انتظار لهذا الأسبوع.";
+        grid.append(empty);
+        return;
+      }
+      const filteredRows = teacherUid ? rows.filter((row) => row.absentTeacherUid === teacherUid || row.substituteUid === teacherUid) : rows;
+      Object.entries(labels.day).forEach(([key, title]) => {
+        const day = document.createElement("section");
+        day.className = "schedule-day";
+        const heading = document.createElement("h3");
+        heading.textContent = title;
+        day.append(heading);
+        const items = filteredRows.filter((item) => item.date === week.days.find((entry) => entry.day === key)?.date);
+        if (!items.length) {
+          const empty = document.createElement("small");
+          empty.textContent = "لا توجد سجلات";
+          day.append(empty);
+        }
+        items.forEach((item) => {
+          const block = document.createElement("div");
+          block.className = "schedule-block";
+          const strong = document.createElement("strong");
+          strong.textContent = item.subject || item.periodName || "حصة";
+          const detail = document.createElement("span");
+          detail.textContent = [
+            item.absentTeacherName,
+            item.substituteName ? `بديلة: ${item.substituteName}` : "بديلة: غير محددة",
+            `${item.startTime} - ${item.endTime}`
+          ].join(" • ");
+          block.append(strong, detail);
+          day.append(block);
+        });
+        grid.append(day);
+      });
+      return;
+    }
+
+    const [rows, classes] = await Promise.all([fetchScheduleRows(scope, teacherUid), loadClasses()]);
+    const classNames = new Map(classes.map((item) => [item.id, classLabel(item)]));
     grid.classList.toggle("schedule-grid-empty", !rows.some((item) => item.blockType === type));
 
     Object.entries(labels.day).forEach(([key, title]) => {
@@ -2367,6 +2713,7 @@ async function renderScheduleManage() {
       <div class="schedule-tabs no-print" role="tablist" aria-label="إدارة نوع الجدول">
         <button class="schedule-tab active" type="button" data-schedule-manage="class" role="tab" aria-selected="true">الحصص الدراسية</button>
         <button class="schedule-tab" type="button" data-schedule-manage="break" role="tab" aria-selected="false">المناوبات</button>
+        <button class="schedule-tab" type="button" data-schedule-manage="coverage" role="tab" aria-selected="false">جدول الانتظار</button>
       </div>
 
       <section id="scheduleClassPanel" class="schedule-manage-panel">
@@ -2376,10 +2723,9 @@ async function renderScheduleManage() {
         <div class="field"><label for="classScheduleDay">اليوم</label><select id="classScheduleDay" required><option value="">اختاري اليوم</option><option value="sunday">الأحد</option><option value="monday">الاثنين</option><option value="tuesday">الثلاثاء</option><option value="wednesday">الأربعاء</option><option value="thursday">الخميس</option></select></div>
         <div class="field"><label for="classScheduleGrade">الصف</label><select id="classScheduleGrade" required><option value="">اختاري الصف</option></select></div>
         <div class="field"><label for="classScheduleSection">الفصل</label><select id="classScheduleSection" required disabled><option value="">اختاري الفصل</option></select></div>
-        <div class="field"><label for="classScheduleGender">الجنس</label><select id="classScheduleGender" required disabled><option value="">اختاري الجنس</option></select></div>
-        <div class="field"><label for="classPeriodNumber">رقم الحصة</label><input id="classPeriodNumber" type="number" min="1" max="12" required></div>
+        <div class="field"><label for="classPeriodNumber">الحصة</label><select id="classPeriodNumber"><option value="">اختياري</option>${Array.from({ length: 8 }, (_, index) => `<option value="${index + 1}">الحصة ${index + 1}</option>`).join("")}</select></div>
         <div class="field"><label for="classScheduleSubject">المادة</label><select id="classScheduleSubject" required><option value="">اختاري المادة</option></select></div>
-        <div class="field"><label for="classPeriodName">اسم الحصة</label><input id="classPeriodName" maxlength="40" placeholder="مثال: الحصة الأولى" required></div>
+        <div class="field"><label for="classPeriodName">اسم الحصة</label><input id="classPeriodName" maxlength="40" placeholder="اختياري: مثال الحصة الأولى"></div>
         <div class="field"><label for="classStartTime">وقت البداية</label><input id="classStartTime" type="time" min="07:30" max="14:30" required></div>
         <div class="field"><label for="classEndTime">وقت النهاية</label><input id="classEndTime" type="time" min="07:30" max="14:30" required></div>
         <div class="field"><label for="classScheduleLocation">المكان (اختياري)</label><input id="classScheduleLocation" maxlength="80"></div>
@@ -2403,6 +2749,16 @@ async function renderScheduleManage() {
   <button id="cancelBreakScheduleEdit" class="btn btn-secondary btn-small hidden" type="button">إلغاء </button>
 </div>      </form>
       </section>
+
+      <section id="scheduleCoveragePanel" class="schedule-manage-panel hidden">
+        <h2>جدول الانتظار</h2>
+        <form id="coverageManageFilters" class="form-grid schedule-form" novalidate>
+          <div class="field"><label for="coverageManageDate">التاريخ</label><input id="coverageManageDate" type="date" value="${localDate()}" required></div>
+          <div class="field"><label for="coverageManageTeacher">المعلمة</label><select id="coverageManageTeacher"><option value="">كل المعلمات</option></select></div>
+          <div class="form-actions"><button id="loadCoverageManage" class="btn btn-small" type="button">عرض</button></div>
+        </form>
+        <div id="coverageManageTable" class="table-wrap"><div class="empty-state">اختر التاريخ لعرض جدول الانتظار.</div></div>
+      </section>
     </div>
 
     <section id="scheduleRecordsPanel" class="subsection hidden">
@@ -2417,12 +2773,17 @@ async function renderScheduleManage() {
   ["#classScheduleTeacher", "#breakScheduleTeacher"].forEach((selector) => {
     fillSelect(document.querySelector(selector), teachers, (item) => item.authUid ?? item.id, (item) => item.nameAr, "اختاري المعلمة");
   });
+  fillSelect(document.querySelector("#coverageManageTeacher"), teachers, (item) => item.authUid ?? item.id, (item) => item.nameAr, "كل المعلمات");
   setupScheduleClassSelectors(classes);
 
   document.querySelector("#scheduleClassForm").addEventListener("submit", (event) => saveSchedule(event, "class"));
   document.querySelector("#scheduleBreakForm").addEventListener("submit", (event) => saveSchedule(event, "break"));
   document.querySelector("#cancelClassScheduleEdit").addEventListener("click", () => resetScheduleEdit("class"));
   document.querySelector("#cancelBreakScheduleEdit").addEventListener("click", () => resetScheduleEdit("break"));
+  document.querySelector("#loadCoverageManage").addEventListener("click", async () => {
+    const date = value("coverageManageDate") || localDate();
+    await loadCoverageManageRows(date, value("coverageManageTeacher"));
+  });
   document.querySelectorAll("[data-schedule-section]").forEach((button) => {
     button.addEventListener("click", () => setScheduleManageSection(button.dataset.scheduleSection));
   });
@@ -2430,6 +2791,7 @@ async function renderScheduleManage() {
     button.addEventListener("click", () => setScheduleManageTab(button.dataset.scheduleManage));
   });
   await loadManagedScheduleRows("class");
+  await loadCoverageManageRows(localDate(), "");
 }
 
 function setScheduleManageSection(section) {
@@ -2450,8 +2812,59 @@ async function setScheduleManageTab(type) {
   });
   document.querySelector("#scheduleClassPanel").classList.toggle("hidden", type !== "class");
   document.querySelector("#scheduleBreakPanel").classList.toggle("hidden", type !== "break");
-  document.querySelector("#managedScheduleTitle").textContent = type === "class" ? "الحصص المسجلة" : "المناوبات المسجلة";
+  document.querySelector("#scheduleCoveragePanel").classList.toggle("hidden", type !== "coverage");
+  document.querySelector("#managedScheduleTitle").textContent = type === "class" ? "الحصص المسجلة" : type === "break" ? "المناوبات المسجلة" : "جدول الانتظار";
+
+  if (type === "coverage") {
+    const date = value("coverageManageDate") || localDate();
+    await loadCoverageManageRows(date, value("coverageManageTeacher"));
+    return;
+  }
+
   await loadManagedScheduleRows(type);
+}
+
+async function loadCoverageManageRows(selectedDate, selectedTeacherUid = "") {
+  const wrap = document.querySelector("#coverageManageTable");
+  if (!wrap) return;
+  const date = selectedDate || localDate();
+  wrap.replaceChildren();
+
+  try {
+    const week = coverageWeek(date);
+    const result = await api.get(`/coverage?from=${week.from}&to=${week.to}`);
+    const rows = result.data?.rows ?? [];
+    const filteredRows = rows.filter((row) => row.date === date && (!selectedTeacherUid || row.absentTeacherUid === selectedTeacherUid || row.substituteUid === selectedTeacherUid));
+
+    if (!filteredRows.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "لا توجد سجلات انتظار لهذا التاريخ.";
+      wrap.append(empty);
+      return;
+    }
+
+    const table = document.createElement("table");
+    const head = document.createElement("thead");
+    head.innerHTML = "<tr><th>اليوم</th><th>الحصة / المكان</th><th>المعلمة الغائبة</th><th>البديلة</th><th>الحالة</th><th>الوقت</th></tr>";
+    table.append(head);
+
+    const body = document.createElement("tbody");
+    filteredRows.forEach((row) => {
+      const tr = document.createElement("tr");
+      const dayName = labels.day[Object.keys(labels.day).find((key) => row.date === coverageWeek(date).days.find((entry) => entry.day === key)?.date)] ?? "—";
+      [dayName, row.subject || row.periodName || row.location || "—", row.absentTeacherName || "—", row.substituteName || "—", row.status || "مكلف", `${row.startTime || "—"} - ${row.endTime || "—"}`].forEach((value) => tr.append(createCell(value)));
+      body.append(tr);
+    });
+
+    table.append(body);
+    wrap.append(table);
+  } catch (error) {
+    const errorBox = document.createElement("div");
+    errorBox.className = "notice notice-error visible";
+    errorBox.textContent = error.message || "تعذّر تحميل جدول الانتظار.";
+    wrap.append(errorBox);
+  }
 }
 
 
@@ -2499,8 +2912,8 @@ async function saveSchedule(event, blockType) {
       day: value("classScheduleDay"),
       teacherUid: employee.authUid ?? employee.id,
       classId: academicClass.id,
-      periodNumber: Number(value("classPeriodNumber")),
-      periodName: value("classPeriodName"),
+      periodNumber: value("classPeriodNumber") ? Number(value("classPeriodNumber")) : undefined,
+      periodName: value("classPeriodName") || undefined,
       subject: value("classScheduleSubject"),
       location: value("classScheduleLocation") || undefined,
       startTime: value("classStartTime"),
@@ -2568,15 +2981,11 @@ function beginScheduleEdit(item, blockType, classes) {
     if (selectedClass) {
       const grade = document.querySelector("#classScheduleGrade");
       const section = document.querySelector("#classScheduleSection");
-      const gender = document.querySelector("#classScheduleGender");
 
       grade.value = selectedClass.grade;
       grade.dispatchEvent(new Event("change"));
 
-      section.value = selectedClass.section;
-      section.dispatchEvent(new Event("change"));
-
-      gender.value = selectedClass.gender;
+      section.value = selectedClass.id;
     }
   } else {
     document.querySelector("#breakScheduleTeacher").value = item.teacherUid;
@@ -3148,6 +3557,12 @@ async function renderRequestPage(key, overrides = {}, viewKey = key) {
         ? "إدارة طلبات السلف"
         : "إدارة العهدة";
 
+    const canManageSection = key === "materials"
+      ? has("manage_materials") || hasRole("system_admin")
+      : key === "loans"
+        ? has("manage_loans") || hasRole("system_admin")
+        : has("manage_assets") || hasRole("system_admin");
+
     const linksHTML = `
       <nav class="student-services-list" >
 
@@ -3156,10 +3571,12 @@ async function renderRequestPage(key, overrides = {}, viewKey = key) {
     <span>→</span>
 </a>
 
+${canManageSection ? `
 <a href="#" id="adminLink" class="student-service-link">
 <div>${adminTitle}</div>
     <span>→</span>
 </a>
+` : ""}
 
 </nav >
       `;
@@ -3361,33 +3778,91 @@ async function renderSupportEmployee() {
 }
 
 async function renderInvoices() {
-  page("رفع الفواتير", "ارفعي فواتير المشتريات أو المصروفات المرتبطة بالعمل واحتفظي بسجلها.", `<form id="invoiceForm" class="form-grid" novalidate><div class="field"><label for="invoiceSupplier">اسم المورد</label><input id="invoiceSupplier" required maxlength="160"></div><div class="field"><label for="invoiceNumber">رقم الفاتورة</label><input id="invoiceNumber" required maxlength="80"></div><div class="field"><label for="invoiceDate">تاريخ الفاتورة</label><input id="invoiceDate" type="date" required></div><div class="field"><label for="invoiceAmount">المبلغ</label><input id="invoiceAmount" inputmode="decimal" min="0" step="0.01" placeholder="اختياري"></div><div class="field span-2"><label for="invoiceFile">ملف الفاتورة</label><input id="invoiceFile" type="file" accept=".pdf,.jpg,.jpeg,.png" required><span class="field-hint">PDF أو JPG أو PNG، بحد أقصى 5 ميغابايت.</span></div><div class="field span-2"><label for="invoiceNotes">ملاحظات (اختياري)</label><textarea id="invoiceNotes" maxlength="500"></textarea></div><div class="form-actions span-2"><button id="uploadInvoiceButton" class="btn" type="submit">رفع الفاتورة</button></div></form><h2>الفواتير المرفوعة</h2><div id="invoiceTable" class="table-wrap"><div class="empty-state">جاري التحميل...</div></div>`);
+  const links = [
+    studentHubLink("invoice-add", "إضافة الفاتورة", "إدخال بيانات الفاتورة وربط رابطها مباشرة."),
+    studentHubLink("invoice-history", "سجل طلباتي", "عرض الفواتير التي رفعتها سابقًا."),
+  ];
+  page("رفع الفواتير", "اختاري الخدمة المطلوبة.", `<nav class="student-services-list" aria-label="خدمات الفواتير">${links.join("")}</nav>`);
+
   const renderRows = (invoices) => {
     const table = document.querySelector("#invoiceTable");
     if (!invoices.length) { table.innerHTML = '<div class="empty-state">لا توجد فواتير مرفوعة.</div>'; return; }
-    table.innerHTML = `<table><thead><tr><th>المورد</th><th>رقم الفاتورة</th><th>التاريخ</th><th>المبلغ</th><th>الحالة</th><th>الملف</th></tr></thead><tbody>${invoices.map((invoice) => `<tr>${[invoice.supplierName, invoice.invoiceNumber, invoice.invoiceDate, invoice.amount || "—", invoice.status].map((item) => createCell(item).outerHTML).join("")}<td><button class="btn btn-small" type="button" data-invoice-path="${encodeURIComponent(invoice.filePath)}">تنزيل</button></td></tr>`).join("")}</tbody></table>`;
+    table.innerHTML = `<table><thead><tr><th>المورد</th><th>رقم الفاتورة</th><th>التاريخ</th><th>المبلغ</th><th>الحالة</th><th>الملف</th></tr></thead><tbody>${invoices.map((invoice) => `<tr>${[invoice.supplierName, invoice.invoiceNumber, invoice.invoiceDate, invoice.amount || "—", invoice.status].map((item) => createCell(item).outerHTML).join("")}<td>${invoice.filePath && /^https?:\/\//i.test(invoice.filePath)
+      ? `<a href="${invoice.filePath}" target="_blank" rel="noopener noreferrer" class="btn btn-small">فتح الرابط</a>`
+      : `<button class="btn btn-small" type="button" data-invoice-path="${encodeURIComponent(invoice.filePath || "")}">تنزيل</button>`}</td></tr>`).join("")}</tbody></table>`;
     table.querySelectorAll("[data-invoice-path]").forEach((button) => button.addEventListener("click", async () => { try { await downloadFile(`/files/download?path=${button.dataset.invoicePath}`, "invoice"); } catch (error) { showError(error); } }));
   };
-  const loadInvoices = async () => renderRows((await api.get("/invoices")).data);
-  await loadInvoices();
-  document.querySelector("#invoiceForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!event.currentTarget.reportValidity()) return;
-    const button = document.querySelector("#uploadInvoiceButton");
-    await submitSafely(button, async () => {
-      const body = new FormData();
-      body.append("supplierName", value("invoiceSupplier"));
-      body.append("invoiceNumber", value("invoiceNumber"));
-      body.append("invoiceDate", value("invoiceDate"));
-      body.append("amount", value("invoiceAmount"));
-      body.append("notes", value("invoiceNotes"));
-      body.append("file", document.querySelector("#invoiceFile").files[0]);
-      const result = await apiFetch("/invoices", { method: "POST", body });
-      setNotice(document.querySelector("#pageNotice"), "success", result.message);
-      event.currentTarget.reset();
-      await loadInvoices();
+
+  const loadInvoices = async () => {
+    const response = await api.get("/invoices");
+    return response.data;
+  };
+
+  const showUploadForm = () => {
+    page("إضافة الفاتورة", "ارفعي فواتير المشتريات أو المصروفات المرتبطة بالعمل واحتفظي بسجلها.", `
+      <form id="invoiceForm" class="form-grid" novalidate>
+        <div class="field"><label for="invoiceSupplier">اسم المورد</label><input id="invoiceSupplier" required maxlength="160"></div>
+        <div class="field"><label for="invoiceNumber">رقم الفاتورة</label><input id="invoiceNumber" required maxlength="80"></div>
+        <div class="field"><label for="invoiceDate">تاريخ الفاتورة</label><input id="invoiceDate" type="date" required></div>
+        <div class="field"><label for="invoiceAmount">المبلغ</label><input id="invoiceAmount" inputmode="decimal" min="0" step="0.01" placeholder="اختياري"></div>
+        <div class="field span-2"><label for="invoiceLink">رابط الفاتورة</label><input id="invoiceLink" type="url" placeholder="https://example.com/invoice.pdf" required><span class="field-hint">يمكنك إدخال رابط مباشر للفاتورة بدل الإرفاق.</span></div>
+        <div class="field span-2"><label for="invoiceNotes">ملاحظات (اختياري)</label><textarea id="invoiceNotes" maxlength="500"></textarea></div>
+        <div class="form-actions span-2"><button id="uploadInvoiceButton" class="btn" type="submit">رفع الفاتورة</button></div>
+      </form>
+    `);
+
+    document.querySelector("#invoiceForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!event.currentTarget.reportValidity()) return;
+      const button = document.querySelector("#uploadInvoiceButton");
+      await submitSafely(button, async () => {
+        const body = new FormData();
+        body.append("supplierName", value("invoiceSupplier"));
+        body.append("invoiceNumber", value("invoiceNumber"));
+        body.append("invoiceDate", value("invoiceDate"));
+        body.append("amount", value("invoiceAmount"));
+        body.append("notes", value("invoiceNotes"));
+        body.append("invoiceLink", value("invoiceLink"));
+        const result = await apiFetch("/invoices", { method: "POST", body });
+        setNotice(document.querySelector("#pageNotice"), "success", result.message);
+        event.currentTarget.reset();
+      });
+    });
+  };
+
+  const showHistory = async () => {
+    page("سجل طلباتي", "عرض الفواتير التي رفعتها سابقًا مع رابطها المباشر.", `
+      <div id="invoiceTable" class="table-wrap"><div class="empty-state">جاري التحميل...</div></div>
+    `);
+    const invoices = await loadInvoices();
+    renderRows(invoices);
+  };
+
+  const route = currentRoute();
+  if (route === "invoice-add") {
+    showUploadForm();
+    return;
+  }
+  if (route === "invoice-history") {
+    showHistory();
+    return;
+  }
+
+  if (route !== "invoices") {
+    showUploadForm();
+    return;
+  }
+
+  const hubLinks = document.querySelectorAll(".student-service-link[data-route]");
+  hubLinks.forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      const nextRoute = link.dataset.route;
+      window.location.hash = nextRoute;
     });
   });
+
+  page("رفع الفواتير", "اختاري الخدمة المطلوبة.", `<nav class="student-services-list" aria-label="خدمات الفواتير">${links.join("")}</nav>`);
 }
 
 async function renderSupportHistory() {
@@ -3440,9 +3915,9 @@ async function renderSuggestionsManage() {
 async function renderLeaveHub() {
   const links = [];
   if (has("request_leave")) {
-    links.push(leaveLink("leave-request", "طلب إجازة – الموظفة", "اختيار النوع والتواريخ وإرفاق المستندات."));
-    links.push(leaveLink("leave-history", "سجل طلباتي – الموظفة", "متابعة قرارات المديرة والموارد البشرية."));
-    links.push(leaveLink("leave-extension", "تمديد الإجازة – الموظفة", "طلب تمديد إجازة معتمدة."));
+    links.push(leaveLink("leave-request", "طلب إجازة", "اختيار النوع والتواريخ وإرفاق المستندات."));
+    links.push(leaveLink("leave-history", "سجل طلباتي", "متابعة قرارات المديرة والموارد البشرية."));
+    links.push(leaveLink("leave-extension", "تمديد الإجازة", "طلب تمديد إجازة معتمدة."));
   }
   if (has("manage_leave_requests")) links.push(leaveLink("leave-manager", "طلبات الإجازات – المديرة", "مراجعة الطلبات وإرسالها للموارد البشرية."));
   if (has("manage_leave_hr_requests") || hasRole("hr", "system_admin")) links.push(leaveLink("leave-hr", "طلبات الإجازات – الموارد البشرية", "اعتماد القرار النهائي أو رفضه."));
@@ -3526,12 +4001,14 @@ async function renderLeaveQueue(scope) {
 
 async function renderPermissionHub() {
   const links = [];
+  const canManagePermissionRequests = has("manage_leave_requests");
   if (has("request_leave")) {
     links.push(studentHubLink("permission-self", "تقديم استئذان", "إرسال طلب استئذان ومتابعة حالته"));
     links.push(studentHubLink("permission-history", "سجل طلبات الاستئذان", "عرض الطلبات السابقة وحالاتها"));
   }
-  if (has("manage_leave_requests")) {
-    links.push(studentHubLink("permission-manage", "إدارة الاستئذان", "عرض الطلبات وقبولها أو رفضها"));
+  if (canManagePermissionRequests) {
+    const managerTitle = hasRole("principal") ? "طلبات الاستئذان – المديرة" : "إدارة الاستئذان";
+    links.push(studentHubLink("permission-manage", managerTitle, "عرض طلبات الموظفات وقبولها أو رفضها"));
   }
   page("الاستئذان", "اختاري الخدمة المطلوبة.", `<nav class="student-services-list" aria-label="خدمات الاستئذان">${links.join("")}</nav>`);
 }
@@ -3549,7 +4026,8 @@ async function renderPermissionHistory() {
 
 async function renderPermissionManage() {
   if (!has("manage_leave_requests")) throw new Error("إدارة الاستئذان متاحة للإدارة المخولة فقط.");
-  page("إدارة الاستئذان", "عرض طلبات الاستئذان ومراجعتها واتخاذ القرار.", `
+  const title = hasRole("principal") ? "طلبات الاستئذان – المديرة" : "إدارة الاستئذان";
+  page(title, "عرض طلبات الموظفات ومراجعتها واتخاذ قرار القبول أو الرفض.", `
     <div id="requestTable" class="table-wrap"><div class="empty-state">جاري التحميل...</div></div>
   `);
   await loadRequestRows({ ...requestPages.permission, path: "/requests/permission?scope=all&limit=200" }, "permission-manage");
@@ -4076,7 +4554,7 @@ async function loadMaterialsLookupTable() {
   <td>
     <button
       type="button"
-      class="btn-small select-material-btn"
+      class="btn btn-secondary btn-small select-material-btn"
       data-number="${material.itemNumber || ''}"
       data-code="${material.code || ''}"
       data-desc="${material.nameAr || ''}"
@@ -4857,14 +5335,12 @@ function renderEmployeeData() {
       "عرض البيانات الوظيفية المرتبطة بحسابك فقط"
     )
   ];
-  if (hasRole("system_admin", "principal", "admin") && has("manage_employees")) {
-    links.push(
-      studentHubLink(
-        "employee-add",
-        "إضافة موظفة وإدخال بياناتها",
-        "إنشاء ملف موظفة جديد وربطه بحسابها"
-      )
-    );
+  if (hasRole("system_admin", "resource_user") && has("manage_employees")) {
+    links.push(studentHubLink(
+      "employee-add",
+      "إضافة بيانات موظفة",
+      "إنشاء ملف وظيفي جديد لموظفة"
+    ));
   }
   page("بيانات الموظفة", "اختاري الخدمة المطلوبة.", `
     <nav class="student-services-list" aria-label="خدمات بيانات الموظفة">
@@ -4891,7 +5367,7 @@ function drawEmployeeProfile(selector, employee, accountEmail = "") {
     ["الاسم باللغة العربية", employee.nameAr],
     ["الاسم باللغة الإنجليزية", employee.nameEn, "ltr"],
     ["رقم الهوية الوطنية", employee.nationalId, "ltr"],
-    ["الرقم الوظيفي", employee.employeeNumber, "ltr"],
+    ["الرقم الوظيفي", String(employee.employeeNumber ?? employee.employeeId ?? employee.number ?? "—"), "ltr"],
     ["المسمى الوظيفي", labels.role[employee.role] ?? employee.role],
     ["القسم", employee.department],
     ["البريد الإلكتروني الرسمي", accountEmail || employee.email, "ltr"],
@@ -4920,6 +5396,7 @@ function drawEmployeeProfile(selector, employee, accountEmail = "") {
 }
 
 function renderPerformance() {
+  if (hasRole("resource_user")) throw new Error("لا توجد لديك صلاحية الوصول إلى الأداء الوظيفي.");
   page("الأداء الوظيفي", "عرض بيانات الأداء الوظيفي المرتبطة بحسابك.", `
     <div class="empty-state">لا توجد بيانات أداء وظيفي متاحة حاليًا.</div>
   `);
@@ -5888,11 +6365,13 @@ function renderCertificateManager(area) {
 }
 
 const permissionLabels = {
-  view_students: "عرض الطلاب", manage_students: "إدارة الطلاب", enter_attendance: "إدخال الغياب", view_attendance: "متابعة الغياب", manage_attendance: "إدارة الغياب", attendance_override: "تجاوز قيد الحصة الأولى", view_schedules: "عرض الجدول", view_all_schedules: "عرض جميع الجداول", manage_schedules: "إدارة الجداول", request_leave: "تقديم إجازة واستئذان", manage_leave_requests: "مراجعة الإجازات – المديرة", manage_leave_hr_requests: "اعتماد الإجازات – الموارد البشرية", request_training: "تقديم دورة", manage_training_requests: "اعتماد الدورات", issue_work_assignments: "إصدار تكليف", view_all_work_assignments: "عرض جميع التكاليف", request_assets: "طلب عهدة", manage_assets: "إدارة العهد", request_loans: "استعلام سلفة", manage_loans: "إدارة السلف", manage_employees: "إدارة الموظفات", manage_permissions: "إدارة الصلاحيات", manage_announcements: "إدارة الإعلانات", upload_files: "رفع المرفقات"
+  view_substitution_assignments: "عرض حصص الانتظار",
+  view_students: "عرض الطلاب", manage_students: "إدارة الطلاب", enter_attendance: "إدخال الغياب", view_attendance: "متابعة الغياب", manage_attendance: "إدارة الغياب", manage_absence: "إدارة بلاغات الغياب", attendance_override: "تجاوز قيد الحصة الأولى", view_schedules: "عرض الجدول", view_all_schedules: "عرض جميع الجداول", manage_schedules: "إدارة الجداول", request_leave: "تقديم إجازة واستئذان", manage_leave_requests: "مراجعة الإجازات – المديرة", manage_leave_hr_requests: "اعتماد الإجازات – الموارد البشرية", request_training: "تقديم دورة", manage_training_requests: "اعتماد الدورات", issue_work_assignments: "إصدار تكليف", view_all_work_assignments: "عرض جميع التكاليف", request_assets: "طلب عهدة", manage_assets: "إدارة العهد", request_loans: "استعلام سلفة", manage_loans: "إدارة السلف", manage_materials: "إدارة المواد", manage_invoices: "رفع الفواتير", manage_employees: "إدارة الموظفات", manage_permissions: "إدارة الصلاحيات", manage_announcements: "إدارة الإعلانات", upload_files: "رفع المرفقات"
 };
 
 async function renderEmployeeManagementPage(mode) {
-  const canAddEmployee = hasRole("system_admin", "principal", "admin") && has("manage_employees");
+  const canAddEmployee = hasRole("system_admin", "principal", "admin", "resource_user", "upper_management") && has("manage_employees");
+  const canManageAccounts = hasRole("system_admin", "principal", "admin") && has("manage_employees");
   const canManagePermissions = hasRole("system_admin") && has("manage_permissions");
   const addMode = mode === "add";
   const accountAddMode = mode === "account-add";
@@ -5900,15 +6379,162 @@ async function renderEmployeeManagementPage(mode) {
   if ((addMode || accountAddMode) && !canAddEmployee) {
     throw new Error("إضافة بيانات الموظفات متاحة للإدارة المخولة فقط.");
   }
+  if (accountAddMode && !canManageAccounts) {
+    throw new Error("إضافة حسابات الموظفات متاحة للإدارة المخولة فقط.");
+  }
   if (mode === "permissions" && !canManagePermissions) {
     throw new Error("إدارة صلاحيات الموظفات متاحة لمسؤولة النظام المخولة فقط.");
   }
-  const accountForm = `<form id="employeeAccountForm" class="form-grid employee-entry-form"><div class="field"><label for="accountEmployeeName">اسم الموظفة</label><input id="accountEmployeeName" required minlength="3" maxlength="120" placeholder="اكتبي اسم الموظفة"></div><div class="field"><label for="accountEmployeeEmail">اسم المستخدم / البريد الإلكتروني</label><input id="accountEmployeeEmail" type="email" required maxlength="160" dir="ltr" placeholder="example@school.com"></div><div class="field"><label for="accountEmployeePassword">كلمة المرور</label><div class="portal-password-wrap"><input id="accountEmployeePassword" type="password" minlength="6" maxlength="128" required dir="ltr" placeholder="كلمة المرور"><button id="accountEmployeePasswordToggle" class="portal-password-toggle" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false">👁</button></div></div><div class="field"><label for="accountEmployeeNumber">الرقم الوظيفي</label><input id="accountEmployeeNumber" required maxlength="30" placeholder="مثال: T001"></div><div class="field"><label for="accountEmployeeRole">المسمى الوظيفي</label><select id="accountEmployeeRole" required><option value="">اختاري المسمى</option><option value="teacher">معلمة</option><option value="principal">مديرة المدرسة</option><option value="vice_principal">وكيلة</option><option value="hr">الموارد البشرية</option><option value="it_teacher">تقنية المعلومات</option><option value="admin">إدارية</option><option value="registrar">القبول والتسجيل</option><option value="accountant">المحاسبة</option><option value="doctor">طبيبة</option><option value="system_admin">مسؤولة النظام</option><option value="schedule_admin">مسؤولة الجداول</option><option value="upper_management">الإدارة العليا</option></select></div><div class="form-actions span-2"><button id="saveEmployeeAccount" class="btn" type="submit">حفظ الحساب</button></div></form>`;
+  const accountForm = `<form id="employeeAccountForm" class="form-grid employee-entry-form"><div class="field"><label for="accountEmployeeName">اسم الموظفة</label><input id="accountEmployeeName" required minlength="3" maxlength="120" placeholder="اكتبي اسم الموظفة"></div><div class="field"><label for="accountEmployeeEmail">اسم المستخدم / البريد الإلكتروني</label><input id="accountEmployeeEmail" type="email" required maxlength="160" dir="ltr" placeholder="example@school.com"></div><div class="field"><label for="accountEmployeePassword">كلمة المرور</label><div class="portal-password-wrap"><input id="accountEmployeePassword" type="password" minlength="6" maxlength="128" required dir="ltr" placeholder="كلمة المرور"><button id="accountEmployeePasswordToggle" class="portal-password-toggle" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false">👁</button></div></div><div class="field"><label for="accountEmployeeNumber">الرقم الوظيفي</label><input id="accountEmployeeNumber" required maxlength="30" placeholder="مثال: T001"></div><div class="field"><label for="accountEmployeeRole">المسمى الوظيفي</label><select id="accountEmployeeRole" required><option value="">اختاري المسمى</option><option value="teacher">معلمة</option><option value="principal">مديرة المدرسة</option><option value="vice_principal">وكيلة</option><option value="hr">الموارد البشرية</option><option value="resource_user">الموارد البشرية والمالية</option><option value="it_teacher">تقنية المعلومات</option><option value="admin">إدارية</option><option value="registrar">القبول والتسجيل</option><option value="accountant">المحاسبة</option><option value="doctor">طبيبة</option><option value="system_admin">مسؤولة النظام</option><option value="schedule_admin">مسؤولة الجداول</option><option value="upper_management">الإدارة العليا</option></select></div><div class="form-actions span-2"><button id="saveEmployeeAccount" class="btn" type="submit">حفظ الحساب</button></div></form>`;
   if (accountsMode) {
     page("حسابات الموظفات", "عرض حسابات الدخول التي تمت إضافتها.", `<div id="employeeAccountsTable" class="table-wrap"><div class="empty-state">جارٍ تحميل الحسابات...</div></div>`);
     try {
-      const employees = await loadEmployees();
-      renderSimpleTable("#employeeAccountsTable", ["الموظفة", "الرقم الوظيفي", "اسم المستخدم", "كلمة المرور", "حالة الحساب"], employees, (employee) => [employee.nameAr, employee.employeeNumber, employee.email || "غير مسجل", "••••••••", employee.status === "inactive" ? "غير نشطة" : "نشطة"]);
+      const employees = await loadEmployees(true);
+      const wrap = document.querySelector("#employeeAccountsTable");
+      wrap.replaceChildren();
+      if (!employees.length) {
+        wrap.innerHTML = '<div class="empty-state">لا توجد حسابات موظفات حتى الآن.</div>';
+        return;
+      }
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      thead.innerHTML = '<tr><th>الموظفة</th><th>الرقم الوظيفي</th><th>اسم المستخدم</th><th>كلمة المرور</th><th>حالة الحساب</th><th>الإجراءات</th></tr>';
+      const tbody = document.createElement("tbody");
+      employees.forEach((employee) => {
+        const row = document.createElement("tr");
+        const passwordCell = document.createElement("td");
+        const passwordValue = document.createElement("span");
+        passwordValue.className = "password-mask";
+        passwordValue.textContent = employee.password ? "••••••••" : "لا توجد كلمة مرور";
+        passwordValue.style.direction = "ltr";
+
+        const passwordActions = document.createElement("div");
+        passwordActions.style.display = "inline-flex";
+        passwordActions.style.alignItems = "center";
+        passwordActions.style.gap = "4px";
+        passwordActions.style.flexWrap = "nowrap";
+        passwordActions.style.justifyContent = "flex-start";
+        passwordActions.style.direction = "rtl";
+        passwordActions.style.verticalAlign = "middle";
+
+        const passwordToggle = document.createElement("button");
+        passwordToggle.type = "button";
+        passwordToggle.className = "btn btn-secondary btn-small";
+        passwordToggle.textContent = "👁";
+        passwordToggle.title = "إظهار كلمة المرور";
+        passwordToggle.setAttribute("aria-label", "إظهار كلمة المرور");
+        passwordToggle.disabled = !employee.password;
+        passwordToggle.style.margin = "0";
+        passwordToggle.style.padding = "4px 8px";
+        passwordToggle.style.fontSize = "12px";
+        passwordToggle.style.lineHeight = "1.2";
+        passwordToggle.style.minWidth = "0";
+        passwordToggle.addEventListener("click", () => {
+          const isVisible = passwordToggle.dataset.visible === "1";
+          if (!employee.password) {
+            passwordValue.textContent = "لا توجد كلمة مرور";
+            return;
+          }
+          passwordToggle.dataset.visible = String(Number(!isVisible));
+          passwordValue.textContent = isVisible ? "••••••••" : employee.password;
+          passwordToggle.textContent = isVisible ? "👁" : "🙈";
+          passwordToggle.title = isVisible ? "إظهار كلمة المرور" : "إخفاء كلمة المرور";
+          passwordToggle.setAttribute("aria-label", isVisible ? "إظهار كلمة المرور" : "إخفاء كلمة المرور");
+        });
+
+        const resetButton = document.createElement("button");
+        resetButton.type = "button";
+        resetButton.className = "btn btn-secondary btn-small";
+        resetButton.textContent = "🔑";
+        resetButton.title = employee.password ? "إعادة تعيين كلمة المرور" : "تعيين كلمة المرور";
+        resetButton.setAttribute("aria-label", employee.password ? "إعادة تعيين كلمة المرور" : "تعيين كلمة المرور");
+        resetButton.style.margin = "0";
+        resetButton.style.padding = "4px 8px";
+        resetButton.style.fontSize = "12px";
+        resetButton.style.lineHeight = "1.2";
+        resetButton.style.minWidth = "0";
+        if (hasRole("resource_user")) resetButton.hidden = true;
+        resetButton.addEventListener("click", async () => {
+          const newPassword = window.prompt("اكتبي كلمة المرور الجديدة للموظفة:", "");
+          if (newPassword === null) return;
+          const value = newPassword.trim();
+          if (value.length < 6) {
+            setNotice(document.querySelector("#pageNotice"), "error", "كلمة المرور يجب أن تكون 6 أحرف على الأقل.");
+            return;
+          }
+          const employeeLookup = employee.authUid || employee.id || employee.email || employee.employeeNumber;
+          if (!employeeLookup) {
+            setNotice(document.querySelector("#pageNotice"), "error", "لا يمكن تحديد الموظفة المطلوبة للحذف أو إعادة التعيين.");
+            return;
+          }
+          try {
+            const result = await api.patch(`/employees/${encodeURIComponent(employeeLookup)}/password`, { password: value });
+            setNotice(document.querySelector("#pageNotice"), "success", result.message);
+            employee.password = value;
+            employee.hasPassword = true;
+            resetButton.title = "إعادة تعيين كلمة المرور";
+            resetButton.setAttribute("aria-label", "إعادة تعيين كلمة المرور");
+            passwordToggle.disabled = false;
+            passwordToggle.dataset.visible = "0";
+            passwordToggle.textContent = "👁";
+            passwordToggle.title = "إظهار كلمة المرور";
+            passwordToggle.setAttribute("aria-label", "إظهار كلمة المرور");
+            passwordValue.textContent = "••••••••";
+          } catch (error) {
+            showError(error);
+          }
+        });
+
+        passwordActions.append(passwordToggle, resetButton);
+        passwordCell.append(passwordValue, document.createTextNode(" "), passwordActions);
+
+        const actionCell = document.createElement("td");
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "btn btn-danger btn-small";
+        deleteButton.textContent = "حذف";
+        deleteButton.addEventListener("click", async () => {
+          if (!await confirmAction(`حذف حساب الموظفة «${employee.nameAr}»؟`, "تأكيد الحذف", "حذف")) return;
+          const employeeLookup = employee.authUid || employee.id || employee.email || employee.employeeNumber;
+          if (!employeeLookup) {
+            setNotice(document.querySelector("#pageNotice"), "error", "لا يمكن تحديد الموظفة المطلوبة للحذف.");
+            return;
+          }
+          try {
+            const result = await api.delete(`/employees/${encodeURIComponent(employeeLookup)}`);
+            setNotice(document.querySelector("#pageNotice"), "success", result.message);
+            const currentId = employee.id ?? employee.authUid;
+            state.employees = (state.employees ?? []).filter((item) => (item.id ?? item.authUid) !== currentId);
+            row.remove();
+            if (!state.employees.length) {
+              const table = row.closest("table");
+              if (table) {
+                const tbody = table.querySelector("tbody");
+                if (tbody && !tbody.children.length) {
+                  tbody.innerHTML = '<tr><td colspan="6" class="empty-state">لا توجد حسابات موظفات حتى الآن.</td></tr>';
+                }
+              }
+            }
+          } catch (error) {
+            showError(error);
+            if (error?.status === 404 || error?.code === "EMPLOYEE_NOT_FOUND") {
+              state.employees = (state.employees ?? []).filter((item) => (item.id ?? item.authUid) !== (employee.id ?? employee.authUid));
+              row.remove();
+            }
+          }
+        });
+        actionCell.append(deleteButton);
+
+        row.innerHTML = `
+          <td>${employee.nameAr || "—"}</td>
+          <td dir="ltr">${employee.employeeNumber || "—"}</td>
+          <td dir="ltr">${employee.email || "غير مسجل"}</td>
+        `;
+        row.append(passwordCell, createCell(employee.status === "inactive" ? "غير نشطة" : "نشطة"), actionCell);
+        tbody.append(row);
+      });
+      table.append(thead, tbody);
+      wrap.append(table);
     } catch (error) {
       showError(error);
     }
@@ -5930,7 +6556,6 @@ async function renderEmployeeManagementPage(mode) {
     accountAddMode ? accountForm : addMode ? employeeForm : permissionsPanel
   );
   [
-    ["employeePassword", "employeePasswordToggle"],
     ["accountEmployeePassword", "accountEmployeePasswordToggle"]
   ].forEach(([inputId, buttonId]) => {
     const input = document.querySelector(`#${inputId}`);
@@ -5953,8 +6578,18 @@ async function renderEmployeeManagementPage(mode) {
     document.querySelector("#employeeAccountForm").addEventListener("submit", saveEmployeeAccount);
   } else if (addMode) {
     const form = document.querySelector("#employeeForm");
+    document.querySelector("#employeePassword")?.closest(".field")?.remove();
+    document.querySelector("#employeeAuthUid")?.closest(".field")?.remove();
+    const englishNameInput = document.querySelector("#employeeNameEn");
+    if (englishNameInput) {
+      englishNameInput.dir = "rtl";
+      englishNameInput.style.textAlign = "right";
+    }
+    const roleSelect = document.querySelector("#employeeRoleInput");
+    if (!roleSelect.querySelector('option[value="resource_user"]')) {
+      roleSelect.insertAdjacentHTML("beforeend", '<option value="resource_user">الموارد البشرية والمالية</option>');
+    }
     if (!hasRole("system_admin")) {
-      const roleSelect = document.querySelector("#employeeRoleInput");
       ["principal", "vice_principal", "admin", "system_admin", "schedule_admin", "upper_management"].forEach((role) => {
         roleSelect.querySelector(`option[value = "${role}"]`)?.remove();
       });
@@ -5984,11 +6619,16 @@ async function renderEmployeeAdd() {
 }
 
 function renderEmployeeManagementHub() {
-  if (!hasRole("system_admin", "principal", "admin") || !has("manage_employees")) {
+  if (!hasRole("system_admin", "principal", "admin", "resource_user", "upper_management") || !has("manage_employees")) {
     throw new Error("إدارة الموظفات متاحة للإدارة المخولة فقط.");
+  }
+  if (hasRole("resource_user")) {
+    page("بيانات الموظفات", "اختاري الخدمة المطلوبة.", `<nav class="student-services-list" aria-label="خدمات بيانات الموظفات">${studentHubLink("employee-add", "إضافة بيانات موظفة", "إنشاء ملف وظيفي جديد لموظفة")}</nav>`);
+    return;
   }
   const links = [
     studentHubLink("employee-account-add", "إضافة حساب للموظفة", "إضافة اسم المستخدم وكلمة المرور"),
+    studentHubLink("employee-account-import", "استيراد حسابات الموظفات", "إنشاء عدة حسابات من ملف Excel دفعة واحدة"),
     studentHubLink("employee-accounts", "عرض حسابات الموظفات", "عرض الحسابات التي تمت إضافتها")
   ];
   page("إدارة الموظفات والصلاحيات", "اختاري الخدمة المطلوبة.", `<nav class="student-services-list" aria-label="خدمات إدارة الموظفات">${links.join("")}</nav>`);
@@ -5996,6 +6636,59 @@ function renderEmployeeManagementHub() {
 
 async function renderEmployeeAccountAdd() {
   await renderEmployeeManagementPage("account-add");
+}
+
+async function renderEmployeeAccountImport() {
+  const canAddEmployee = hasRole("system_admin", "principal", "admin") && has("manage_employees");
+  if (!canAddEmployee) throw new Error("استيراد حسابات الموظفات متاح للإدارة المخولة فقط.");
+  page("استيراد حسابات الموظفات", "ارفعي ملف Excel لإنشاء عدة حسابات دفعة واحدة.", `
+    <div class="notice visible">
+      الأعمدة المطلوبة: اسم الموظفة، رقم الهوية، البريد الإلكتروني، كلمة المرور، رقم الجوال، الرقم الوظيفي، الدور.
+      يمكن كتابة الدور بالعربية أو بالقيمة الإنجليزية مثل teacher.
+    </div>
+    <form id="employeeImportForm" class="form-grid">
+      <div class="field span-2"><label for="employeeImportFile">ملف حسابات الموظفات بصيغة Excel</label><input id="employeeImportFile" type="file" accept=".xlsx" required></div>
+      <div class="form-actions span-2"><button id="previewEmployeeImport" class="btn" type="submit">معاينة الملف</button><button id="commitEmployeeImport" class="btn btn-secondary hidden" type="button">حفظ الحسابات المقبولة</button></div>
+    </form>
+    <div id="employeeImportSummary" class="field-hint"></div>
+    <div id="employeeImportAccepted" class="table-wrap"></div>
+    <div id="employeeImportRejected" class="table-wrap"></div>
+  `);
+  let preview = null;
+  const uploadBody = () => {
+    const body = new FormData();
+    body.append("file", document.querySelector("#employeeImportFile").files[0]);
+    return body;
+  };
+  document.querySelector("#employeeImportForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    await submitSafely(document.querySelector("#previewEmployeeImport"), async () => {
+      try {
+        const result = await apiFetch("/employees/import/preview", { method: "POST", body: uploadBody() });
+        preview = result.data;
+        document.querySelector("#employeeImportSummary").textContent = `مقبول: ${preview.accepted.length} — مرفوض: ${preview.rejected.length}`;
+        document.querySelector("#commitEmployeeImport").classList.toggle("hidden", !preview.accepted.length);
+        renderSimpleTable("#employeeImportAccepted", ["الصف", "الموظفة", "البريد", "الرقم الوظيفي", "الدور"], preview.accepted, (item) => [item.row, item.nameAr, item.email, item.employeeNumber, labels.role[item.role] ?? item.role]);
+        renderSimpleTable("#employeeImportRejected", ["الصف", "الموظفة", "سبب الرفض"], preview.rejected, (item) => [item.row, item.nameAr, item.reason]);
+        setNotice(document.querySelector("#pageNotice"), "success", result.message);
+      } catch (error) { showError(error); }
+    });
+  });
+  document.querySelector("#commitEmployeeImport").addEventListener("click", async () => {
+    if (!preview?.accepted?.length) return;
+    await submitSafely(document.querySelector("#commitEmployeeImport"), async () => {
+      try {
+        const result = await apiFetch("/employees/import/commit", { method: "POST", body: uploadBody() });
+        preview = result.data;
+        document.querySelector("#commitEmployeeImport").classList.add("hidden");
+        document.querySelector("#employeeImportSummary").textContent = `تم إنشاء: ${preview.accepted.length} — مرفوض: ${preview.rejected.length}`;
+        renderSimpleTable("#employeeImportAccepted", ["الصف", "الموظفة", "البريد", "الحالة"], preview.accepted, (item) => [item.row, item.nameAr, item.email, "تم الإنشاء"]);
+        renderSimpleTable("#employeeImportRejected", ["الصف", "الموظفة", "سبب الرفض"], preview.rejected, (item) => [item.row, item.nameAr, item.reason]);
+        setNotice(document.querySelector("#pageNotice"), "success", result.message);
+      } catch (error) { showError(error); }
+    });
+  });
 }
 
 async function renderEmployeeAccounts() {
@@ -6014,6 +6707,7 @@ function renderParentManagement() {
   if (!hasRole("system_admin")) throw new Error("إدارة أولياء الأمور متاحة لمسؤولة النظام فقط.");
   const links = [
     studentHubLink("parent-add", "إضافة ولي أمر", "تسجيل بيانات ولي الأمر وربط أبنائه"),
+    studentHubLink("parent-import", "استيراد أولياء الأمور", "إنشاء عدة حسابات من ملف Excel دفعة واحدة"),
     studentHubLink("parent-list", "عرض أولياء الأمور", "عرض عدد الأبناء المرتبطين بكل ولي أمر")
   ];
   page("إدارة أولياء الأمور", "إضافة أولياء الأمور وربط الأبناء بحساباتهم.", `<nav class="student-services-list" aria-label="خدمات إدارة أولياء الأمور">${links.join("")}</nav>`);
@@ -6046,6 +6740,59 @@ async function renderParentAdd() {
   document.querySelector("#parentStudentSearchButton").addEventListener("click", searchStudents);
   document.querySelector("#parentStudentSearch").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); searchStudents(); } });
   document.querySelector("#parentForm").addEventListener("submit", async (event) => { event.preventDefault(); if (!event.currentTarget.reportValidity()) return; if (!selectedStudents.size) { setNotice(document.querySelector("#pageNotice"), "error", "ابحثي وأضيفي ابنًا واحدًا على الأقل بعد التأكد من بياناته."); return; } const button = event.currentTarget.querySelector("button[type=submit]"); button.disabled = true; try { const result = await api.post("/parent-admin", { nameAr: document.querySelector("#parentName").value, nationalId: document.querySelector("#parentNationalId").value, phone: document.querySelector("#parentPhone").value, email: document.querySelector("#parentEmail").value, password: document.querySelector("#parentPassword").value, studentIds: [...selectedStudents.keys()] }); setNotice(document.querySelector("#pageNotice"), "success", result.message); event.currentTarget.reset(); selectedStudents.clear(); studentsArea.replaceChildren(); document.querySelector("#parentStudentsStatus").textContent = "تم الحفظ. ابحثي لإضافة ولي أمر آخر."; } catch (error) { setNotice(document.querySelector("#pageNotice"), "error", error.message); } finally { button.disabled = false; } });
+}
+
+async function renderParentImport() {
+  if (!hasRole("system_admin")) throw new Error("استيراد أولياء الأمور متاح لمسؤولة النظام فقط.");
+  page("استيراد أولياء الأمور", "ارفعي ملف Excel لإنشاء عدة حسابات وربط الأبناء دفعة واحدة.", `
+    <div class="notice visible">
+      يجب أن يحتوي الصف الأول على الأعمدة التالية: اسم ولي الأمر، رقم هوية ولي الأمر، البريد الإلكتروني، رقم الجوال، كلمة المرور، أرقام هويات الأبناء.
+      افصلي أرقام هويات الأبناء بفاصلة عربية أو إنجليزية.
+    </div>
+    <form id="parentImportForm" class="form-grid">
+      <div class="field span-2"><label for="parentImportFile">ملف أولياء الأمور بصيغة Excel</label><input id="parentImportFile" type="file" accept=".xlsx" required></div>
+      <div class="form-actions span-2"><button id="previewParentImport" class="btn" type="submit">معاينة الملف</button><button id="commitParentImport" class="btn btn-secondary hidden" type="button">حفظ الحسابات المقبولة</button></div>
+    </form>
+    <div id="parentImportSummary" class="field-hint"></div>
+    <div id="parentImportAccepted" class="table-wrap"></div>
+    <div id="parentImportRejected" class="table-wrap"></div>
+  `);
+
+  let preview = null;
+  const uploadBody = () => {
+    const body = new FormData();
+    body.append("file", document.querySelector("#parentImportFile").files[0]);
+    return body;
+  };
+  document.querySelector("#parentImportForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    await submitSafely(document.querySelector("#previewParentImport"), async () => {
+      try {
+        const result = await apiFetch("/parent-admin/import/preview", { method: "POST", body: uploadBody() });
+        preview = result.data;
+        document.querySelector("#parentImportSummary").textContent = `مقبول: ${preview.accepted.length} — مرفوض: ${preview.rejected.length}`;
+        document.querySelector("#commitParentImport").classList.toggle("hidden", !preview.accepted.length);
+        renderSimpleTable("#parentImportAccepted", ["الصف", "ولي الأمر", "البريد", "عدد الأبناء"], preview.accepted, (item) => [item.row, item.nameAr, item.email, item.studentCount]);
+        renderSimpleTable("#parentImportRejected", ["الصف", "ولي الأمر", "سبب الرفض"], preview.rejected, (item) => [item.row, item.nameAr, item.reason]);
+        setNotice(document.querySelector("#pageNotice"), "success", result.message);
+      } catch (error) { showError(error); }
+    });
+  });
+  document.querySelector("#commitParentImport").addEventListener("click", async () => {
+    if (!preview?.accepted?.length) return;
+    await submitSafely(document.querySelector("#commitParentImport"), async () => {
+      try {
+        const result = await apiFetch("/parent-admin/import/commit", { method: "POST", body: uploadBody() });
+        setNotice(document.querySelector("#pageNotice"), "success", result.message);
+        preview = result.data;
+        document.querySelector("#commitParentImport").classList.add("hidden");
+        document.querySelector("#parentImportSummary").textContent = `تم إنشاء: ${preview.accepted.length} — مرفوض: ${preview.rejected.length}`;
+        renderSimpleTable("#parentImportAccepted", ["الصف", "ولي الأمر", "البريد", "الحالة"], preview.accepted, (item) => [item.row, item.nameAr, item.email, "تم الإنشاء"]);
+        renderSimpleTable("#parentImportRejected", ["الصف", "ولي الأمر", "سبب الرفض"], preview.rejected, (item) => [item.row, item.nameAr, item.reason]);
+      } catch (error) { showError(error); }
+    });
+  });
 }
 
 async function renderParentList() {
@@ -6144,7 +6891,6 @@ async function saveEmployee(event) {
     nameEn: value("employeeNameEn"),
     nationalId: value("employeeNationalId"),
     email: value("employeeEmail").toLowerCase(),
-    password: value("employeePassword"),
     phone: value("employeePhone"),
     employeeNumber: value("employeeNumberInput"),
     role: value("employeeRoleInput"),
@@ -6156,7 +6902,6 @@ async function saveEmployee(event) {
     specialization: value("employeeSpecialization"),
     status: "active"
   };
-  if (value("employeeAuthUid")) data.authUid = value("employeeAuthUid");
   await submitSafely(button, async () => { try { const result = await api.post("/employees", data); setNotice(document.querySelector("#pageNotice"), "success", result.message); event.currentTarget.reset(); state.employees = null; } catch (error) { showError(error); } });
 }
 
@@ -6237,6 +6982,8 @@ async function route() {
     "attendance-entry": renderAttendance,
     "attendance-monitor": renderAttendanceMonitor,
     schedule: renderSchedule,
+    coverage: renderCoverage,
+    "coverage-mine": renderMyCoverage,
     "schedule-my": renderMySchedule,
     "schedule-all": renderAllSchedules,
     "schedule-manage": renderScheduleManage,
@@ -6288,10 +7035,13 @@ async function route() {
     "support-history": renderSupportHistory,
     "support-manage": renderSupportManage,
     invoices: renderInvoices,
+    "invoice-add": renderInvoices,
+    "invoice-history": renderInvoices,
     "employee-data": renderEmployeeData,
     "employee-data-view": renderEmployeeDataView,
     "employee-add": renderEmployeeAdd,
     "employee-account-add": renderEmployeeAccountAdd,
+    "employee-account-import": renderEmployeeAccountImport,
     "employee-accounts": renderEmployeeAccounts,
     "employee-permissions": renderEmployeePermissions,
     performance: renderPerformance,
@@ -6304,6 +7054,7 @@ async function route() {
     parents: renderParentManagement,
     "parent-add": renderParentAdd,
     "parent-list": renderParentList,
+    "parent-import": renderParentImport,
     "site-settings": renderSiteSettings
   };
   const handler = routes[name] ?? renderDashboard;

@@ -72,6 +72,7 @@ export async function saveAttendance(user, data) {
       createdAt: FieldValue.serverTimestamp()
     });
   });
+  await notifyLinkedParents({ ...data, id: recordId, className: classSnapshot.name }, data.entries, []);
   return recordId;
 }
 
@@ -82,7 +83,23 @@ export async function listAttendance(filters) {
   if (filters.date) records = records.filter((record) => record.date === filters.date);
   if (filters.teacherUid) records = records.filter((record) => record.teacherUid === filters.teacherUid);
   if (filters.status) records = records.filter((record) => record.entries?.some((entry) => entry.status === filters.status));
+  const studentIds = [...new Set(records.flatMap((record) => (record.entries ?? []).map((entry) => entry.studentId)))];
+  const studentSnapshots = await Promise.all(studentIds.map((studentId) => db.collection("students").doc(studentId).get()));
+  const studentNames = new Map(studentSnapshots.filter((student) => student.exists).map((student) => [student.id, student.data().fullName]));
   return records
+    .flatMap((record) => (record.entries ?? []).map((entry) => ({
+      id: record.id,
+      date: record.date,
+      classId: record.classId,
+      className: record.className,
+      teacherName: record.teacherName,
+      weekNumber: record.weekNumber,
+      entries: record.entries ?? [],
+      studentId: entry.studentId,
+      studentName: studentNames.get(entry.studentId) ?? "طالب غير مسجل",
+      status: entry.status
+    })))
+    .filter((record) => !filters.status || record.status === filters.status)
     .sort((a, b) => String(b.date ?? "").localeCompare(String(a.date ?? "")))
     .slice(0, filters.limit);
 }
@@ -91,5 +108,38 @@ export async function updateAttendance(user, recordId, entries) {
   const ref = db.collection("attendance").doc(recordId);
   const existing = await ref.get();
   if (!existing.exists) throw new AppError(404, "ATTENDANCE_NOT_FOUND", "سجل الغياب غير موجود.");
+  const record = { id: recordId, ...existing.data() };
   await ref.update({ entries, updatedBy: user.uid, updatedAt: FieldValue.serverTimestamp() });
+  await notifyLinkedParents(record, entries, record.entries ?? []);
+}
+
+async function notifyLinkedParents(record, entries, previousEntries) {
+  const previous = new Map(previousEntries.map((entry) => [entry.studentId, entry.status]));
+  const alerts = entries.filter((entry) => ["excused", "unexcused", "late"].includes(entry.status)
+    && previous.get(entry.studentId) !== entry.status);
+  if (!alerts.length) return;
+
+  const students = await Promise.all(alerts.map((entry) => db.collection("students").doc(entry.studentId).get()));
+  const studentNames = new Map(students.filter((snapshot) => snapshot.exists).map((snapshot) => [snapshot.id, snapshot.data().fullName]));
+  const parentQueries = await Promise.all(alerts.map((entry) => db.collection("parents").where("studentIds", "array-contains", entry.studentId).limit(50).get()));
+  const batch = db.batch();
+  alerts.forEach((entry, index) => {
+    const statusLabel = { excused: "غائب بعذر", unexcused: "غائب دون عذر", late: "متأخر" }[entry.status];
+    parentQueries[index].docs.forEach((parent) => {
+      const recipientUid = parent.data().authUid ?? parent.id;
+      if (!recipientUid) return;
+      batch.set(db.collection("notifications").doc(), {
+        recipientUid,
+        type: "attendance_alert",
+        title: `تنبيه حضور: ${studentNames.get(entry.studentId) ?? "الطالب"}`,
+        message: `تم تسجيل حالة الطالب ${statusLabel} بتاريخ ${record.date} في ${record.className ?? "الفصل"}.`,
+        studentId: entry.studentId,
+        attendanceId: record.id,
+        status: entry.status,
+        read: false,
+        createdAt: FieldValue.serverTimestamp()
+      });
+    });
+  });
+  await batch.commit();
 }

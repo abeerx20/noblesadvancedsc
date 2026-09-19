@@ -67,10 +67,11 @@ app.use(cors({
 
 app.use("/api", rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 600,
+  limit: 2000,
   standardHeaders: "draft-8",
   legacyHeaders: false,
-  message: { success: false, error: { code: "RATE_LIMITED", message: "تم إرسال طلبات كثيرة. حاولي بعد قليل." } }
+  skipSuccessfulRequests: false,
+  message: { success: false, error: { code: "RATE_LIMITED", message: "تم إرسال طلبات كثيرة. انتظري قليلًا ثم حاولي مجددًا." } }
 }));
 app.use(express.json({ limit: "150kb", strict: true }));
 app.use(express.urlencoded({ extended: false, limit: "50kb" }));

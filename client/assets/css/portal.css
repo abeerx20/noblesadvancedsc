@@ -1,3 +1,74 @@
+.coverage-print-sheet {
+  margin: 0 0 18px;
+  border: 0;
+  padding: 0;
+}
+
+.coverage-print-sheet h2 {
+  display: none;
+}
+
+.coverage-print-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border: 1px solid #e1e8e5;
+  border-radius: 10px;
+  padding: 11px 14px;
+  background: var(--green-050);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.coverage-print-meta strong {
+  color: var(--green-900);
+  font-weight: 600;
+}
+
+.coverage-day table {
+  width: 100%;
+}
+
+.coverage-absence-form {
+  grid-template-columns: minmax(170px, 1fr) minmax(220px, 1.4fr) auto;
+  align-items: end;
+}
+
+.coverage-absence-form .form-actions {
+  margin: 0;
+}
+
+.coverage-absence-form .btn {
+  min-width: 132px;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .coverage-absence-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .coverage-print-sheet {
+    border: 0;
+  }
+
+  .coverage-print-sheet h2 {
+    display: block;
+    margin: 0 0 1rem;
+    color: #111;
+    text-align: center;
+    font-size: 20px;
+  }
+
+  .coverage-day {
+    break-inside: avoid;
+  }
+}
+
 /* =========================================================
    بوابة موظفات مدارس النبلاء المتقدمة
    تصميم مؤسسي أصلي بهوية خضراء وواجهة عربية RTL
@@ -1827,17 +1898,20 @@ input[type="month"] {
 
 .portal-password-wrap {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .portal-password-wrap input {
   width: 100%;
-  padding-left: 42px;
+  padding-left: 14px;
+  padding-right: 42px;
 }
 
 .portal-password-toggle {
   position: absolute;
   top: 50%;
-  left: 8px;
+  right: 12px;
   transform: translateY(-50%);
   border: 0;
   background: transparent;
@@ -1845,6 +1919,7 @@ input[type="month"] {
   cursor: pointer;
   font-size: 16px;
   line-height: 1;
+  z-index: 1;
 }
 
 .page-back-link {
@@ -2789,6 +2864,65 @@ tbody tr:hover {
   }
 }
 
+@media (max-width: 560px) {
+  .portal-header {
+    min-height: 66px;
+  }
+
+  .portal-header .brand-full-logo {
+    width: 150px;
+    height: 46px;
+  }
+
+  .portal-header .brand-name {
+    display: none;
+  }
+
+  .portal-header .header-actions {
+    gap: 5px;
+  }
+
+  .portal-header .header-actions .btn {
+    min-height: 32px;
+    padding: 6px 8px;
+    font-size: 9px;
+  }
+
+  .portal-strip {
+    top: 66px;
+  }
+
+  .portal-main {
+    min-height: calc(100vh - 104px);
+  }
+
+  .content-card {
+    padding: 13px;
+  }
+
+  .page-heading h1 {
+    line-height: 1.6;
+  }
+
+  .form-actions .btn,
+  .form-actions .btn-secondary {
+    width: 100%;
+  }
+
+  .table-wrap {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-wrap table {
+    min-width: 640px;
+  }
+
+  .modal-card,
+  dialog {
+    max-width: calc(100vw - 24px);
+  }
+}
+
 /* Official A4 print stationery shared by portal pages. */
 .official-print-header {
   display: none;
@@ -3225,8 +3359,8 @@ tbody tr:hover {
 
 .schedule-tabs {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: min(380px, 100%);
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  width: min(520px, 100%);
   gap: 6px;
   margin: 0 auto 24px;
   padding: 6px;
@@ -4898,36 +5032,36 @@ dialog::backdrop {
 
 .select-material-btn {
   position: relative;
-  background-color: #91a29f;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  padding: 9px 18px;
+  border: 1px solid #0f5f52;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #dfeae8 0%, #b9cfc9 100%);
   color: #05332a;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 22px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
+  line-height: 1.2;
   cursor: pointer;
-  transition: all 0.25s ease;
-  min-width: 80px;
+  box-shadow: 0 2px 6px rgba(5, 51, 42, 0.12);
+  transition: all 0.2s ease;
 }
 
-
-/* عند تمرير الماوس */
 .select-material-btn:hover {
-  background-color: #9aaba7;
+  background: linear-gradient(180deg, #e7f1ee 0%, #c7d9d5 100%);
   transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(5, 51, 42, 0.15);
 }
 
-
-/* عند الضغط */
 .select-material-btn:active {
-  transform: scale(0.97);
+  transform: translateY(0) scale(0.98);
 }
 
-
-/* حالة التركيز */
 .select-material-btn:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(8, 120, 95, 0.2);
+  box-shadow: 0 0 0 3px rgba(8, 120, 95, 0.22), 0 4px 10px rgba(5, 51, 42, 0.15);
 }
 
 /* حاوية نموذج طلب المواد */
@@ -6173,63 +6307,4 @@ label:has(#agreement) {
   white-space: normal;
   overflow-wrap: anywhere;
   text-align: center;
-}
-
-@media (max-width: 560px) {
-  .portal-header {
-    min-height: 66px;
-  }
-
-  .portal-header .brand-full-logo {
-    width: 150px;
-    height: 46px;
-  }
-
-  .portal-header .brand-name {
-    display: none;
-  }
-
-  .portal-header .header-actions {
-    gap: 5px;
-  }
-
-  .portal-header .header-actions .btn {
-    min-height: 32px;
-    padding: 6px 8px;
-    font-size: 9px;
-  }
-
-  .portal-strip {
-    top: 66px;
-  }
-
-  .portal-main {
-    min-height: calc(100vh - 104px);
-  }
-
-  .content-card {
-    padding: 13px;
-  }
-
-  .page-heading h1 {
-    line-height: 1.6;
-  }
-
-  .form-actions .btn,
-  .form-actions .btn-secondary {
-    width: 100%;
-  }
-
-  .table-wrap {
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .table-wrap table {
-    min-width: 640px;
-  }
-
-  .modal-card,
-  dialog {
-    max-width: calc(100vw - 24px);
-  }
 }

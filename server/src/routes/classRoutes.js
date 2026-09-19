@@ -8,7 +8,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const classRoutes = Router();
 classRoutes.use(authenticate);
-classRoutes.get("/", requirePermission("view_students", "manage_students", "enter_attendance", "view_schedules", "manage_schedules"), asyncHandler(controller.index));
+classRoutes.get("/", requirePermission("view_students", "manage_students", "enter_attendance", "manage_absence", "view_schedules", "manage_schedules"), asyncHandler(controller.index));
 classRoutes.post("/", requirePermission("manage_students"), validate(classSchema), asyncHandler(controller.create));
 classRoutes.put("/:id", requirePermission("manage_students"), validate(idParamSchema, "params"), validate(classSchema), asyncHandler(controller.update));
 classRoutes.delete("/:id", requirePermission("manage_students"), validate(idParamSchema, "params"), asyncHandler(controller.remove));

@@ -13,8 +13,11 @@ export const authenticate = asyncHandler(async (req, _res, next) => {
   let decodedToken;
   try {
     decodedToken = await auth.verifyIdToken(match[1], true);
-  } catch {
-    throw new AppError(401, "INVALID_TOKEN", "انتهت جلسة الدخول أو أنها غير صالحة. سجّلي الدخول مرة أخرى.");
+  } catch (error) {
+    const message = error instanceof Error && error.message?.includes("Could not load the default credentials")
+      ? "خدمة Firebase غير مُهيأة في السيرفر. أضف ملف service account الصحيح أو حدّث GOOGLE_APPLICATION_CREDENTIALS."
+      : "انتهت جلسة الدخول أو أنها غير صالحة. سجّلي الدخول مرة أخرى.";
+    throw new AppError(401, "INVALID_TOKEN", message);
   }
 
   req.user = await loadIdentity(decodedToken);
