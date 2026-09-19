@@ -231,6 +231,7 @@ const parentRouteByPage = Object.freeze({
   "coverage-mine": "coverage-mine",
   "employee-data-view": "employee-data",
   "employee-add": "employees",
+  "employee-data-add": "employee-data",
   "employee-account-add": "employees",
   "employee-account-import": "employees",
   "employee-accounts": "employees",
@@ -312,6 +313,7 @@ const scheduleBreadcrumbs = {
 const administrativeBreadcrumbs = {
   "employee-data": ["إداري", "الخدمات الإدارية", "بيانات الموظفة"],
   "employee-data-view": ["إداري", "الخدمات الإدارية", "بيانات الموظفة", "عرض بياناتي الوظيفية"],
+  "employee-data-add": ["إداري", "الخدمات الإدارية", "بيانات الموظفة", "إضافة بيانات موظفة"],
   "employee-add": ["إداري", "إدارة النظام", "إدارة الموظفات والصلاحيات", "إضافة موظفة وإدخال بياناتها"],
   "employee-account-add": ["إداري", "إدارة النظام", "إدارة الموظفات والصلاحيات", "إضافة حساب الموظفة"],
   "employee-account-import": ["إداري", "إدارة النظام", "إدارة الموظفات والصلاحيات", "استيراد حسابات الموظفات"],
@@ -5337,7 +5339,7 @@ function renderEmployeeData() {
   ];
   if (hasRole("system_admin", "resource_user") && has("manage_employees")) {
     links.push(studentHubLink(
-      "employee-add",
+      "employee-data-add",
       "إضافة بيانات موظفة",
       "إنشاء ملف وظيفي جديد لموظفة"
     ));
@@ -6551,8 +6553,8 @@ async function renderEmployeeManagementPage(mode) {
     </div>
   `;
   page(
-    accountAddMode ? "إضافة حساب موظفة" : addMode ? "إضافة موظفة وإدخال بياناتها" : "إدارة صلاحيات الموظفات",
-    accountAddMode ? "أضيفي اسم المستخدم وكلمة المرور للموظفة." : addMode ? "أدخلي البيانات الوظيفية لإنشاء ملف الموظفة." : "اختاري الموظفة ثم حددي الصلاحيات المطلوبة.",
+    accountAddMode ? "إضافة حساب موظفة" : addMode ? "إضافة بيانات موظفة" : "إدارة صلاحيات الموظفات",
+    accountAddMode ? "أضيفي اسم المستخدم وكلمة المرور للموظفة." : addMode ? "أدخلي البيانات الوظيفية وبيانات العقد فقط." : "اختاري الموظفة ثم حددي الصلاحيات المطلوبة.",
     accountAddMode ? accountForm : addMode ? employeeForm : permissionsPanel
   );
   [
@@ -6623,7 +6625,7 @@ function renderEmployeeManagementHub() {
     throw new Error("إدارة الموظفات متاحة للإدارة المخولة فقط.");
   }
   if (hasRole("resource_user")) {
-    page("بيانات الموظفات", "اختاري الخدمة المطلوبة.", `<nav class="student-services-list" aria-label="خدمات بيانات الموظفات">${studentHubLink("employee-add", "إضافة بيانات موظفة", "إنشاء ملف وظيفي جديد لموظفة")}</nav>`);
+    page("بيانات الموظفات", "اختاري الخدمة المطلوبة.", `<nav class="student-services-list" aria-label="خدمات بيانات الموظفات">${studentHubLink("employee-data-add", "إضافة بيانات موظفة", "إدخال بيانات الموظفة وبيانات عقدها")}</nav>`);
     return;
   }
   const links = [
@@ -7040,6 +7042,7 @@ async function route() {
     "employee-data": renderEmployeeData,
     "employee-data-view": renderEmployeeDataView,
     "employee-add": renderEmployeeAdd,
+    "employee-data-add": renderEmployeeAdd,
     "employee-account-add": renderEmployeeAccountAdd,
     "employee-account-import": renderEmployeeAccountImport,
     "employee-accounts": renderEmployeeAccounts,
