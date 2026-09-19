@@ -356,7 +356,7 @@ function setupDateInputs(root) {
     input.setAttribute("placeholder", "DD / MM / YYYY");
     input.setAttribute("lang", "en-GB");
     input.setAttribute("dir", "ltr");
-    input.style.textAlign = "left";
+    input.style.textAlign = "right";
     input.type = "text";
     input.inputMode = "numeric";
     input.value = formatDisplayDate(input.value);
