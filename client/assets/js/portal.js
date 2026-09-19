@@ -369,7 +369,7 @@ function setupDateInputs(root) {
     const pickerButton = document.createElement("button");
     pickerButton.type = "button";
     pickerButton.className = "date-picker-button";
-    pickerButton.textContent = "▣";
+    pickerButton.textContent = "";
     pickerButton.setAttribute("aria-label", "اختيار التاريخ من التقويم");
     const dateControl = document.createElement("div");
     dateControl.className = "date-picker-control";
