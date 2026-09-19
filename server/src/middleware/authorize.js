@@ -8,7 +8,7 @@ export function requirePermission(...requiredPermissions) {
 
     const granted = new Set(req.user?.permissions ?? []);
     // النظامي: system_admin يتجاوز الصلاحيات الوظيفية فقط بعد التحقق من هوية Firebase
-    if (req.user?.employee?.role === "system_admin") return next();
+    if (["system_admin", "upper_management"].includes(req.user?.employee?.role)) return next();
 
     if (!requiredPermissions.some((permission) => granted.has(permission))) {
       return next(
@@ -26,6 +26,7 @@ export function requirePermission(...requiredPermissions) {
 
 export function requireAllPermissions(...requiredPermissions) {
   return function allPermissionsGuard(req, _res, next) {
+    if (["system_admin", "upper_management"].includes(req.user?.employee?.role)) return next();
     const granted = new Set(req.user?.permissions ?? []);
     if (!requiredPermissions.every((permission) => granted.has(permission))) {
       return next(new AppError(403, "FORBIDDEN", "لا توجد لديك الصلاحيات الكافية لتنفيذ هذه العملية."));
