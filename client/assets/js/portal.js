@@ -369,11 +369,14 @@ function setupDateInputs(root) {
     const pickerButton = document.createElement("button");
     pickerButton.type = "button";
     pickerButton.className = "date-picker-button";
-    pickerButton.textContent = "📅";
+    pickerButton.textContent = "▣";
     pickerButton.setAttribute("aria-label", "اختيار التاريخ من التقويم");
     input.insertAdjacentElement("afterend", pickerButton);
     pickerButton.insertAdjacentElement("afterend", picker);
-    pickerButton.addEventListener("click", () => picker.showPicker?.());
+    pickerButton.addEventListener("click", () => {
+      if (picker.showPicker) picker.showPicker();
+      else picker.click();
+    });
     picker.addEventListener("change", () => {
       input.value = formatDisplayDate(picker.value);
     });

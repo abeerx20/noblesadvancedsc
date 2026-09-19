@@ -1301,6 +1301,10 @@ input[type="month"] {
   min-width: 220px;
 }
 
+.field:has(.date-picker-button) {
+  position: relative;
+}
+
 .date-picker-button {
   position: absolute;
   left: 10px;
@@ -1309,12 +1313,9 @@ input[type="month"] {
   border: 0;
   padding: 2px;
   background: transparent;
+  color: #526c65;
   cursor: pointer;
   transform: translateY(-50%);
-}
-
-.field:has(.date-picker-button) {
-  position: relative;
 }
 
 .date-picker-native {
