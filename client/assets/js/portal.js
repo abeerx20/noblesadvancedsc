@@ -6588,6 +6588,8 @@ async function renderEmployeeManagementPage(mode) {
       englishNameInput.style.textAlign = "right";
     }
     const roleSelect = document.querySelector("#employeeRoleInput");
+    roleSelect.previousElementSibling?.querySelector("label")?.replaceChildren(document.createTextNode("المسمى الوظيفي"));
+    roleSelect.querySelector('option[value=""]')?.replaceChildren(document.createTextNode("اختاري المسمى الوظيفي"));
     if (!roleSelect.querySelector('option[value="resource_user"]')) {
       roleSelect.insertAdjacentHTML("beforeend", '<option value="resource_user">الموارد البشرية والمالية</option>');
     }
@@ -6599,7 +6601,6 @@ async function renderEmployeeManagementPage(mode) {
     form.querySelector(".form-actions").insertAdjacentHTML("beforebegin", `
     <div class="field" ><label for="employeeNationalId">رقم الهوية الوطنية</label><input id="employeeNationalId" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required dir="ltr"></div>
       <div class="field"><label for="employeePhone">رقم الجوال</label><input id="employeePhone" type="tel" maxlength="12" required dir="ltr"></div>
-      <div class="field"><label for="employeeDepartment">القسم</label><input id="employeeDepartment" maxlength="100" required></div>
       <div class="field"><label for="employeeHireDate">تاريخ المباشرة</label><input id="employeeHireDate" type="date" required></div>
       <div class="field"><label for="employeeEmploymentType">نوع العقد</label><select id="employeeEmploymentType" required><option value="">اختاري النوع</option><option value="full_time">دوام كامل</option><option value="part_time">دوام جزئي</option><option value="contract">عقد</option></select></div>
       <div class="field"><label for="employeeEmploymentStatus">الحالة الوظيفية</label><select id="employeeEmploymentStatus" required><option value="">اختاري الحالة</option><option value="active">على رأس العمل</option><option value="on_leave">في إجازة</option><option value="suspended">موقوفة</option><option value="terminated">منتهية الخدمة</option></select></div>
@@ -6896,7 +6897,6 @@ async function saveEmployee(event) {
     phone: value("employeePhone"),
     employeeNumber: value("employeeNumberInput"),
     role: value("employeeRoleInput"),
-    department: value("employeeDepartment"),
     hireDate: value("employeeHireDate"),
     employmentType: value("employeeEmploymentType"),
     employmentStatus: value("employeeEmploymentStatus"),

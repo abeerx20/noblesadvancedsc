@@ -379,7 +379,7 @@ export const employeeSchema = z.object({
   phone: z.string().trim().regex(/^(?:9665\d{8}|05\d{8})$/, "رقم الجوال غير صالح."),
   employeeNumber: clean(1, 30, "الرقم الوظيفي"),
   role: z.enum(["teacher", "principal", "vice_principal", "hr", "resource_user", "it", "it_teacher", "admin", "registrar", "accountant", "counselor", "doctor", "system_admin", "schedule_admin", "upper_management"]),
-  department: clean(2, 100, "القسم"),
+  department: clean(2, 100, "القسم").optional(),
   hireDate: date,
   employmentType: z.enum(["full_time", "part_time", "contract"], { error: "نوع العقد مطلوب." }),
   employmentStatus: z.enum(["active", "on_leave", "suspended", "terminated"], { error: "الحالة الوظيفية مطلوبة." }),
