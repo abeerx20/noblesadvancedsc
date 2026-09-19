@@ -1,6 +1,6 @@
 ﻿import { api, apiFetch, downloadFile } from "./api.js";
 import { logout } from "./firebase-client.js";
-import { clearNotice, createCell, fillSelect, formatDate, setNotice, submitSafely } from "./ui.js";
+import { clearNotice, createCell, fillSelect, formatDate, setNotice, submitSafely } from "./ui.js?v=20260919-3";
 import {
   confirmDelete,
   confirmSave,
@@ -348,37 +348,42 @@ function setSidebarOpen(open) {
 }
 
 function setupDateInputs(root) {
-  root.querySelectorAll('input[type="date"], input[type="datetime-local"], input[type="month"], input[data-fixed-date="true"]').forEach((input) => {
+  root.querySelectorAll('input[type="date"], input[data-fixed-date="true"]').forEach((input) => {
     if (input.dataset.dateInputReady) return;
     input.dataset.dateInputReady = "true";
     input.dataset.dateInputType = input.type;
+    input.dataset.dateIsoValue = input.value;
     input.setAttribute("placeholder", "DD / MM / YYYY");
     input.setAttribute("lang", "en-GB");
     input.setAttribute("dir", "ltr");
-    input.style.textAlign = "right";
+    input.style.textAlign = "left";
     input.type = "text";
     input.inputMode = "numeric";
-    input.addEventListener("focus", () => {
-      input.type = input.dataset.fixedDate === "true" ? "text" : input.dataset.dateInputType;
-      input.setAttribute("lang", "en-GB");
-      input.setAttribute("dir", "ltr");
-      input.style.textAlign = "right";
+    input.value = formatDisplayDate(input.value);
+    input.addEventListener("input", () => {
+      const digits = input.value.replace(/\D/g, "").slice(0, 8);
+      input.value = formatDisplayDateDigits(digits);
     });
-    input.addEventListener("blur", () => {
-      if (!input.value) {
-        input.type = "text";
-        input.setAttribute("lang", "ar");
-        input.setAttribute("dir", "ltr");
-        input.style.textAlign = "right";
-      }
-    });
-    if (input.dataset.fixedDate === "true") {
-      input.addEventListener("input", () => {
-        const digits = input.value.replace(/\D/g, "").slice(0, 8);
-        input.value = digits.replace(/(\d{2})(\d{2})(\d{0,4})/, "$1 / $2 / $3").replace(/ \/ $$/, "");
-      });
-    }
+    input.form?.addEventListener("submit", () => {
+      input.value = normalizeDisplayDate(input.value);
+    }, { once: true });
   });
+}
+
+function formatDisplayDate(value) {
+  const match = String(value ?? "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return match ? `${match[3]} / ${match[2]} / ${match[1]}` : value;
+}
+
+function formatDisplayDateDigits(digits) {
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)} / ${digits.slice(2)}`;
+  return `${digits.slice(0, 2)} / ${digits.slice(2, 4)} / ${digits.slice(4)}`;
+}
+
+function normalizeDisplayDate(value) {
+  const match = String(value ?? "").match(/^(\d{2})\s*\/\s*(\d{2})\s*\/\s*(\d{4})$/);
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : value;
 }
 
 function page(title, description, body) {

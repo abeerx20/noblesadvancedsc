@@ -52,6 +52,9 @@ export function fillSelect(select, items, getValue, getLabel, placeholder = "ا�
 export function formatDate(value) {
   if (!value) return "—";
   const date = new Date(value.length === 10 ? `${value}T12:00:00` : value);
-  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium" }).format(date);
+  if (Number.isNaN(date.getTime())) return value;
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day} / ${month} / ${date.getFullYear()}`;
 }
 
