@@ -128,7 +128,7 @@ export async function createEmployee(data, actor) {
       manage_absence: true, attendance_override: true, view_schedules: true, view_all_schedules: true, manage_schedules: true, view_substitution_assignments: true,
       request_leave: true, manage_leave_requests: true, manage_leave_hr_requests: true, request_training: true, manage_training_requests: true,
       issue_work_assignments: true, view_all_work_assignments: true, request_assets: true, manage_assets: true, request_loans: true, manage_loans: true,
-      manage_employees: true, manage_announcements: true, request_materials: true, manage_materials: true, manage_invoices: true,
+      manage_employees: true, manage_permissions: true, manage_announcements: true, request_materials: true, manage_materials: true, manage_invoices: true,
       request_suggestions: true, request_support: true, manage_support: true, request_absence: true, request_community: true, manage_community: true
     } : employeeData.role === "resource_user" ? {
       manage_employees: true,
@@ -177,7 +177,7 @@ export async function getAccess(targetUid) {
     manage_absence: true, attendance_override: true, view_schedules: true, view_all_schedules: true, manage_schedules: true, view_substitution_assignments: true,
     request_leave: true, manage_leave_requests: true, manage_leave_hr_requests: true, request_training: true, manage_training_requests: true,
     issue_work_assignments: true, view_all_work_assignments: true, request_assets: true, manage_assets: true, request_loans: true, manage_loans: true,
-    manage_employees: true, manage_announcements: true, request_materials: true, manage_materials: true, manage_invoices: true,
+    manage_employees: true, manage_permissions: true, manage_announcements: true, request_materials: true, manage_materials: true, manage_invoices: true,
     request_suggestions: true, request_support: true, manage_support: true, request_absence: true, request_community: true, manage_community: true
   } : employee?.role === "resource_user" ? {
     manage_employees: true,

@@ -84,7 +84,7 @@ export async function loadIdentity(decodedToken) {
       "manage_absence", "attendance_override", "view_schedules", "view_all_schedules", "manage_schedules", "view_substitution_assignments",
       "request_leave", "manage_leave_requests", "manage_leave_hr_requests", "request_training", "manage_training_requests",
       "issue_work_assignments", "view_all_work_assignments", "request_assets", "manage_assets", "request_loans", "manage_loans",
-      "manage_employees", "manage_announcements", "request_materials", "manage_materials", "manage_invoices",
+      "manage_employees", "manage_permissions", "manage_announcements", "request_materials", "manage_materials", "manage_invoices",
       "request_suggestions", "request_support", "manage_support", "request_absence", "request_community", "manage_community"
     );
   }

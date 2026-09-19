@@ -146,7 +146,7 @@ const menuGroups = [
           {
             route: "employee-permissions",
             label: "صلاحيات الموظفات",
-            roles: ["system_admin"],
+            roles: ["system_admin", "upper_management"],
             any: ["manage_permissions"]
           },
           {
@@ -188,7 +188,8 @@ function has(permission) {
 
 function hasRole(...roles) {
   const role = state.me?.employee?.role;
-  return roles.includes(role) || (role === "upper_management" && roles.includes("admin"));
+  return roles.includes(role)
+    || (role === "upper_management" && (roles.includes("admin") || roles.includes("system_admin")));
 }
 
 function isTeachingRole() {
@@ -293,7 +294,6 @@ const studentBreadcrumbs = {
   "student-list": ["أكاديمي", "شؤون الطلاب والفصول", "قوائم الطلاب", "عرض قوائم الطلاب"],
   "student-management": ["أكاديمي", "شؤون الطلاب والفصول", "قوائم الطلاب", "إدارة الطلاب"],
   "student-add": ["أكاديمي", "شؤون الطلاب والفصول", "قوائم الطلاب", "إضافة طالب"],
-  "student-upload": ["أكاديمي", "شؤون الطلاب والفصول", "قوائم الطلاب", "رفع ملف Excel"],
   "student-review": ["أكاديمي", "شؤون الطلاب والفصول", "قوائم الطلاب", "المسودات والاعتماد"],
   classes: ["أكاديمي", "شؤون الطلاب والفصول", "قوائم الطلاب", "إدارة الفصول"],
   reports: ["أكاديمي", "التقارير", "التقارير"],
@@ -391,7 +391,7 @@ function page(title, description, body) {
   const backButton = routeName === "dashboard"
     ? ""
     : '<button id="pageBackButton" class="btn btn-secondary btn-small no-print" type="button">رجوع</button>';
-  content.innerHTML = `<section class="content-card page-card">${breadcrumb}<div class="page-heading"><div><h1>${title}</h1><p>${description}</p></div>${backButton}</div><div id="pageNotice" class="notice" role="alert" aria-live="polite"></div>${body}</section>`;
+  content.innerHTML = `<section class="content-card page-card page-card-${routeName}">${breadcrumb}<div class="page-heading"><div><h1>${title}</h1><p>${description}</p></div>${backButton}</div><div id="pageNotice" class="notice" role="alert" aria-live="polite"></div>${body}</section>`;
   setupDateInputs(content);
   document.querySelector("#pageBackButton")?.addEventListener("click", () => {
     const linksContainer = document.querySelector("#linksContainer");
