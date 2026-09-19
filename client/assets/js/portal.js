@@ -1,6 +1,6 @@
 ﻿import { api, apiFetch, downloadFile } from "./api.js";
 import { logout } from "./firebase-client.js";
-import { clearNotice, createCell, fillSelect, formatDate, setNotice, submitSafely } from "./ui.js?v=20260919-3";
+import { clearNotice, createCell, fillSelect, formatDate, setNotice, submitSafely } from "./ui.js?v=20260919-8";
 import {
   confirmDelete,
   confirmSave,
@@ -353,7 +353,7 @@ function setupDateInputs(root) {
     input.dataset.dateInputReady = "true";
     input.dataset.dateInputType = input.type;
     input.dataset.dateIsoValue = input.value;
-    input.setAttribute("placeholder", "DD / MM / YYYY");
+    input.setAttribute("placeholder", "YYYY/MM/DD");
     input.setAttribute("lang", "en-GB");
     input.setAttribute("dir", "ltr");
     input.style.textAlign = "right";
@@ -394,18 +394,18 @@ function setupDateInputs(root) {
 
 function formatDisplayDate(value) {
   const match = String(value ?? "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  return match ? `${match[3]} / ${match[2]} / ${match[1]}` : value;
+  return match ? `${match[1]}/${match[2]}/${match[3]}` : value;
 }
 
 function formatDisplayDateDigits(digits) {
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)} / ${digits.slice(2)}`;
-  return `${digits.slice(0, 2)} / ${digits.slice(2, 4)} / ${digits.slice(4)}`;
+  if (digits.length <= 4) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 4)}/${digits.slice(4)}`;
+  return `${digits.slice(0, 4)}/${digits.slice(4, 6)}/${digits.slice(6)}`;
 }
 
 function normalizeDisplayDate(value) {
-  const match = String(value ?? "").match(/^(\d{2})\s*\/\s*(\d{2})\s*\/\s*(\d{4})$/);
-  return match ? `${match[3]}-${match[2]}-${match[1]}` : value;
+  const match = String(value ?? "").match(/^(\d{4})\s*\/\s*(\d{2})\s*\/\s*(\d{2})$/);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : value;
 }
 
 function page(title, description, body) {
@@ -6646,7 +6646,7 @@ async function renderEmployeeManagementPage(mode) {
     form.querySelector(".form-actions").insertAdjacentHTML("beforebegin", `
     <div class="field" ><label for="employeeNationalId">رقم الهوية الوطنية</label><input id="employeeNationalId" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required dir="ltr"></div>
       <div class="field"><label for="employeePhone">رقم الجوال</label><input id="employeePhone" type="tel" maxlength="12" required dir="ltr"></div>
-      <div class="field"><label for="employeeHireDate">تاريخ المباشرة</label><input id="employeeHireDate" type="text" data-fixed-date="true" inputmode="numeric" placeholder="DD / MM / YYYY" maxlength="14" required></div>
+      <div class="field"><label for="employeeHireDate">تاريخ المباشرة</label><input id="employeeHireDate" type="text" data-fixed-date="true" inputmode="numeric" placeholder="YYYY/MM/DD" maxlength="10" required></div>
       <div class="field"><label for="employeeEmploymentType">نوع العقد</label><select id="employeeEmploymentType" required><option value="">اختاري النوع</option><option value="full_time">دوام كامل</option><option value="part_time">دوام جزئي</option><option value="contract">عقد</option></select></div>
       <div class="field"><label for="employeeEmploymentStatus">الحالة الوظيفية</label><select id="employeeEmploymentStatus" required><option value="">اختاري الحالة</option><option value="active">على رأس العمل</option><option value="on_leave">في إجازة</option><option value="suspended">موقوفة</option><option value="terminated">منتهية الخدمة</option></select></div>
       <div class="field"><label for="employeeQualification">المؤهل العلمي</label><input id="employeeQualification" maxlength="120" required></div>
