@@ -348,7 +348,7 @@ function setSidebarOpen(open) {
 }
 
 function setupDateInputs(root) {
-  root.querySelectorAll('input[type="date"], input[type="datetime-local"], input[type="month"]').forEach((input) => {
+  root.querySelectorAll('input[type="date"], input[type="datetime-local"], input[type="month"], input[data-fixed-date="true"]').forEach((input) => {
     if (input.dataset.dateInputReady) return;
     input.dataset.dateInputReady = "true";
     input.dataset.dateInputType = input.type;
@@ -359,7 +359,7 @@ function setupDateInputs(root) {
     input.type = "text";
     input.inputMode = "numeric";
     input.addEventListener("focus", () => {
-      input.type = input.dataset.dateInputType;
+      input.type = input.dataset.fixedDate === "true" ? "text" : input.dataset.dateInputType;
       input.setAttribute("lang", "en-GB");
       input.setAttribute("dir", "ltr");
       input.style.textAlign = "right";
@@ -372,6 +372,12 @@ function setupDateInputs(root) {
         input.style.textAlign = "right";
       }
     });
+    if (input.dataset.fixedDate === "true") {
+      input.addEventListener("input", () => {
+        const digits = input.value.replace(/\D/g, "").slice(0, 8);
+        input.value = digits.replace(/(\d{2})(\d{2})(\d{0,4})/, "$1 / $2 / $3").replace(/ \/ $$/, "");
+      });
+    }
   });
 }
 
@@ -3525,6 +3531,18 @@ const requestPages = {
 
 function value(id) { return document.querySelector(`#${id}`)?.value?.trim() ?? ""; }
 
+function normalizeEmployeeDate(input) {
+  const match = input.match(/^(\d{2})\s*\/\s*(\d{2})\s*\/\s*(\d{4})$/);
+  if (!match) return input;
+  const [, day, month, year] = match;
+  const date = new Date(`${year}-${month}-${day}T12:00:00`);
+  return date.getFullYear() === Number(year)
+    && date.getMonth() + 1 === Number(month)
+    && date.getDate() === Number(day)
+    ? `${year}-${month}-${day}`
+    : input;
+}
+
 function formatDateTime(valueToFormat) {
   if (!valueToFormat) return "—";
   const normalizedValue = typeof valueToFormat === "object"
@@ -6601,12 +6619,13 @@ async function renderEmployeeManagementPage(mode) {
     form.querySelector(".form-actions").insertAdjacentHTML("beforebegin", `
     <div class="field" ><label for="employeeNationalId">رقم الهوية الوطنية</label><input id="employeeNationalId" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required dir="ltr"></div>
       <div class="field"><label for="employeePhone">رقم الجوال</label><input id="employeePhone" type="tel" maxlength="12" required dir="ltr"></div>
-      <div class="field"><label for="employeeHireDate">تاريخ المباشرة</label><input id="employeeHireDate" type="date" required></div>
+      <div class="field"><label for="employeeHireDate">تاريخ المباشرة</label><input id="employeeHireDate" type="text" data-fixed-date="true" inputmode="numeric" placeholder="DD / MM / YYYY" maxlength="14" required></div>
       <div class="field"><label for="employeeEmploymentType">نوع العقد</label><select id="employeeEmploymentType" required><option value="">اختاري النوع</option><option value="full_time">دوام كامل</option><option value="part_time">دوام جزئي</option><option value="contract">عقد</option></select></div>
       <div class="field"><label for="employeeEmploymentStatus">الحالة الوظيفية</label><select id="employeeEmploymentStatus" required><option value="">اختاري الحالة</option><option value="active">على رأس العمل</option><option value="on_leave">في إجازة</option><option value="suspended">موقوفة</option><option value="terminated">منتهية الخدمة</option></select></div>
       <div class="field"><label for="employeeQualification">المؤهل العلمي</label><input id="employeeQualification" maxlength="120" required></div>
       <div class="field"><label for="employeeSpecialization">التخصص</label><input id="employeeSpecialization" maxlength="120" required></div>
   `);
+    setupDateInputs(form);
     form.addEventListener("submit", saveEmployee);
   } else {
     const permissionEmployee = document.querySelector("#permissionEmployee");
@@ -6897,7 +6916,7 @@ async function saveEmployee(event) {
     phone: value("employeePhone"),
     employeeNumber: value("employeeNumberInput"),
     role: value("employeeRoleInput"),
-    hireDate: value("employeeHireDate"),
+    hireDate: normalizeEmployeeDate(value("employeeHireDate")),
     employmentType: value("employeeEmploymentType"),
     employmentStatus: value("employeeEmploymentStatus"),
     qualification: value("employeeQualification"),
