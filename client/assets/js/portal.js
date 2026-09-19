@@ -5231,31 +5231,29 @@ function buildOfficialAssignmentLetter(item, { preview = false } = {}) {
   const school = document.createElement("p"); school.textContent = "مدارس النبلاء المتقدمة";
   header.append(authority, school);
 
-  const title = document.createElement("h2"); title.textContent = "تكليف";
+  const title = document.createElement("h2"); title.textContent = "( قرار تكليف للعام الدراسي .......... )";
   const meta = document.createElement("div"); meta.className = "assignment-letter-meta";
   const number = document.createElement("span"); number.textContent = `رقم الخطاب: ${item.assignmentNumber ?? (preview ? "يُنشأ بعد الإرسال" : "—")} `;
   const issueDate = document.createElement("span"); issueDate.textContent = `تاريخ الإصدار: ${item.issueDate ?? new Date().toLocaleDateString("ar-SA")} `;
   meta.append(number, issueDate);
 
-  const recipient = document.createElement("p"); recipient.className = "assignment-letter-recipient";
-  recipient.textContent = `تُكلَّف الموظفة / ${item.assigneeName ?? "—"}، الرقم الوظيفي / ${item.assigneeEmployeeNumber ?? "—"} `;
-  const body = document.createElement("p"); body.className = "assignment-letter-body";
-  body.textContent = `بناءً على مقتضيات العمل، تُكلَّف بالعمل بمسمى «${item.jobTitle}»${item.actingForName ? ` نيابةً عن الموظفة/ ${item.actingForName}` : ""}، في ${item.location}، خلال الفترة من ${item.startDate} إلى ${item.endDate}، وذلك بسبب: ${item.reason}.`;
-  const responsibility = document.createElement("p"); responsibility.className = "assignment-letter-body";
-  responsibility.textContent = "وتُمنح الصلاحيات اللازمة في حدود مهام التكليف، وتكون مسؤولة عن تنفيذ الأعمال المسندة إليها خلال مدة التكليف.";
-  const acceptance = document.createElement("p"); acceptance.className = "assignment-letter-acceptance";
-  acceptance.textContent = "قبلتُ التكليف، ومستعدة للتنفيذ";
+  const greeting = document.createElement("p"); greeting.className = "assignment-letter-body";
+  greeting.textContent = "الحمد لله الذي بيده زمام الأمور، والصلاة والسلام على النبي الأمي محمداً عبدالله ورسوله، وعلى آله وصحبه أجمعين.";
+  const authorityText = document.createElement("p"); authorityText.className = "assignment-letter-body";
+  authorityText.textContent = "وفقاً للصلاحيات الممنوحة لمديرة مدارس النبلاء المتقدمة الأهلية،";
+  const decision = document.createElement("p"); decision.className = "assignment-letter-body";
+  decision.textContent = `فقد تقرر تكليف الموظفة / ${item.assigneeName ?? "........................"} بالرقم الوظيفي ( ${item.assigneeEmployeeNumber ?? ".............."} ) للقيام بمهام ${item.jobTitle ?? "........................................."} اعتباراً من تاريخ صدور القرار،`;
+  const instruction = document.createElement("p"); instruction.className = "assignment-letter-body";
+  instruction.textContent = "لذا آمل من الموظفة البدء بتنفيذ البرنامج وفقاً للتعاميم الواردة..";
 
-  article.append(header, title, meta, recipient, body);
+  article.append(header, title, meta, greeting, authorityText, decision, instruction);
   if (Array.isArray(item.tasks) && item.tasks.length) {
     const tasksTitle = document.createElement("h3"); tasksTitle.className = "assignment-letter-tasks-title"; tasksTitle.textContent = "المهام المسندة:";
     const tasksList = document.createElement("ol"); tasksList.className = "assignment-letter-tasks";
     item.tasks.forEach((task) => { const entry = document.createElement("li"); entry.textContent = task; tasksList.append(entry); });
     article.append(tasksTitle, tasksList);
   }
-  article.append(responsibility);
   if (item.notes) { const notes = document.createElement("p"); notes.className = "assignment-letter-notes"; notes.textContent = `ملاحظات: ${item.notes} `; article.append(notes); }
-  article.append(acceptance);
 
   const signatures = document.createElement("footer"); signatures.className = "assignment-letter-signatures";
   const employeeSignature = document.createElement("div");
