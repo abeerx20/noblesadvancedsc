@@ -84,6 +84,11 @@
 
 /* ---------- الهيدر ---------- */
 
+.page-card-invoices,
+.page-card-invoices * {
+  font-family: "Alexandria", "Segoe UI", sans-serif;
+}
+
 .portal-header {
   position: sticky;
   top: 0;
@@ -1286,6 +1291,14 @@ input[type="datetime-local"],
 input[type="month"] {
   direction: ltr;
   text-align: left;
+}
+
+#employeeHireDate {
+  direction: ltr;
+  unicode-bidi: plaintext;
+  text-align: right;
+  white-space: nowrap;
+  min-width: 220px;
 }
 
 #supportFilters .form-actions {
