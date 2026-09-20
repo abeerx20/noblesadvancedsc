@@ -2385,7 +2385,6 @@ async function renderScheduleManage() {
         <div class="field"><label for="classPeriodName">اسم الحصة</label><input id="classPeriodName" maxlength="40" placeholder="مثال: الحصة الأولى" required></div>
         <div class="field"><label for="classStartTime">وقت البداية</label><input id="classStartTime" type="time" min="07:30" max="14:30" required></div>
         <div class="field"><label for="classEndTime">وقت النهاية</label><input id="classEndTime" type="time" min="07:30" max="14:30" required></div>
-        <div class="field"><label for="classScheduleLocation">المكان (اختياري)</label><input id="classScheduleLocation" maxlength="80"></div>
 <div class="form-actions">
   <button id="saveClassSchedule" class="btn btn-small" type="submit">حفظ</button>
   <button id="cancelClassScheduleEdit" class="btn btn-secondary btn-small hidden" type="button">إلغاء </button>
@@ -2505,7 +2504,6 @@ async function saveSchedule(event, blockType) {
       periodNumber: Number(value("classPeriodNumber")),
       periodName: value("classPeriodName"),
       subject: value("classScheduleSubject"),
-      location: value("classScheduleLocation") || undefined,
       startTime: value("classStartTime"),
       endTime: value("classEndTime")
     }
@@ -2562,7 +2560,6 @@ function beginScheduleEdit(item, blockType, classes) {
     document.querySelector("#classPeriodName").value = item.periodName;
     document.querySelector("#classStartTime").value = item.startTime;
     document.querySelector("#classEndTime").value = item.endTime;
-    document.querySelector("#classScheduleLocation").value = item.location ?? "";
 
     const selectedClass = classes.find(
       (academicClass) => academicClass.id === item.classId
