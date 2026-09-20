@@ -170,12 +170,13 @@ export const scheduleSchema = z.object({
   teacherUid: id,
   subject: clean(1, 80, "المادة").optional(),
   classId: id.optional(),
-  location: clean(1, 80, "المكان").optional()
+  location: clean(1, 80, "المكان").optional(),
+  stage: z.enum(["primary", "kindergarten"]).optional()
 }).strict().superRefine((value, ctx) => {
   if (value.blockType === "class" && (!value.classId || !value.subject)) {
     ctx.addIssue({ code: "custom", path: ["classId"], message: "الفصل والمادة مطلوبة للحصة الدراسية." });
   }
-  if (value.blockType === "break" && (value.classId || value.subject || value.periodNumber)) {
+  if (value.blockType === "break" && (value.classId || value.subject || value.periodNumber || !value.stage)) {
     ctx.addIssue({ code: "custom", path: ["blockType"], message: "المناوبة لا تقبل بيانات الفصل أو المادة أو رقم الحصة." });
   }
 });

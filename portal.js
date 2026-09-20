@@ -2397,7 +2397,7 @@ async function renderScheduleManage() {
         <div class="field"><label for="breakScheduleTeacher">المعلمة</label><select id="breakScheduleTeacher" required><option value="">اختاري المعلمة</option></select></div>
         <div class="field"><label for="breakScheduleDay">اليوم</label><select id="breakScheduleDay" required><option value="">اختاري اليوم</option><option value="sunday">الأحد</option><option value="monday">الاثنين</option><option value="tuesday">الثلاثاء</option><option value="wednesday">الأربعاء</option><option value="thursday">الخميس</option></select></div>
         <div class="field"><label for="breakPeriodName">اسم المناوبة</label><input id="breakPeriodName" maxlength="40" placeholder="مثال: مناوبة الصباح" required></div>
-        <div class="field"><label for="breakLocation">المكان</label><input id="breakLocation" maxlength="80" required></div>
+        <div class="field"><label for="breakStage">المرحلة الدراسية</label><select id="breakStage" required><option value="">اختاري المرحلة</option><option value="primary">ابتدائي</option><option value="kindergarten">رياض أطفال</option></select></div>
         <div class="field"><label for="breakStartTime">وقت البداية</label><input id="breakStartTime" type="time" min="07:30" max="14:30" required></div>
         <div class="field"><label for="breakEndTime">وقت النهاية</label><input id="breakEndTime" type="time" min="07:30" max="14:30" required></div>
 <div class="form-actions">
@@ -2512,7 +2512,7 @@ async function saveSchedule(event, blockType) {
       day: value("breakScheduleDay"),
       teacherUid: employee.authUid ?? employee.id,
       periodName: value("breakPeriodName"),
-      location: value("breakLocation"),
+      stage: value("breakStage"),
       startTime: value("breakStartTime"),
       endTime: value("breakEndTime")
     };
@@ -2582,7 +2582,7 @@ function beginScheduleEdit(item, blockType, classes) {
     document.querySelector("#breakScheduleTeacher").value = item.teacherUid;
     document.querySelector("#breakScheduleDay").value = item.day;
     document.querySelector("#breakPeriodName").value = item.periodName;
-    document.querySelector("#breakLocation").value = item.location ?? "";
+    document.querySelector("#breakStage").value = item.stage ?? "";
     document.querySelector("#breakStartTime").value = item.startTime;
     document.querySelector("#breakEndTime").value = item.endTime;
   }
@@ -2611,7 +2611,7 @@ async function loadManagedScheduleRows(blockType) {
     const table = document.createElement("table");
     const head = document.createElement("thead");
     const headRow = document.createElement("tr");
-    ["اليوم", "المعلمة", blockType === "class" ? "المادة" : "المناوبة", "الفصل/المكان", "الوقت", "الإجراء"].forEach((title) => {
+    ["اليوم", "المعلمة", blockType === "class" ? "المادة" : "المناوبة", blockType === "class" ? "الفصل" : "المرحلة الدراسية", "الوقت", "الإجراء"].forEach((title) => {
       const th = document.createElement("th");
       th.textContent = title;
       headRow.append(th);
@@ -2624,7 +2624,7 @@ async function loadManagedScheduleRows(blockType) {
         labels.day[item.day] ?? item.day,
         item.teacherName,
         item.subject ?? item.periodName,
-        item.classId ? classNames.get(item.classId) : item.location,
+        item.classId ? classNames.get(item.classId) : item.stage === "primary" ? "ابتدائي" : item.stage === "kindergarten" ? "رياض أطفال" : item.location,
         `${item.startTime} - ${item.endTime}`
       ].forEach((cellValue) => row.append(createCell(cellValue ?? "—")));
       const actionCell = document.createElement("td");
