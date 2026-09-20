@@ -34,9 +34,6 @@ export const studentSchema = z.object({
   if (value.stage === "kindergarten" && value.gender !== "mixed") {
     ctx.addIssue({ code: "custom", path: ["gender"], message: "فصول رياض الأطفال تستخدم خيار مختلط." });
   }
-  if (value.stage === "primary" && value.gender === "mixed") {
-    ctx.addIssue({ code: "custom", path: ["gender"], message: "يجب فصل البنين والبنات في المرحلة الابتدائية." });
-  }
   if (value.stage === "kindergarten" && !value.grade.startsWith("KG")) {
     ctx.addIssue({ code: "custom", path: ["grade"], message: "الصف لا يتوافق مع مرحلة رياض الأطفال." });
   }

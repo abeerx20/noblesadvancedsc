@@ -26,7 +26,7 @@ async function assertClassAccess(user, classId) {
 function validateStudentAgainstClass(student, academicClass) {
   const matches = student.stage === academicClass.stage
     && student.grade === academicClass.grade
-    && student.gender === academicClass.gender;
+    && (student.gender === "mixed" || student.gender === academicClass.gender);
   if (!matches) {
     throw new AppError(422, "CLASS_MISMATCH", "المرحلة أو الصف أو الجنس لا يتوافق مع الفصل المحدد.");
   }

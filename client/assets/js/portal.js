@@ -1495,25 +1495,26 @@ async function renderStudentAdd() {
   fillSelect(grade, uniqueValues(classes.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
 
   function selectedClass() {
-    return classes.find((item) => item.grade === grade.value && item.section === classSelect.value && item.gender === genderSelect.value);
+    return classes.find((item) => item.id === classSelect.value);
   }
 
   function refreshGenders() {
-    const genders = uniqueValues(classes
-      .filter((item) => item.grade === grade.value && item.section === classSelect.value)
-      .map((item) => item.gender));
+    const genders = grade.value.startsWith("Grade")
+      ? ["mixed"]
+      : uniqueValues(classes
+        .filter((item) => item.grade === grade.value && item.id === classSelect.value)
+        .map((item) => item.gender));
     fillSelect(genderSelect, genders, (x) => x, (x) => labels.gender[x] ?? x, "اختاري الجنس");
+    if (grade.value.startsWith("Grade")) genderSelect.value = "mixed";
   }
 
   function refreshClasses() {
-    const sections = uniqueValues(classes
-      .filter((item) => item.grade === grade.value)
-      .map((item) => item.section));
+    const matchingClasses = classes.filter((item) => item.grade === grade.value);
     fillSelect(
       classSelect,
-      sections,
-      (x) => x,
-      (x) => x,
+      matchingClasses,
+      (item) => item.id,
+      classLabel,
       "اختاري الشعبة"
     );
     refreshGenders();
@@ -1527,7 +1528,7 @@ async function renderStudentAdd() {
     const selectedClass = classes.find((item) => item.id === editing.classId);
     grade.value = selectedClass?.grade ?? editing.grade;
     refreshClasses();
-    classSelect.value = selectedClass?.section ?? "";
+    classSelect.value = selectedClass?.id ?? "";
     refreshGenders();
     genderSelect.value = editing.gender;
     document.querySelector("#addFullName").value = editing.fullName;

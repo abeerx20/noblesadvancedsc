@@ -18,8 +18,8 @@ test("يقبل نموذج إضافة فصل بدون اسم ويولد الاس�
   }).success, true);
 });
 
-test("يرفض دمج البنين والبنات في الابتدائي", () => {
-  assert.equal(studentSchema.safeParse({ ...base, stage: "primary", grade: "Grade1", gender: "mixed" }).success, false);
+test("يقبل الجنس المختلط عند إضافة طالب للمرحلة الابتدائية", () => {
+  assert.equal(studentSchema.safeParse({ ...base, stage: "primary", grade: "Grade1", gender: "mixed" }).success, true);
 });
 
 test("يرفض صفًا لا يتوافق مع المرحلة", () => {
