@@ -3235,7 +3235,7 @@ tbody tr:hover {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   width: min(380px, 100%);
-  gap: 6px;
+  gap: 10px;
   margin: 0 auto 24px;
   padding: 6px;
   border: 1px solid #d4e2dd;
@@ -3249,7 +3249,7 @@ tbody tr:hover {
   padding: 8px 18px;
   border: 1px solid transparent;
   border-radius: 10px;
-  background: transparent;
+  background: #fff;
   color: #064236;
   font: inherit;
   font-size: 13px;
@@ -6181,4 +6181,8 @@ label:has(#agreement) {
   white-space: normal;
   overflow-wrap: anywhere;
   text-align: center;
+}
+
+#scheduleEntryPanel > .schedule-tabs {
+  margin-top: 14px;
 }
