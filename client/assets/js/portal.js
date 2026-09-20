@@ -1175,13 +1175,6 @@ async function renderStudentList() {
     `
       <div class="filters">
         <div class="field">
-          <label for="rosterSubject">المادة</label>
-          <select id="rosterSubject">
-            <option value="">اختاري المادة</option>
-          </select>
-        </div>
- 
-        <div class="field">
           <label for="rosterGrade">الصف</label>
           <select id="rosterGrade">
             <option value="">اختاري الصف</option>
@@ -1232,14 +1225,18 @@ async function renderStudentList() {
  
       <div id="rosterTable" class="table-wrap">
         <div class="empty-state">
-          اختاري المادة والصف والشعبة لعرض الطلاب.
+          اختاري الصف والشعبة لعرض الطلاب.
         </div>
       </div>
     `
   );
 
-  await bindRosterSelectors("roster", {
-    requireExistingOption: true
+  const classes = await loadClasses();
+  const grade = document.querySelector("#rosterGrade");
+  const classSelect = document.querySelector("#rosterClass");
+  fillSelect(grade, uniqueValues(classes.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
+  grade.addEventListener("change", () => {
+    fillSelect(classSelect, classes.filter((item) => item.grade === grade.value), (x) => x.id, classLabel, "اختاري الشعبة");
   });
 
   document
@@ -1322,7 +1319,7 @@ async function renderManagedStudentEdit(student) {
   page("تعديل بيانات الطالب", "تعديل البيانات الأساسية للطالب داخل شعبته الحالية.", `
     <form id="managedStudentEditForm" class="form-grid student-entry-form" novalidate>
       <div class="field"><label for="managedStudentName">اسم الطالب الرباعي</label><input id="managedStudentName" required minlength="4" maxlength="120" value="${student.fullName.replaceAll('"', "&quot;")}"></div>
-      <div class="form-actions span-2">
+      <div class="form-actions">
         <button class="btn btn-small" type="submit">حفظ</button>
         <button id="cancelManagedStudentEdit" class="btn btn-secondary btn-small" type="button">إلغاء</button>
       </div>
@@ -1413,20 +1410,19 @@ async function bindRosterSelectors(prefix, { requireExistingOption = false } = {
 
 function selectedRosterScope(prefix) {
   const classId = value(`${prefix}Class`);
-  const subject = value(`${prefix}Subject`);
-  if (!classId || !subject) {
-    setNotice(document.querySelector("#pageNotice"), "error", "اختاري المادة والصف والشعبة أولًا.");
+  if (!classId) {
+    setNotice(document.querySelector("#pageNotice"), "error", "اختاري الصف والشعبة أولًا.");
     return null;
   }
-  return { classId, subject };
+  return { classId };
 }
 
 async function loadApprovedRoster() {
   const scope = selectedRosterScope("roster");
   if (!scope) return;
   try {
-    const query = new URLSearchParams({ ...scope, status: "active", limit: "200" });
-    state.currentStudents = (await api.get(`/student-rosters?${query}`)).data;
+    const query = new URLSearchParams({ ...scope, limit: "200" });
+    state.currentStudents = (await api.get(`/students?${query}`)).data;
     drawApprovedRoster(state.currentStudents);
   } catch (error) { showError(error); }
 }
@@ -1437,7 +1433,7 @@ function drawApprovedRoster(rows) {
   if (!rows.length) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "لا يوجد طلاب معتمدون في هذه المادة والشعبة.";
+    empty.textContent = "لا يوجد طلاب في هذه الشعبة.";
     wrap.append(empty);
     return;
   }
@@ -1468,20 +1464,19 @@ async function exportApprovedRoster() {
   if (!scope) return;
   try {
     const query = new URLSearchParams(scope);
-    await downloadFile(`/student-rosters/export?${query}`, `قائمة-الطلاب-${scope.subject}.xlsx`);
+    await downloadFile(`/students/export?${query}`, `قائمة-الطلاب-${scope.classId}.xlsx`);
   } catch (error) { showError(error); }
 }
 
 async function renderStudentAdd() {
   if (!has("manage_students")) throw new Error("لا تملكين صلاحية إدارة قوائم الطلاب.");
   let editing = state.rosterEdit;
-  page(editing ? "تعديل طالب" : "إضافة طالب", "يُحفظ الطالب في المسودات ولا يظهر للمعلمة قبل الاعتماد.", `
+  page(editing ? "تعديل طالب" : "إضافة طالب", "يُحفظ الطالب ضمن الشعبة ويظهر تلقائيًا للمعلمات المرتبطات بها في الجدول.", `
     <form id="rosterStudentForm" class="form-grid student-entry-form" novalidate>
       <div class="field"><label for="addFullName">اسم الطالب الرباعي</label><input id="addFullName" required minlength="4" maxlength="120"></div>
       <div class="field"><label for="addGrade">الصف</label><select id="addGrade" required><option value="">اختاري الصف</option></select></div>
       <div class="field"><label for="addClass">الشعبة</label><select id="addClass" required><option value="">اختاري الشعبة</option></select></div>
       <div class="field"><label for="addGender">الجنس</label><select id="addGender" required><option value="">اختاري الجنس</option></select></div>
-      <div class="field"><label for="addSubject">المادة</label><select id="addSubject" required><option value="">اختاري المادة</option></select></div>
       <div class="form-actions span-2">
         <button id="saveRosterStudent" class="btn btn-small" type="submit">حفظ</button>
         ${editing ? '<button id="cancelRosterEdit" class="btn btn-secondary btn-small" type="button">إلغاء التعديل</button>' : ""}
@@ -1490,32 +1485,17 @@ async function renderStudentAdd() {
     <div class="subsection">
       <h2>الطلاب المضافون</h2>
       <div id="addRosterTable" class="table-wrap">
-        <div class="empty-state">اختاري الصف والشعبة والمادة لعرض الطلاب المضافين.</div>
+        <div class="empty-state">اختاري الصف والشعبة لعرض الطلاب المضافين.</div>
       </div>
     </div>`);
-  const { classes, options } = await rosterContext();
+  const { classes } = await rosterContext();
   const grade = document.querySelector("#addGrade");
   const classSelect = document.querySelector("#addClass");
   const genderSelect = document.querySelector("#addGender");
-  const subjectSelect = document.querySelector("#addSubject");
   fillSelect(grade, uniqueValues(classes.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
 
   function selectedClass() {
     return classes.find((item) => item.grade === grade.value && item.section === classSelect.value && item.gender === genderSelect.value);
-  }
-
-  function refreshSubjects() {
-    const selected = selectedClass();
-    if (!selected) {
-      subjectSelect.replaceChildren(new Option("اختاري المادة", ""));
-      return;
-    }
-    const subjects = uniqueValues(
-      options
-        .filter((item) => item.classId === selected.id)
-        .map((item) => item.subject)
-    );
-    fillSelect(subjectSelect, subjects, (x) => x, (x) => x, "اختاري المادة");
   }
 
   function refreshGenders() {
@@ -1523,7 +1503,6 @@ async function renderStudentAdd() {
       .filter((item) => item.grade === grade.value && item.section === classSelect.value)
       .map((item) => item.gender));
     fillSelect(genderSelect, genders, (x) => x, (x) => labels.gender[x] ?? x, "اختاري الجنس");
-    refreshSubjects();
   }
 
   function refreshClasses() {
@@ -1542,10 +1521,7 @@ async function renderStudentAdd() {
 
   grade.addEventListener("change", refreshClasses);
   classSelect.addEventListener("change", refreshGenders);
-  genderSelect.addEventListener("change", refreshSubjects);
-  subjectSelect.addEventListener("change", () => {
-    loadInlineRosterEntries(selectedClass()?.id, subjectSelect.value, "#addRosterTable");
-  });
+  genderSelect.addEventListener("change", () => loadClassStudents(selectedClass()?.id, "#addRosterTable"));
 
   if (editing) {
     const selectedClass = classes.find((item) => item.id === editing.classId);
@@ -1554,14 +1530,12 @@ async function renderStudentAdd() {
     classSelect.value = selectedClass?.section ?? "";
     refreshGenders();
     genderSelect.value = editing.gender;
-    refreshSubjects();
-    subjectSelect.value = editing.subject;
     document.querySelector("#addFullName").value = editing.fullName;
     document.querySelector("#cancelRosterEdit").addEventListener("click", () => {
       state.rosterEdit = null;
       renderStudentAdd();
     });
-    await loadInlineRosterEntries(selectedClass?.id, subjectSelect.value, "#addRosterTable");
+    await loadClassStudents(selectedClass?.id, "#addRosterTable");
   }
 
   document.querySelector("#rosterStudentForm").addEventListener("submit", async (event) => {
@@ -1573,14 +1547,16 @@ async function renderStudentAdd() {
     const data = {
       fullName: value("addFullName"),
       classId: targetClass.id,
-      subject: value("addSubject"),
-      gender: value("addGender")
+      stage: targetClass.stage,
+      grade: targetClass.grade,
+      gender: value("addGender"),
+      active: true
     };
     await submitSafely(button, async () => {
       try {
         const result = editing
-          ? await api.put(`/student-rosters/${editing.enrollmentId}`, data)
-          : await api.post("/student-rosters", data);
+          ? await api.put(`/students/${editing.id}`, data)
+          : await api.post("/students", data);
         editing = null;
         state.rosterEdit = null;
         state.rosterOptions = null;
@@ -1588,7 +1564,7 @@ async function renderStudentAdd() {
         document.querySelector("#addFullName").value = "";
         document.querySelector("#addGender").value = "";
         document.querySelector("#cancelRosterEdit")?.remove();
-        await loadInlineRosterEntries(data.classId, data.subject, "#addRosterTable");
+        await loadClassStudents(data.classId, "#addRosterTable");
       } catch (error) { showError(error); }
     });
   });
@@ -1601,9 +1577,8 @@ async function renderStudentUpload() {
     <form id="rosterUploadForm" class="form-grid roster-upload-form" novalidate>
       <div class="field"><label for="uploadGrade">الصف</label><select id="uploadGrade" required><option value="">اختاري الصف</option></select></div>
       <div class="field"><label for="uploadClass">الشعبة</label><select id="uploadClass" required><option value="">اختاري الشعبة</option></select></div>
-      <div class="field"><label for="uploadSubject">المادة</label><input id="uploadSubject" list="uploadSubjects" required maxlength="80" autocomplete="off"><datalist id="uploadSubjects"></datalist></div>
       <div class="field"><label for="rosterExcelFile">اختيار ملف Excel</label><input id="rosterExcelFile" type="file" accept=".xlsx" required></div>
-      <div class="form-actions span-2">
+      <div class="form-actions">
         <button id="downloadStudentTemplate" class="btn btn-secondary btn-small" type="button">تحميل قالب Excel</button>
         <button id="previewRosterFile" class="btn btn-secondary btn-small" type="submit">معاينة الملف</button>
         <button id="saveRosterFile" class="btn btn-small hidden" type="button">حفظ</button>
@@ -1613,10 +1588,10 @@ async function renderStudentUpload() {
     <div class="subsection">
       <h2>الطلاب المحفوظون</h2>
       <div id="uploadRosterTable" class="table-wrap">
-        <div class="empty-state">اختاري الصف والشعبة والمادة لعرض الطلاب المحفوظين.</div>
+        <div class="empty-state">اختاري الصف والشعبة لعرض الطلاب المحفوظين.</div>
       </div>
     </div>`);
-  const { classes, options } = await rosterContext();
+  const { classes } = await rosterContext();
   const grade = document.querySelector("#uploadGrade");
   const classSelect = document.querySelector("#uploadClass");
   fillSelect(grade, uniqueValues(classes.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
@@ -1624,11 +1599,7 @@ async function renderStudentUpload() {
     fillSelect(classSelect, classes.filter((item) => item.grade === grade.value), (x) => x.id, classLabel, "اختاري الشعبة");
   });
   classSelect.addEventListener("change", () => {
-    loadInlineRosterEntries(classSelect.value, value("uploadSubject"), "#uploadRosterTable");
-  });
-  uniqueValues(options.map((item) => item.subject)).forEach((item) => document.querySelector("#uploadSubjects").append(new Option(item)));
-  document.querySelector("#uploadSubject").addEventListener("change", () => {
-    loadInlineRosterEntries(classSelect.value, value("uploadSubject"), "#uploadRosterTable");
+    loadClassStudents(classSelect.value, "#uploadRosterTable");
   });
   document.querySelector("#downloadStudentTemplate").addEventListener("click", () => {
     const link = document.createElement("a");
@@ -1647,7 +1618,7 @@ function rosterUploadBody() {
   const file = document.querySelector("#rosterExcelFile").files[0];
   const body = new FormData();
   body.append("classId", value("uploadClass"));
-  body.append("subject", value("uploadSubject"));
+  body.append("subject", "class-roster");
   body.append("file", file);
   return body;
 }
@@ -1674,7 +1645,6 @@ async function saveRosterFile() {
   if (!state.rosterImport?.accepted?.length) return;
   const button = document.querySelector("#saveRosterFile");
   const classId = value("uploadClass");
-  const subject = value("uploadSubject");
   await submitSafely(button, async () => {
     try {
       const result = await apiFetch("/student-rosters/import/commit", { method: "POST", body: rosterUploadBody() });
@@ -1682,7 +1652,7 @@ async function saveRosterFile() {
       state.rosterImport = null;
       state.rosterOptions = null;
       button.classList.add("hidden");
-      await loadInlineRosterEntries(classId, subject, "#uploadRosterTable");
+      await loadClassStudents(classId, "#uploadRosterTable");
     } catch (error) { showError(error); }
   });
 }
@@ -1708,6 +1678,34 @@ async function loadInlineRosterEntries(classId, subject, selector) {
   } catch (error) { showError(error); }
 }
 
+async function loadClassStudents(classId, selector) {
+  const wrap = document.querySelector(selector);
+  if (!wrap) return;
+  if (!classId) {
+    wrap.innerHTML = '<div class="empty-state">اختاري الصف والشعبة لعرض الطلاب.</div>';
+    return;
+  }
+  try {
+    const query = new URLSearchParams({ classId, limit: "200" });
+    const rows = (await api.get(`/students?${query}`)).data;
+    wrap.replaceChildren();
+    if (!rows.length) {
+      wrap.innerHTML = '<div class="empty-state">لا يوجد طلاب في هذه الشعبة.</div>';
+      return;
+    }
+    const table = document.createElement("table");
+    table.innerHTML = "<thead><tr><th>م</th><th>اسم الطالب</th><th>الجنس</th></tr></thead>";
+    const body = document.createElement("tbody");
+    rows.forEach((student, index) => {
+      const row = document.createElement("tr");
+      row.append(createCell(index + 1), createCell(student.fullName), createCell(labels.gender[student.gender] ?? student.gender));
+      body.append(row);
+    });
+    table.append(body);
+    wrap.append(table);
+  } catch (error) { showError(error); }
+}
+
 async function renderStudentReview() {
   if (!has("manage_students")) throw new Error("لا تملكين صلاحية اعتماد قوائم الطلاب.");
   page("المسودات والاعتماد", "راجعي الطلاب قبل إظهارهم للمعلمات، أو أجّلي القيد أو احذفيه من المادة والشعبة.", `
@@ -1726,8 +1724,13 @@ async function renderStudentReview() {
 }
 
 async function loadRosterReview() {
-  const scope = selectedRosterScope("review");
-  if (!scope) return;
+  const classId = value("reviewClass");
+  const subject = value("reviewSubject");
+  if (!classId || !subject) {
+    setNotice(document.querySelector("#pageNotice"), "error", "اختاري المادة والصف والشعبة أولًا.");
+    return;
+  }
+  const scope = { classId, subject };
   try {
     const query = new URLSearchParams({ ...scope, status: value("reviewStatus"), limit: "200" });
     const rows = (await api.get(`/student-rosters?${query}`)).data;
