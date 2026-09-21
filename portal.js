@@ -512,7 +512,16 @@ async function loadEmployees() {
   return state.employees;
 }
 
-function classLabel(item) { return `${labels.grade[item.grade] ?? item.grade} - ${item.section} - ${labels.gender[item.gender] ?? item.gender}`; }
+function displaySection(item) {
+  if (item.stage === "kindergarten") {
+    const section = String(item.section ?? "").trim();
+    if (["أ", "ا", "A", "a"].includes(section)) return "1";
+    if (["ب", "B", "b"].includes(section)) return "2";
+  }
+  return item.section;
+}
+
+function classLabel(item) { return `${labels.grade[item.grade] ?? item.grade} - ${displaySection(item)} - ${labels.gender[item.gender] ?? item.gender}`; }
 function localDate() { const now = new Date(); return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
 function weekNumber(dateValue) {
   const date = new Date(`${dateValue}T12:00:00Z`); const first = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
@@ -1812,7 +1821,7 @@ async function renderClasses() {
       <div class="field"><label for="classStage">المرحلة</label><select id="classStage" required><option value="">اختاري المرحلة</option><option value="kindergarten">رياض الأطفال</option><option value="primary">الابتدائي</option></select></div>
       <div class="field"><label for="classGrade">الصف</label><select id="classGrade" required><option value="">اختاري الصف</option></select></div>
       <div class="field"><label for="classGender">الجنس</label><select id="classGender" required><option value="">اختاري الجنس</option></select></div>
-      <div class="field"><label for="classSection">الشعبة</label><input id="classSection" required maxlength="20" placeholder="مثال: أ"></div>
+      <div class="field"><label for="classSection">الشعبة</label><input id="classSection" required maxlength="20" placeholder="رياض الأطفال: 1 أو 2"></div>
       <div class="form-actions span-2">
         <button id="saveClass" class="btn" type="submit">حفظ الفصل</button>
         <button id="cancelClassEdit" class="btn btn-secondary hidden" type="button">إلغاء التعديل</button>
