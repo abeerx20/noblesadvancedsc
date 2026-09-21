@@ -24,9 +24,13 @@ async function assertClassAccess(user, classId) {
 }
 
 function validateStudentAgainstClass(student, academicClass) {
+  const sectionNumber = Number.parseInt(String(academicClass.section ?? "").trim(), 10);
+  const sectionGender = academicClass.stage === "primary" && Number.isInteger(sectionNumber)
+    ? (sectionNumber % 100 === 1 ? "female" : sectionNumber % 100 === 2 ? "male" : null)
+    : null;
   const matches = student.stage === academicClass.stage
     && student.grade === academicClass.grade
-    && (student.gender === "mixed" || student.gender === academicClass.gender);
+    && student.gender === (sectionGender ?? academicClass.gender);
   if (!matches) {
     throw new AppError(422, "CLASS_MISMATCH", "المرحلة أو الصف أو الجنس لا يتوافق مع الفصل المحدد.");
   }

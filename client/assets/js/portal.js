@@ -1498,18 +1498,28 @@ async function renderStudentAdd() {
     return classes.find((item) => item.id === classSelect.value);
   }
 
+  function primarySectionGender(section) {
+    const sectionNumber = Number.parseInt(String(section).trim(), 10);
+    if (!Number.isInteger(sectionNumber)) return null;
+    return sectionNumber % 100 === 1 ? "female" : sectionNumber % 100 === 2 ? "male" : null;
+  }
+
   function refreshGenders() {
-    const genders = grade.value.startsWith("Grade")
-      ? ["mixed"]
-      : uniqueValues(classes
-        .filter((item) => item.grade === grade.value && item.id === classSelect.value)
-        .map((item) => item.gender));
+    const selected = selectedClass();
+    const genders = selected?.stage === "primary"
+      ? [primarySectionGender(selected.section) ?? selected.gender]
+      : ["mixed"];
     fillSelect(genderSelect, genders, (x) => x, (x) => labels.gender[x] ?? x, "اختاري الجنس");
-    if (grade.value.startsWith("Grade")) genderSelect.value = "mixed";
+    genderSelect.value = genders[0] ?? "";
   }
 
   function refreshClasses() {
-    const matchingClasses = classes.filter((item) => item.grade === grade.value);
+    const matchingClasses = classes.filter((item) => {
+      if (item.grade !== grade.value) return false;
+      if (item.stage !== "primary") return true;
+      const expectedGender = primarySectionGender(item.section);
+      return expectedGender ? item.gender === expectedGender : false;
+    });
     fillSelect(
       classSelect,
       matchingClasses,
