@@ -1246,7 +1246,7 @@ async function renderStudentList() {
   const classSelect = document.querySelector("#rosterClass");
   fillSelect(grade, uniqueValues(classes.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
   grade.addEventListener("change", () => {
-    fillSelect(classSelect, classes.filter((item) => item.grade === grade.value), (x) => x.id, classLabel, "اختاري الشعبة");
+    fillSelect(classSelect, classes.filter((item) => item.grade === grade.value), (x) => x.id, displaySection, "اختاري الشعبة");
   });
 
   document
@@ -1540,7 +1540,7 @@ async function renderStudentAdd() {
       classSelect,
       matchingClasses,
       (item) => item.id,
-      classLabel,
+      displaySection,
       "اختاري الشعبة"
     );
     refreshGenders();
@@ -1623,7 +1623,7 @@ async function renderStudentUpload() {
   const classSelect = document.querySelector("#uploadClass");
   fillSelect(grade, uniqueValues(classes.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
   grade.addEventListener("change", () => {
-    fillSelect(classSelect, classes.filter((item) => item.grade === grade.value), (x) => x.id, classLabel, "اختاري الشعبة");
+    fillSelect(classSelect, classes.filter((item) => item.grade === grade.value), (x) => x.id, displaySection, "اختاري الشعبة");
   });
   classSelect.addEventListener("change", () => {
     loadClassStudents(classSelect.value, "#uploadRosterTable");
