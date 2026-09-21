@@ -1821,7 +1821,7 @@ async function renderClasses() {
       <div class="field"><label for="classStage">المرحلة</label><select id="classStage" required><option value="">اختاري المرحلة</option><option value="kindergarten">رياض الأطفال</option><option value="primary">ابتدائي</option></select></div>
       <div class="field"><label for="classGrade">الصف</label><select id="classGrade" required><option value="">اختاري الصف</option></select></div>
       <div class="field"><label for="classGender">الجنس</label><select id="classGender" required><option value="">اختاري الجنس</option></select></div>
-      <div class="field"><label for="classSection">الشعبة</label><select id="classSection" required><option value="">اختاري الشعبة</option></select></div>
+      <div class="field"><label for="classSection">الشعبة</label><select id="classSection" required><option value="">تحدد تلقائياً من الجنس</option></select></div>
       <div class="form-actions span-2">
         <button id="saveClass" class="btn" type="submit">حفظ الفصل</button>
         <button id="cancelClassEdit" class="btn btn-secondary hidden" type="button">إلغاء التعديل</button>
@@ -1859,6 +1859,7 @@ async function renderClasses() {
   const syncStageFields = () => {
     fillSelect(grade, gradeOptions(stage.value), (x) => x[0], (x) => x[1], "اختاري الصف");
     refreshSections();
+    section.disabled = stage.value === "primary";
     gender.replaceChildren();
     const initial = document.createElement("option");
     initial.value = "";
