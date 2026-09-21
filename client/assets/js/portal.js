@@ -1877,6 +1877,13 @@ async function renderClasses() {
     gender.value = section.value.endsWith("1") ? "female" : section.value.endsWith("2") ? "male" : "";
   };
 
+  const syncPrimarySection = () => {
+    if (stage.value !== "primary" || !gender.value) return;
+    const suffix = gender.value === "female" ? "1" : "2";
+    const matchingSection = [...section.options].find((option) => option.value.endsWith(suffix));
+    if (matchingSection) section.value = matchingSection.value;
+  };
+
   const syncStageFields = () => {
     fillSelect(grade, gradeOptions(stage.value), (x) => x[0], (x) => x[1], "اختاري الصف");
     refreshSections();
@@ -1903,6 +1910,7 @@ async function renderClasses() {
       female.textContent = "بنات";
       gender.append(male, female);
       syncPrimaryGender();
+      syncPrimarySection();
     }
   };
 
@@ -1917,6 +1925,7 @@ async function renderClasses() {
   stage.addEventListener("change", syncStageFields);
   grade.addEventListener("change", () => { refreshSections(); syncPrimaryGender(); });
   section.addEventListener("change", syncPrimaryGender);
+  gender.addEventListener("change", syncPrimarySection);
   document.querySelector("#cancelClassEdit").addEventListener("click", resetEditor);
   syncStageFields();
   drawClasses(await loadClasses());
