@@ -13,7 +13,7 @@ test("يقبل نموذج إضافة فصل بدون اسم ويولد الاس�
     stage: "primary",
     grade: "Grade1",
     section: "101",
-    gender: "female",
+    gender: "male",
     active: true
   }).success, true);
 });

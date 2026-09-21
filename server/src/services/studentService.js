@@ -26,7 +26,7 @@ async function assertClassAccess(user, classId) {
 function validateStudentAgainstClass(student, academicClass) {
   const sectionNumber = Number.parseInt(String(academicClass.section ?? "").trim(), 10);
   const sectionGender = academicClass.stage === "primary" && Number.isInteger(sectionNumber)
-    ? (sectionNumber % 100 === 1 ? "female" : sectionNumber % 100 === 2 ? "male" : null)
+    ? (sectionNumber % 100 === 1 ? "male" : sectionNumber % 100 === 2 ? "female" : null)
     : null;
   const matches = student.stage === academicClass.stage
     && student.grade === academicClass.grade
