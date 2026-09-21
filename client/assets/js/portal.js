@@ -873,6 +873,7 @@ function renderSkillAddPage() {
 
 async function renderSkillEntryPage() {
   const classes = await loadClasses();
+  state.classes = classes;
   const allSkills = JSON.parse(localStorage.getItem("nas-skill-catalog") || "[]");
 
   page("إدخال الدرجات", "اختاري الصف والشعبة واسم الطالب ثم سجل التقييم لكل مهارة.", `
@@ -1254,11 +1255,11 @@ async function renderStudentList() {
 
   document
     .querySelector("#printRoster")
-    .addEventListener("click", (event) => printPortalPage(event.currentTarget));
+    .addEventListener("click", (event) => printStudentRoster(event.currentTarget));
 
   document
     .querySelector("#saveRosterPdf")
-    .addEventListener("click", (event) => printPortalPage(event.currentTarget));
+    .addEventListener("click", (event) => printStudentRoster(event.currentTarget));
 
   document
     .querySelector("#exportRoster")
@@ -1436,6 +1437,11 @@ async function loadApprovedRoster() {
   } catch (error) { showError(error); }
 }
 
+async function printStudentRoster(button) {
+  if (!selectedRosterScope("roster")) return;
+  await printPortalPage(button);
+}
+
 function drawApprovedRoster(rows) {
   const wrap = document.querySelector("#rosterTable");
   wrap.replaceChildren();
@@ -1448,7 +1454,7 @@ function drawApprovedRoster(rows) {
   }
   const table = document.createElement("table");
   const head = document.createElement("thead");
-  head.innerHTML = "<tr><th>م</th><th>اسم الطالب</th><th>الصف والشعبة</th><th>الجنس</th></tr>";
+  head.innerHTML = "<tr><th>م</th><th>اسم الطالب</th><th>الصف</th><th>الشعبة</th><th>الجنس</th></tr>";
   const body = document.createElement("tbody");
   const selectedClass = state.classes.find((item) => item.id === value("rosterClass"));
   const sortedRows = [...rows].sort((a, b) =>
@@ -1459,7 +1465,8 @@ function drawApprovedRoster(rows) {
     row.append(
       createCell(index + 1),
       createCell(student.fullName),
-      createCell(selectedClass ? classLabel(selectedClass) : labels.grade[student.grade] ?? student.grade),
+      createCell(selectedClass ? labels.grade[selectedClass.grade] ?? selectedClass.grade : labels.grade[student.grade] ?? student.grade),
+      createCell(selectedClass ? displaySection(selectedClass) : "—"),
       createCell(labels.gender[student.gender] ?? student.gender)
     );
     body.append(row);
