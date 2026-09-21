@@ -99,7 +99,7 @@ const gradeLabels = {
 };
 
 function buildClassName(data) {
-  const stageLabel = data.stage === "kindergarten" ? "رياض الأطفال" : "الابتدائي";
+  const stageLabel = data.stage === "kindergarten" ? "رياض الأطفال" : "ابتدائي";
   const genderLabel = data.gender === "mixed" ? "مختلط" : data.gender === "male" ? "بنين" : "بنات";
   const section = String(data.section ?? "").trim() || "غير محدد";
   return `${stageLabel} - ${gradeLabels[data.grade] ?? data.grade} - ${section} - ${genderLabel}`;

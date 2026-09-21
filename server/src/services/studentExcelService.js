@@ -18,7 +18,7 @@ const headerAliases = {
   gender: ["gender", "الجنس"]
 };
 
-const stageMap = { "رياض الأطفال": "kindergarten", "الروضة": "kindergarten", kindergarten: "kindergarten", "الابتدائي": "primary", primary: "primary" };
+const stageMap = { "رياض الأطفال": "kindergarten", "الروضة": "kindergarten", kindergarten: "kindergarten", "الابتدائي": "primary", "ابتدائي": "primary", primary: "primary" };
 const gradeMap = { "الروضة الأولى": "KG1", KG1: "KG1", "الروضة الثانية": "KG2", KG2: "KG2", "الروضة الثالثة": "KG3", KG3: "KG3", "الأول الابتدائي": "Grade1", Grade1: "Grade1", "الثاني الابتدائي": "Grade2", Grade2: "Grade2", "الثالث الابتدائي": "Grade3", Grade3: "Grade3" };
 const genderMap = { مختلط: "mixed", mixed: "mixed", بنين: "male", male: "male", بنات: "female", female: "female" };
 

@@ -1818,7 +1818,7 @@ async function renderClasses() {
   state.classEdit = null;
   page("إدارة الفصول", "تعريف المراحل والصفوف والشعب التي تُستخدم في القوائم والغياب والجداول.", `
     <form id="classForm" class="form-grid class-management-form">
-      <div class="field"><label for="classStage">المرحلة</label><select id="classStage" required><option value="">اختاري المرحلة</option><option value="kindergarten">رياض الأطفال</option><option value="primary">الابتدائي</option></select></div>
+      <div class="field"><label for="classStage">المرحلة</label><select id="classStage" required><option value="">اختاري المرحلة</option><option value="kindergarten">رياض الأطفال</option><option value="primary">ابتدائي</option></select></div>
       <div class="field"><label for="classGrade">الصف</label><select id="classGrade" required><option value="">اختاري الصف</option></select></div>
       <div class="field"><label for="classGender">الجنس</label><select id="classGender" required><option value="">اختاري الجنس</option></select></div>
       <div class="field"><label for="classSection">الشعبة</label><select id="classSection" required><option value="">اختاري الشعبة</option></select></div>
@@ -1901,7 +1901,7 @@ async function renderClasses() {
     const gradeValue = value("classGrade");
     const sectionValue = value("classSection");
     const genderValue = value("classGender");
-    const autoName = `${stageValue === "kindergarten" ? "رياض الأطفال" : "الابتدائي"} - ${gradeValue || "-"} - ${sectionValue || "غير محدد"} - ${genderValue === "mixed" ? "مختلط" : genderValue === "male" ? "بنين" : genderValue === "female" ? "بنات" : "-"}`;
+    const autoName = `${stageValue === "kindergarten" ? "رياض الأطفال" : "ابتدائي"} - ${gradeValue || "-"} - ${sectionValue || "غير محدد"} - ${genderValue === "mixed" ? "مختلط" : genderValue === "male" ? "بنين" : genderValue === "female" ? "بنات" : "-"}`;
 
     const payload = {
       name: autoName,
@@ -1945,7 +1945,7 @@ function drawClasses(rows) {
     const row = document.createElement("tr");
     row.append(
       createCell(academicClass.name),
-      createCell(academicClass.stage === "primary" ? "الابتدائي" : "رياض الأطفال"),
+      createCell(academicClass.stage === "primary" ? "ابتدائي" : "رياض الأطفال"),
       createCell(labels.grade[academicClass.grade] ?? academicClass.grade),
       createCell(academicClass.section),
       createCell(labels.gender[academicClass.gender] ?? academicClass.gender)
