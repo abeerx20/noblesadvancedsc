@@ -2277,14 +2277,21 @@ function renderSimpleTable(selector, headings, rows, values) {
 
 function coverageWeek(dateValue) {
   const normalizedDate = String(dateValue ?? "").trim().replaceAll("/", "-");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) throw new Error("اختاري تاريخاً صحيحاً لجدول الانتظار.");
-  const start = new Date(`${normalizedDate}T12:00:00Z`);
-  if (Number.isNaN(start.getTime())) throw new Error("اختاري تاريخاً صحيحاً لجدول الانتظار.");
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalizedDate);
+  if (!match) throw new Error("اختاري تاريخاً صحيحاً لجدول الانتظار.");
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const dayOfMonth = Number(match[3]);
+  const start = new Date(Date.UTC(year, month - 1, dayOfMonth, 12));
+  if (start.getUTCFullYear() !== year || start.getUTCMonth() !== month - 1 || start.getUTCDate() !== dayOfMonth) {
+    throw new Error("اختاري تاريخاً صحيحاً لجدول الانتظار.");
+  }
   start.setUTCDate(start.getUTCDate() - start.getUTCDay());
   const days = Array.from({ length: 5 }, (_, index) => {
     const date = new Date(start);
     date.setUTCDate(start.getUTCDate() + index);
-    return { date: date.toISOString().slice(0, 10), day: Object.keys(labels.day)[index] };
+    const dateText = [date.getUTCFullYear(), String(date.getUTCMonth() + 1).padStart(2, "0"), String(date.getUTCDate()).padStart(2, "0")].join("-");
+    return { date: dateText, day: Object.keys(labels.day)[index] };
   });
   return { from: days[0].date, to: days[4].date, days };
 }

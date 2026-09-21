@@ -23,17 +23,28 @@ function normalizeName(value) {
 
 function dateRange(from, to) {
     const dates = [];
-    const current = new Date(`${from}T12:00:00Z`);
-    const end = new Date(`${to}T12:00:00Z`);
+    const parseDate = (value) => {
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value ?? "").replaceAll("/", "-"));
+        if (!match) return null;
+        const result = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12));
+        return result.getUTCFullYear() === Number(match[1]) && result.getUTCMonth() === Number(match[2]) - 1 && result.getUTCDate() === Number(match[3]) ? result : null;
+    };
+    const current = parseDate(from);
+    const end = parseDate(to);
+    if (!current || !end) return dates;
     while (current <= end) {
-        dates.push({ value: current.toISOString().slice(0, 10), day: schoolDays[current.getUTCDay() - 0] });
+        dates.push({ value: [current.getUTCFullYear(), String(current.getUTCMonth() + 1).padStart(2, "0"), String(current.getUTCDate()).padStart(2, "0")].join("-"), day: schoolDays[current.getUTCDay() - 0] });
         current.setUTCDate(current.getUTCDate() + 1);
     }
     return dates.filter((item) => item.day);
 }
 
 function dayName(dateValue) {
-    const dayIndex = new Date(`${dateValue}T12:00:00Z`).getUTCDay();
+    const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue ?? "").replaceAll("/", "-"));
+    if (!parts) return "";
+    const date = new Date(Date.UTC(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]), 12));
+    if (Number.isNaN(date.getTime())) return "";
+    const dayIndex = date.getUTCDay();
     return ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][dayIndex];
 }
 
