@@ -65,7 +65,7 @@ export const classSchema = z.object({
     ctx.addIssue({ code: "custom", path: ["section"], message: "رقم الشعبة لا يتوافق مع الصف المحدد." });
   }
   if (value.stage === "primary") {
-    const expectedGender = value.section.endsWith("1") ? "male" : "female";
+    const expectedGender = value.section.endsWith("1") ? "female" : "male";
     if (value.gender !== expectedGender) {
       ctx.addIssue({ code: "custom", path: ["gender"], message: "جنس الفصل لا يتوافق مع رقم الشعبة." });
     }

@@ -1510,7 +1510,7 @@ async function renderStudentAdd() {
   function primarySectionGender(section) {
     const sectionNumber = Number.parseInt(String(section).trim(), 10);
     if (!Number.isInteger(sectionNumber)) return null;
-    return sectionNumber % 100 === 1 ? "male" : sectionNumber % 100 === 2 ? "female" : null;
+    return sectionNumber % 100 === 1 ? "female" : sectionNumber % 100 === 2 ? "male" : null;
   }
 
   function refreshGenders() {
@@ -1874,12 +1874,12 @@ async function renderClasses() {
 
   const syncPrimaryGender = () => {
     if (stage.value !== "primary") return;
-    gender.value = section.value.endsWith("1") ? "male" : section.value.endsWith("2") ? "female" : "";
+    gender.value = section.value.endsWith("1") ? "female" : section.value.endsWith("2") ? "male" : "";
   };
 
   const syncPrimarySection = () => {
     if (stage.value !== "primary" || !gender.value) return;
-    const suffix = gender.value === "female" ? "2" : "1";
+    const suffix = gender.value === "female" ? "1" : "2";
     const matchingSection = [...section.options].find((option) => option.value.endsWith(suffix));
     if (matchingSection) section.value = matchingSection.value;
   };
@@ -1945,7 +1945,7 @@ async function renderClasses() {
         : gradeValue === "Grade2" ? ["201", "202"]
           : gradeValue === "Grade3" ? ["301", "302"] : [];
     const expectedGender = stageValue === "primary"
-      ? (sectionValue.endsWith("1") ? "male" : sectionValue.endsWith("2") ? "female" : "")
+      ? (sectionValue.endsWith("1") ? "female" : sectionValue.endsWith("2") ? "male" : "")
       : "mixed";
     if (!expectedSections.includes(sectionValue) || genderValue !== expectedGender) {
       return setNotice(document.querySelector("#pageNotice"), "error", "تعارض: اختاري شعبة الصف الصحيحة والجنس المطابق لها قبل الحفظ.");
