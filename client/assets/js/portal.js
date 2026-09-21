@@ -1924,7 +1924,11 @@ async function renderClasses() {
   };
 
   stage.addEventListener("change", syncStageFields);
-  grade.addEventListener("change", () => { refreshSections(); syncPrimaryGender(); });
+  grade.addEventListener("change", () => {
+    refreshSections();
+    syncPrimarySection();
+    syncPrimaryGender();
+  });
   section.addEventListener("change", syncPrimaryGender);
   gender.addEventListener("change", syncPrimarySection);
   document.querySelector("#cancelClassEdit").addEventListener("click", resetEditor);
