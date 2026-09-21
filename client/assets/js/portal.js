@@ -1849,7 +1849,7 @@ async function renderClasses() {
       <div class="field"><label for="classStage">المرحلة</label><select id="classStage" required><option value="">اختاري المرحلة</option><option value="kindergarten">رياض الأطفال</option><option value="primary">الابتدائي</option></select></div>
       <div class="field"><label for="classGrade">الصف</label><select id="classGrade" required><option value="">اختاري الصف</option></select></div>
       <div class="field"><label for="classGender">الجنس</label><select id="classGender" required><option value="">اختاري الجنس</option></select></div>
-      <div class="field"><label for="classSection">الشعبة</label><input id="classSection" required maxlength="20" placeholder="رياض الأطفال: 1 أو 2"></div>
+      <div class="field"><label for="classSection">الشعبة</label><select id="classSection" required><option value="">اختاري الشعبة</option></select></div>
       <div class="form-actions span-2">
         <button id="saveClass" class="btn" type="submit">حفظ الفصل</button>
         <button id="cancelClassEdit" class="btn btn-secondary hidden" type="button">إلغاء التعديل</button>
@@ -1861,9 +1861,25 @@ async function renderClasses() {
   const stage = document.querySelector("#classStage");
   const grade = document.querySelector("#classGrade");
   const gender = document.querySelector("#classGender");
+  const section = document.querySelector("#classSection");
+
+  const refreshSections = () => {
+    const sections = stage.value === "kindergarten"
+      ? ["1", "2"]
+      : grade.value === "Grade1" ? ["101", "102"]
+        : grade.value === "Grade2" ? ["201", "202"]
+          : grade.value === "Grade3" ? ["301", "302"] : [];
+    fillSelect(section, sections, (item) => item, (item) => item, "اختاري الشعبة");
+  };
+
+  const syncPrimaryGender = () => {
+    if (stage.value !== "primary") return;
+    gender.value = section.value.endsWith("1") ? "female" : section.value.endsWith("2") ? "male" : "";
+  };
 
   const syncStageFields = () => {
     fillSelect(grade, gradeOptions(stage.value), (x) => x[0], (x) => x[1], "اختاري الصف");
+    refreshSections();
     gender.replaceChildren();
     const initial = document.createElement("option");
     initial.value = "";
@@ -1886,7 +1902,7 @@ async function renderClasses() {
       female.value = "female";
       female.textContent = "بنات";
       gender.append(male, female);
-      if (!gender.value) gender.value = "male";
+      syncPrimaryGender();
     }
   };
 
@@ -1899,6 +1915,8 @@ async function renderClasses() {
   };
 
   stage.addEventListener("change", syncStageFields);
+  grade.addEventListener("change", () => { refreshSections(); syncPrimaryGender(); });
+  section.addEventListener("change", syncPrimaryGender);
   document.querySelector("#cancelClassEdit").addEventListener("click", resetEditor);
   syncStageFields();
   drawClasses(await loadClasses());
@@ -1978,8 +1996,9 @@ function startClassEdit(academicClass) {
   stage.value = academicClass.stage;
   stage.dispatchEvent(new Event("change"));
   document.querySelector("#classGrade").value = academicClass.grade;
-  document.querySelector("#classGender").value = academicClass.gender;
-  document.querySelector("#classSection").value = academicClass.section;
+  document.querySelector("#classGrade").dispatchEvent(new Event("change"));
+  document.querySelector("#classSection").value = displaySection(academicClass);
+  document.querySelector("#classSection").dispatchEvent(new Event("change"));
   document.querySelector("#saveClass").textContent = "حفظ التعديل";
   document.querySelector("#cancelClassEdit").classList.remove("hidden");
   document.querySelector("#classForm").scrollIntoView({ behavior: "smooth", block: "start" });

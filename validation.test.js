@@ -12,8 +12,8 @@ test("يقبل نموذج إضافة فصل بدون اسم ويولد الاس�
   assert.equal(classSchema.safeParse({
     stage: "primary",
     grade: "Grade1",
-    section: "أ",
-    gender: "male",
+    section: "101",
+    gender: "female",
     active: true
   }).success, true);
 });

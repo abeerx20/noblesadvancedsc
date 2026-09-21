@@ -56,6 +56,20 @@ export const classSchema = z.object({
   if (value.stage === "kindergarten" && value.gender !== "mixed") {
     ctx.addIssue({ code: "custom", path: ["gender"], message: "اختاري مختلط لرياض الأطفال." });
   }
+  const expectedSections = value.stage === "kindergarten"
+    ? ["1", "2"]
+    : value.grade === "Grade1" ? ["101", "102"]
+      : value.grade === "Grade2" ? ["201", "202"]
+        : value.grade === "Grade3" ? ["301", "302"] : [];
+  if (!expectedSections.includes(value.section)) {
+    ctx.addIssue({ code: "custom", path: ["section"], message: "رقم الشعبة لا يتوافق مع الصف المحدد." });
+  }
+  if (value.stage === "primary") {
+    const expectedGender = value.section.endsWith("1") ? "female" : "male";
+    if (value.gender !== expectedGender) {
+      ctx.addIssue({ code: "custom", path: ["gender"], message: "جنس الفصل لا يتوافق مع رقم الشعبة." });
+    }
+  }
 });
 
 const attendanceEntry = z.object({
