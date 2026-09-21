@@ -1910,6 +1910,17 @@ async function renderClasses() {
     const gradeValue = value("classGrade");
     const sectionValue = value("classSection");
     const genderValue = value("classGender");
+    const expectedSections = stageValue === "kindergarten"
+      ? ["1", "2"]
+      : gradeValue === "Grade1" ? ["101", "102"]
+        : gradeValue === "Grade2" ? ["201", "202"]
+          : gradeValue === "Grade3" ? ["301", "302"] : [];
+    const expectedGender = stageValue === "primary"
+      ? (sectionValue.endsWith("1") ? "female" : sectionValue.endsWith("2") ? "male" : "")
+      : "mixed";
+    if (!expectedSections.includes(sectionValue) || genderValue !== expectedGender) {
+      return setNotice(document.querySelector("#pageNotice"), "error", "تعارض: اختاري شعبة الصف الصحيحة والجنس المطابق لها قبل الحفظ.");
+    }
     const autoName = `${stageValue === "kindergarten" ? "رياض الأطفال" : "ابتدائي"} - ${gradeValue || "-"} - ${sectionValue || "غير محدد"} - ${genderValue === "mixed" ? "مختلط" : genderValue === "male" ? "بنين" : genderValue === "female" ? "بنات" : "-"}`;
 
     const payload = {
