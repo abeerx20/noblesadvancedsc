@@ -2276,7 +2276,10 @@ function renderSimpleTable(selector, headings, rows, values) {
 }
 
 function coverageWeek(dateValue) {
-  const start = new Date(`${dateValue}T12:00:00Z`);
+  const normalizedDate = String(dateValue ?? "").trim().replaceAll("/", "-");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) throw new Error("اختاري تاريخاً صحيحاً لجدول الانتظار.");
+  const start = new Date(`${normalizedDate}T12:00:00Z`);
+  if (Number.isNaN(start.getTime())) throw new Error("اختاري تاريخاً صحيحاً لجدول الانتظار.");
   start.setUTCDate(start.getUTCDate() - start.getUTCDay());
   const days = Array.from({ length: 5 }, (_, index) => {
     const date = new Date(start);
@@ -2899,7 +2902,6 @@ async function renderScheduleManage() {
     button.addEventListener("click", () => setScheduleManageTab(button.dataset.scheduleManage));
   });
   await loadManagedScheduleRows("class");
-  await loadCoverageManageRows(localDate(), "");
 }
 
 function setScheduleManageSection(section) {
@@ -2935,7 +2937,7 @@ async function setScheduleManageTab(type) {
 async function loadCoverageManageRows(selectedDate, selectedTeacherUid = "") {
   const wrap = document.querySelector("#coverageManageTable");
   if (!wrap) return;
-  const date = selectedDate || localDate();
+  const date = String(selectedDate || localDate()).trim().replaceAll("/", "-");
   wrap.replaceChildren();
 
   try {
@@ -2960,7 +2962,7 @@ async function loadCoverageManageRows(selectedDate, selectedTeacherUid = "") {
     const body = document.createElement("tbody");
     filteredRows.forEach((row) => {
       const tr = document.createElement("tr");
-      const dayName = labels.day[Object.keys(labels.day).find((key) => row.date === coverageWeek(date).days.find((entry) => entry.day === key)?.date)] ?? "—";
+      const dayName = labels.day[Object.keys(labels.day).find((key) => row.date === week.days.find((entry) => entry.day === key)?.date)] ?? "—";
       [dayName, row.subject || row.periodName || row.location || "—", row.absentTeacherName || "—", row.substituteName || "—", row.status || "مكلف", `${row.startTime || "—"} - ${row.endTime || "—"}`].forEach((value) => tr.append(createCell(value)));
       body.append(tr);
     });
