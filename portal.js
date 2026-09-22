@@ -1,5 +1,6 @@
 ﻿import { api, apiFetch, downloadFile } from "./api.js";
 import { logout } from "./firebase-client.js";
+import { getRoleTitle } from "./role-display.js";
 import { clearNotice, createCell, fillSelect, formatDate, setNotice, submitSafely } from "./ui.js";
 import {
   confirmDelete,
@@ -5949,7 +5950,7 @@ function renderCertificateRequestForm(area, type) {
  
       <div class="field">
         <label>المسمى الوظيفي</label>
-        <input value="${employee?.role ?? ""}" readonly>
+        <input value="${getRoleTitle(employee?.role)}" readonly>
       </div>
  
  
@@ -6042,7 +6043,7 @@ function renderCertificateManager(area) {
   area.innerHTML = `< form id = "certificateForm" class="form-grid" novalidate >
     <div class="field"><label for="certificateType">نوع الخطاب</label><select id="certificateType" required><option value="salary">تعريف راتب</option><option value="employment">تعريف موظف على رأس العمل</option></select></div>
     <div class="field"><label for="certificateEmployee">الموظفة</label><select id="certificateEmployee" required><option value="">اختاري الموظفة</option>${employeeOptions}</select></div>
-    <div class="field"><label for="certificateJobTitle">المسمى الوظيفي</label><input id="certificateJobTitle" maxlength="120" required></div>
+    <div class="field"><label for="certificateJobTitle">المسمى الوظيفي</label><input id="certificateJobTitle" maxlength="120" required readonly></div>
     <div class="field" id="salaryField"><label for="certificateSalary">الراتب الشهري</label><input id="certificateSalary" type="number" min="0" max="1000000" step="0.01"></div>
     <div class="field"><label for="certificateIssuer">جهة الإصدار</label><input id="certificateIssuer" value="إدارة المدرسة" maxlength="160" required></div>
     <div class="field span-2"><label for="certificateNotes">ملاحظات (اختياري)</label><textarea id="certificateNotes" maxlength="1000"></textarea></div>
@@ -6050,8 +6051,21 @@ function renderCertificateManager(area) {
   </form > `;
   const type = document.querySelector("#certificateType");
   const salaryField = document.querySelector("#salaryField");
+  const employeeField = document.querySelector("#certificateEmployee");
+  const jobTitleField = document.querySelector("#certificateJobTitle");
+
   const syncSalary = () => salaryField.classList.toggle("hidden", type.value !== "salary");
-  type.addEventListener("change", syncSalary); syncSalary();
+  const syncJobTitle = () => {
+    const employeeUid = employeeField.value;
+    const employee = state.employees.find((e) => (e.authUid ?? e.id) === employeeUid);
+    jobTitleField.value = employee ? getRoleTitle(employee.role) : "";
+  };
+
+  type.addEventListener("change", syncSalary);
+  employeeField.addEventListener("change", syncJobTitle);
+  syncSalary();
+  syncJobTitle();
+
   document.querySelector("#certificateForm").addEventListener("submit", async (event) => {
 
     event.preventDefault();
@@ -6110,7 +6124,7 @@ function renderCertificateManager(area) {
 
         if (employee) {
           document.querySelector("#certificateJobTitle").value =
-            labels.role[employee.role] ?? "";
+            getRoleTitle(employee.role);
         }
 
       } catch (error) {
