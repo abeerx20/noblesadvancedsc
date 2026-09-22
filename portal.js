@@ -29,9 +29,14 @@ const state = {
   notificationTimer: null
 };
 
+const normalizeRoleKey = (role) => {
+  if (role == null || role === "") return "";
+  return String(role).trim().toLowerCase().replace(/[\s-]+/g, "_");
+};
+
 const labels = {
   role: {
-    teacher: "معلمة", principal: "مديرة المدرسة", vice_principal: "وكيلة", hr: "الموارد البشرية", it: "تقنية المعلومات",
+    teacher: "معلمة", principal: "مديرة المدرسة", vice_principal: "وكيلة", hr: "الموارد البشرية", resource_user: "الموارد البشرية والمالية", it: "تقنية المعلومات",
     it_teacher: "تقنية المعلومات", admin: "إدارية", registrar: "القبول والتسجيل", accountant: "المحاسبة",
     doctor: "طبيبة", system_admin: "مسؤولة النظام", schedule_admin: "مسؤولة الجداول", upper_management: "الإدارة العليا"
   },
@@ -5995,12 +6000,10 @@ function renderCertificateRequestForm(area, type) {
         employeeNumber:
           state.me.employee.employeeNumber,
 
-        role:
-          state.me.employee.role,
+        role: getRoleTitle(state.me.employee.role),
 
         roleLabel:
-          labels.role[state.me.employee.role]
-          ?? state.me.employee.role,
+          getRoleTitle(state.me.employee.role),
 
         type:
           type === "salary"

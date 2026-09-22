@@ -1,6 +1,7 @@
 // app.js
 import "./config/firebase.js"; // ✅ ضع هذا في الأول!
 import crypto from "node:crypto";
+import { existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
@@ -15,8 +16,8 @@ import { errorHandler, notFound } from "./middleware/errors.js";
 import { AppError } from "./utils/AppError.js";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
-const clientDirectory = path.resolve(currentDirectory, "../../client");
-const templatesDirectory = path.resolve(currentDirectory, "../../templates");
+const clientDirectory = path.resolve(currentDirectory, "client");
+const templatesDirectory = path.resolve(currentDirectory, "templates");
 
 export const app = express();
 
@@ -76,14 +77,29 @@ app.use(express.json({ limit: "150kb", strict: true }));
 app.use(express.urlencoded({ extended: false, limit: "50kb" }));
 
 app.use("/api/v1", apiRouter);
-app.use("/templates", express.static(templatesDirectory, { maxAge: 0, etag: false, lastModified: false }));
-app.use(express.static(clientDirectory, { extensions: ["html"], maxAge: 0, etag: false, lastModified: false }));
-app.get("/", (_req, res) => {
-  res.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-  res.set("Pragma", "no-cache");
-  res.set("Expires", "0");
-  res.sendFile(path.join(clientDirectory, "index.html"));
+app.use("/templates", express.static(templatesDirectory, { maxAge: env.NODE_ENV === "production" ? "1h" : 0 }));
+app.use(express.static(clientDirectory, { extensions: ["html"], maxAge: env.NODE_ENV === "production" ? "1h" : 0 }));
+app.use(express.static(currentDirectory, {
+  index: false,
+  extensions: ["html", "js", "css"],
+  maxAge: env.NODE_ENV === "production" ? "1h" : 0,
+  etag: false,
+  lastModified: false
+}));
+app.get(/^\/((?!api\/)[^?#]+)\.(js|css|html)$/i, (req, res, next) => {
+  const relativePath = req.path.replace(/^\/+/, "");
+  if (!relativePath || relativePath.includes("..")) {
+    return next();
+  }
+
+  const candidate = path.resolve(currentDirectory, relativePath);
+  if (candidate.startsWith(currentDirectory) && existsSync(candidate) && statSync(candidate).isFile()) {
+    return res.sendFile(candidate);
+  }
+
+  return next();
 });
+app.get("/", (_req, res) => res.sendFile(path.join(clientDirectory, "index.html")));
 
 app.use(notFound);
 app.use(errorHandler);
