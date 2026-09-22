@@ -1,4 +1,4 @@
-import { acknowledgeCoverage, assignCoverage, createCoverageAbsence, listCoverage, listMyCoverage, updateCoverage } from "../services/coverageService.js";
+import { acknowledgeCoverage, assignCoverage, createCoverageAbsence, deleteCoverage, listCoverage, listMyCoverage, updateCoverage } from "../services/coverageService.js";
 import { writeAudit } from "../services/auditService.js";
 
 export async function index(req, res) {
@@ -27,6 +27,12 @@ export async function update(req, res) {
     await updateCoverage(req.user, req.params.id, req.body);
     await writeAudit({ req, action: "update", entityType: "teacherCoverage", entityId: req.params.id, summary: req.body });
     res.json({ success: true, message: "تم تعديل تكليف الانتظار." });
+}
+
+export async function remove(req, res) {
+    await deleteCoverage(req.user, req.params.id);
+    await writeAudit({ req, action: "delete", entityType: "teacherCoverage", entityId: req.params.id, summary: { deletedBy: req.user.uid } });
+    res.json({ success: true, message: "تم حذف تكليف الانتظار." });
 }
 
 export async function acknowledge(req, res) {

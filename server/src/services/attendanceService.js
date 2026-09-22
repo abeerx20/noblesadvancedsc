@@ -31,7 +31,7 @@ function attendanceOpensAtNine() {
 
 export async function attendanceEligibility(user, classId, date) {
   if (!attendanceOpensAtNine()) {
-    return { allowed: false, reason: "إدخال الغياب متاح ابتداءً من الساعة 9:00 صباحًا بتوقيت مكة.", subject: null };
+    return { allowed: false, reason: "إدخال الغياب متاح ابتداءً من الساعة 9:00 صباحًا.", subject: null };
   }
   await getClassOrThrow(classId);
   const override = user.permissions.includes("manage_attendance") || user.permissions.includes("attendance_override");

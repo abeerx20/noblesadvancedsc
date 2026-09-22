@@ -81,7 +81,7 @@ export async function loadIdentity(decodedToken) {
   if (employee.role === "upper_management") {
     permissions.push(
       "view_students", "view_all_students", "manage_students", "view_attendance", "manage_attendance", "enter_attendance",
-      "manage_absence", "attendance_override", "view_schedules", "view_all_schedules", "manage_schedules", "view_substitution_assignments",
+      "manage_absence", "attendance_override", "view_schedules", "view_all_schedules", "manage_schedules",
       "request_leave", "manage_leave_requests", "manage_leave_hr_requests", "request_training", "manage_training_requests",
       "issue_work_assignments", "view_all_work_assignments", "request_assets", "manage_assets", "request_loans", "manage_loans",
       "manage_employees", "manage_permissions", "manage_announcements", "request_materials", "manage_materials", "manage_invoices",

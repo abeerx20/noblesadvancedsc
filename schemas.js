@@ -339,6 +339,7 @@ export const accessUpdateSchema = z.object({
   manage_employees: z.boolean().optional(),
   manage_permissions: z.boolean().optional(),
   manage_announcements: z.boolean().optional(),
+  view_reports: z.boolean().optional(),
   request_materials: z.boolean().optional(),
   manage_materials: z.boolean().optional(),
   request_suggestions: z.boolean().optional(),

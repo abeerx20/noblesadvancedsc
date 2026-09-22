@@ -93,7 +93,8 @@ const menuGroups = [
           {
             route: "reports",
             label: "التقارير",
-            roles: ["teacher", "principal", "vice_principal", "admin", "system_admin", "upper_management"]
+            roles: ["teacher", "it_teacher", "parent"],
+            any: ["view_reports"]
           }
         ]
       }
@@ -307,7 +308,6 @@ const scheduleBreadcrumbs = {
   schedule: ["أكاديمي", "الجداول", "الجدول الدراسي"],
   "schedule-my": ["أكاديمي", "الجداول", "الجدول الدراسي", "عرض الجدول الدراسي"],
   "schedule-all": ["أكاديمي", "الجداول", "الجدول الدراسي", "عرض جميع الجداول الدراسية"],
-  "schedule-manage": ["أكاديمي", "الجداول", "الجدول الدراسي", "إدارة الجدول الدراسي"],
   coverage: ["أكاديمي", "الجداول", "جدول الانتظار"]
 };
 const administrativeBreadcrumbs = {
@@ -594,11 +594,29 @@ function displaySection(item) {
   return item.section;
 }
 
-function classLabel(item) { return `${labels.grade[item.grade] ?? item.grade} - ${displaySection(item)} - ${labels.gender[item.gender] ?? item.gender}`; }
+function sectionLabel(sectionValue) {
+  const value = String(sectionValue ?? "").trim();
+  if (!value) return "غير محدد";
+  const map = { A: "أ", a: "أ", B: "ب", b: "ب", C: "ج", c: "ج", D: "د", d: "د", E: "هـ", e: "هـ", F: "ف", f: "ف" };
+  const mapped = map[value];
+  if (mapped) return `شعبة ${mapped}`;
+  if (/^\d+$/.test(value)) return `شعبة ${value}`;
+  return value;
+}
+
+function classLabel(item) {
+  return `${labels.grade[item.grade] ?? item.grade} - ${sectionLabel(displaySection(item))} - ${labels.gender[item.gender] ?? item.gender}`;
+}
 function localDate() { const now = new Date(); return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
 function weekNumber(dateValue) {
-  const date = new Date(`${dateValue}T12:00:00Z`); const first = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  return Math.ceil((((date - first) / 86400000) + first.getUTCDay() + 1) / 7);
+  if (!dateValue) return 1;
+  const date = new Date(`${dateValue}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return 1;
+  const academicStart = date.getUTCMonth() >= 8
+    ? new Date(Date.UTC(date.getUTCFullYear(), 8, 1))
+    : new Date(Date.UTC(date.getUTCFullYear() - 1, 8, 1));
+  const diffDays = Math.floor((date - academicStart) / 86400000);
+  return Math.max(1, Math.floor(diffDays / 7) + 1);
 }
 
 function notificationDate(value) {
@@ -731,14 +749,19 @@ async function renderDashboard() {
   document.querySelector("#dashNumber").textContent = String(employee.employeeNumber ?? employee.employeeId ?? employee.number ?? "—");
   document.querySelector("#dashRole").textContent = labels.role[employee.role] ?? employee.role;
   document.querySelector("#dashEmail").textContent = state.me.email ?? "—";
-  const absenceMonitorOnly = hasRole("admin") && has("manage_absence") && !has("enter_attendance");
-  const quick = [
-    ["attendance", absenceMonitorOnly ? "متابعة الغياب" : "إدخال الغياب", absenceMonitorOnly ? "مراجعة وتعديل حالات الطلاب" : "تسجيل حالات طلاب الحصة الأولى", ["enter_attendance", "manage_attendance", "manage_absence"]],
-    ["leave", "طلب إجازة", "إرسال طلب ومتابعة حالته", ["request_leave"]],
-    ["schedule", "جدولي الدراسي", "عرض الحصص والمناوبات", ["view_schedules", "manage_schedules"]],
-  ];
+  const isMgmt = hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management");
+  const quick = [];
+  if (isMgmt && (has("manage_students") || has("view_attendance") || has("manage_attendance") || has("manage_absence"))) {
+    quick.push(["student-list", "قوائم الطلاب", "عرض الطلاب والفصول والأسماء", ["manage_students", "view_attendance", "manage_attendance", "manage_absence"]]);
+  }
+  if (isMgmt && (has("manage_students") || has("manage_schedules"))) {
+    quick.push(["classes", "إدارة الفصول", "إضافة وتعديل الصفوف والشعب", ["manage_students", "manage_schedules"]]);
+  }
+  if (has("request_leave") || isMgmt) {
+    quick.push(["leave", "طلب إجازة", "إرسال طلب ومتابعة حالته", ["request_leave"]]);
+  }
   const grid = document.querySelector("#quickLinks");
-  quick.filter((item) => item[3].some(has)).forEach(([route, title, description]) => {
+  quick.filter((item) => item[3].some(has) || item[3].some((perm) => hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management") && (perm === "manage_students" || perm === "manage_absence" || perm === "manage_attendance" || perm === "view_attendance"))).forEach(([route, title, description]) => {
     const link = document.createElement("a"); link.className = "quick-link"; link.href = `#${route}`; link.dataset.route = route;
     const icon = document.createElement("span"); icon.className = "quick-link-icon"; icon.setAttribute("aria-hidden", "true");
     const body = document.createElement("span"); body.className = "quick-link-body";
@@ -809,16 +832,12 @@ function appendSkillRow(container, values = { name: "", period: "الفترة ا
 function renderReportsHub() {
   const links = [];
 
-  if (hasRole("teacher", "system_admin")) {
+  if (has("view_reports") && hasRole("teacher", "it_teacher")) {
     links.push(studentHubLink("skill-add", "إضافة مهارة", "إضافة مهارات المعلمة حسب الصف والشعبة والفترة"));
     links.push(studentHubLink("skill-entry", "إدخال الدرجات", "اختيار الصف والشعبة والطالب ثم تسجيل التقييم"));
   }
 
-  if (hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management")) {
-    links.push(studentHubLink("skill-approval", "تقارير المدير", "مراجعة التقارير المعتمدة أو إعادة التعديل"));
-  }
-
-  if (hasRole("teacher", "principal", "vice_principal", "admin", "system_admin", "upper_management")) {
+  if (has("view_reports") && hasRole("parent")) {
     links.push(studentHubLink("skill-parent", "التقييمات المعتمدة", "عرض أسماء الطلاب وتقييماتهم المعتمدة"));
   }
 
@@ -1242,11 +1261,21 @@ async function renderStudentList() {
   );
 
   const classes = await loadClasses();
+  const teacherAssignedClassIds = new Set(
+    (await fetchScheduleRows("mine"))
+      .filter((item) => item.blockType === "class" && item.classId)
+      .map((item) => item.classId)
+  );
+  const canSeeAllClasses = hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management");
+  const visibleClasses = canSeeAllClasses
+    ? classes
+    : classes.filter((item) => teacherAssignedClassIds.has(item.id));
+
   const grade = document.querySelector("#rosterGrade");
   const classSelect = document.querySelector("#rosterClass");
-  fillSelect(grade, uniqueValues(classes.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
+  fillSelect(grade, uniqueValues(visibleClasses.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
   grade.addEventListener("change", () => {
-    fillSelect(classSelect, classes.filter((item) => item.grade === grade.value), (x) => x.id, displaySection, "اختاري الشعبة");
+    fillSelect(classSelect, visibleClasses.filter((item) => item.grade === grade.value), (x) => x.id, displaySection, "اختاري الشعبة");
   });
 
   document
@@ -1364,7 +1393,8 @@ async function rosterContext() {
   const classes = await loadClasses();
   if (!state.rosterOptions) state.rosterOptions = (await api.get("/student-rosters/options")).data;
   const allowedClassIds = new Set(state.rosterOptions.map((item) => item.classId));
-  const visibleClasses = has("manage_students") || has("view_all_students")
+  const canSeeAllClasses = hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management");
+  const visibleClasses = canSeeAllClasses
     ? classes
     : classes.filter((item) => allowedClassIds.has(item.id));
   return { classes: visibleClasses, options: state.rosterOptions };
@@ -2098,11 +2128,11 @@ async function renderAttendancePortal() {
 
 async function renderAttendance() {
   page("إدخال الغياب", "تتاح العملية لمعلمة الحصة الأولى أو للمستخدمة المخولة.", `
-    <aside class="attendance-warning"><strong>تنبيه</strong><span>يبدأ إدخال الغياب الساعة 9:00 صباحًا بتوقيت مكة. يرجى التأكد من صحة البيانات ومراجعتها قبل الإرسال.</span></aside>
+    <aside class="attendance-warning"><strong>تنبيه</strong><span>يبدأ إدخال الغياب الساعة 9:00 صباحًا. يرجى التأكد من صحة البيانات ومراجعتها قبل الإرسال.</span></aside>
     <section class="attendance-data-section"><h2>بيانات الغياب</h2>
       <div class="form-grid attendance-entry-grid">
         <div class="field"><label>اسم المعلمة</label><input id="attendanceTeacher" readonly></div>
-        <div class="field"><label for="attendanceDate">التاريخ</label><input id="attendanceDate" type="date" required></div>
+        <div class="field"><label for="attendanceDate">التاريخ</label><input id="attendanceDate" type="date" required readonly></div>
         <div class="field"><label>الوقت</label><input id="attendanceTime" readonly></div>
         <div class="field"><label>رقم الأسبوع</label><input id="attendanceWeek" readonly></div>
         <div class="field"><label for="attendanceGrade">الصف</label><select id="attendanceGrade" required><option value="">اختاري الصف</option></select></div>
@@ -2113,13 +2143,28 @@ async function renderAttendance() {
     </section>
     <label id="allPresentWrap" class="attendance-all-present hidden no-print"><input id="allPresent" type="checkbox"> <span>جميع الطلاب حاضرين</span></label>
     <form id="attendanceForm" class="attendance-table-section"><div id="attendanceStudents" class="attendance-list"><div class="empty-state">اختاري الصف والشعبة والجنس لعرض الطلاب.</div></div><div class="form-actions no-print"><button id="saveAttendance" class="btn btn-small hidden" type="submit">إرسال</button></div></form>`);
-  const classes = await loadClasses();
+  const allClasses = await loadClasses();
+  const teacherAssignedClassIds = new Set(
+    (await fetchScheduleRows("mine"))
+      .filter((item) => item.blockType === "class" && item.classId)
+      .map((item) => item.classId)
+  );
+  const classes = hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management")
+    ? allClasses
+    : allClasses.filter((item) => teacherAssignedClassIds.has(item.id));
   const grade = document.querySelector("#attendanceGrade"); const section = document.querySelector("#attendanceSection"); const gender = document.querySelector("#attendanceGender");
   fillSelect(grade, uniqueValues(classes.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
   const selectedClass = () => classes.find((item) => item.grade === grade.value && item.section === section.value && item.gender === gender.value);
   const clearStudents = () => { document.querySelector("#attendanceStudents").innerHTML = '<div class="empty-state">اختاري الصف والشعبة والجنس لعرض الطلاب.</div>'; document.querySelector("#allPresentWrap").classList.add("hidden"); document.querySelector("#saveAttendance").classList.add("hidden"); };
   const refreshGender = () => { const values = uniqueValues(classes.filter((item) => item.grade === grade.value && item.section === section.value).map((item) => item.gender)); fillSelect(gender, values, (x) => x, (x) => labels.gender[x] ?? x, "اختاري الجنس"); gender.disabled = !values.length; clearStudents(); };
-  const refreshSection = () => { const values = grade.value ? ["أ", "ب", "ج"] : []; fillSelect(section, values, (x) => x, (x) => x, "اختاري الشعبة"); section.disabled = !values.length; refreshGender(); };
+  const refreshSection = () => {
+    const values = grade.value
+      ? uniqueValues(classes.filter((item) => item.grade === grade.value).map((item) => String(item.section ?? ""))).filter(Boolean)
+      : [];
+    fillSelect(section, values, (x) => x, (x) => sectionLabel(x), "اختاري الشعبة");
+    section.disabled = !values.length;
+    refreshGender();
+  };
   grade.addEventListener("change", refreshSection); section.addEventListener("change", refreshGender); gender.addEventListener("change", () => { if (selectedClass()) loadAttendanceStudents(); else clearStudents(); });
   document.querySelector("#attendanceTeacher").value = state.me.employee.nameAr; document.querySelector("#attendanceDate").value = localDate();
   document.querySelector("#attendanceTime").value = new Date().toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
@@ -2297,55 +2342,87 @@ function coverageWeek(dateValue) {
 }
 
 async function renderCoverage() {
+  if (!has("view_substitution_assignments")) {
+    throw new Error("عرض حصص الانتظار متاح للمخولة فقط.");
+  }
+
   const isManager = hasRole("principal", "vice_principal", "admin", "system_admin", "schedule_admin", "upper_management");
-  if (!isManager && has("view_substitution_assignments")) {
+  if (!isManager) {
     await renderMyCoverage();
     return;
   }
 
   page("جدول الانتظار", "إدخال بيانات حصص الانتظار والإقرار من قبل المعلمة المختارة.", `
-    <div class="page-card" style="padding: 22px 20px 18px;">
-      <div class="toolbar no-print" style="justify-content: flex-end; margin: 0 0 18px;">
-        <button id="printCoverage" class="btn btn-secondary btn-small" type="button">طباعة</button>
-      </div>
-
-      <form id="coverageAssignmentForm" class="form-grid coverage-entry-form" novalidate>
-        <div class="field"><label for="coverageDate">التاريخ</label><input id="coverageDate" type="date" required value="${localDate()}"></div>
-        <div class="field"><label for="coverageDay">اليوم</label><select id="coverageDay" required>
-          <option value="">اختر اليوم</option>
-          <option value="الأحد">الأحد</option>
-          <option value="الاثنين">الاثنين</option>
-          <option value="الثلاثاء">الثلاثاء</option>
-          <option value="الأربعاء">الأربعاء</option>
-          <option value="الخميس">الخميس</option>
-        </select></div>
-
-        <div class="field"><label for="coveragePeriod">الحصة</label><select id="coveragePeriod" required>
-          <option value="">اختر الحصة</option>
-          ${Array.from({ length: 8 }, (_, index) => `<option value="${index + 1}">${index + 1}</option>`).join("")}
-        </select></div>
-        <div class="field"><label for="coverageAbsentTeacher">المعلمة الغائبة</label><select id="coverageAbsentTeacher" required><option value="">اختر المعلمة</option></select></div>
-
-        <div class="field"><label for="coverageSubject">المادة</label><input id="coverageSubject" maxlength="80" required></div>
-        <div class="field"><label for="coverageClass">الصف/الفصل</label><input id="coverageClass" maxlength="120" required></div>
-
-        <div class="field"><label for="coverageSubstitute">معلمة الانتظار</label><select id="coverageSubstitute" required><option value="">اختر المعلمة</option></select></div>
-        <div class="field"><label for="coverageStatus">حالة الانتظار</label><select id="coverageStatus" required>
-          <option value="تم">تم</option>
-          <option value="لم يتم" selected>لم يتم</option>
-        </select></div>
-
-        <div class="form-actions span-2" style="justify-content: flex-end; margin-top: 6px;">
-          <button id="saveCoverageAssignment" class="btn" type="submit">حفظ</button>
+    <section class="schedule-manage-panel coverage-panel">
+      <h2>إضافة حصة انتظار</h2>
+      <form id="coverageAssignmentForm" class="form-grid schedule-form coverage-admin-form" novalidate>
+        <div class="field">
+          <label for="coverageDay">اليوم</label>
+          <select id="coverageDay" required>
+            <option value="">اختر اليوم</option>
+            <option value="الأحد">الأحد</option>
+            <option value="الاثنين">الاثنين</option>
+            <option value="الثلاثاء">الثلاثاء</option>
+            <option value="الأربعاء">الأربعاء</option>
+            <option value="الخميس">الخميس</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="coverageDate">التاريخ</label>
+          <input id="coverageDate" type="date" required value="${localDate()}">
+        </div>
+        <div class="field">
+          <label for="coverageAbsentTeacher">المعلمة الغائبة</label>
+          <select id="coverageAbsentTeacher" required><option value="">اختر المعلمة</option></select>
+        </div>
+        <div class="field">
+          <label for="coveragePeriod">الحصة</label>
+          <select id="coveragePeriod" required>
+            <option value="">اختر الحصة</option>
+            ${Array.from({ length: 9 }, (_, index) => `<option value="${index + 1}">${index + 1}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label for="coverageGrade">الصف</label>
+          <select id="coverageGrade" required><option value="">اختر الصف</option></select>
+        </div>
+        <div class="field">
+          <label for="coverageSection">الفصل</label>
+          <select id="coverageSection" required disabled><option value="">اختر الفصل</option></select>
+        </div>
+        <div class="field">
+          <label for="coverageSubject">المادة</label>
+          <input id="coverageSubject" maxlength="80" required placeholder="اكتب المادة">
+        </div>
+        <div class="field">
+          <label for="coverageSubstitute">معلمة الانتظار</label>
+          <select id="coverageSubstitute" required><option value="">اختر المعلمة</option></select>
+        </div>
+        <div class="form-actions" style="grid-column: 1 / -1; justify-content: center;">
+          <button id="saveCoverageAssignment" class="btn btn-small" type="submit">حفظ</button>
+          <button id="backCoverage" class="btn btn-secondary btn-small" type="button">رجوع</button>
         </div>
       </form>
-    </div>
+    </section>
   `);
 
-  const employees = await loadEmployees();
+  const [employees, classes] = await Promise.all([loadEmployees(), loadClasses()]);
   const teachingEmployees = scheduleTeacherOptions(employees);
   fillSelect(document.querySelector("#coverageAbsentTeacher"), teachingEmployees, (item) => item.authUid ?? item.id, (item) => item.nameAr, "اختر المعلمة");
   fillSelect(document.querySelector("#coverageSubstitute"), teachingEmployees, (item) => item.authUid ?? item.id, (item) => item.nameAr, "اختر المعلمة");
+
+  const grades = [...new Set(classes.map((item) => item.grade).filter(Boolean))].sort();
+  const gradeSelect = document.querySelector("#coverageGrade");
+  const sectionSelect = document.querySelector("#coverageSection");
+  fillSelect(gradeSelect, grades, (item) => item, (item) => labels.grade[item] ?? item, "اختر الصف");
+
+  gradeSelect.addEventListener("change", () => {
+    const selectedGrade = gradeSelect.value;
+    const sections = [...new Set(classes.filter((item) => item.grade === selectedGrade).map((item) => item.section).filter(Boolean))].sort();
+    fillSelect(sectionSelect, sections, (item) => item, (item) => item, "اختر الفصل");
+    sectionSelect.disabled = !sections.length;
+    if (!sections.length) sectionSelect.value = "";
+  });
 
   const syncCoverageDay = () => {
     const chosenDate = value("coverageDate");
@@ -2356,6 +2433,7 @@ async function renderCoverage() {
   };
 
   document.querySelector("#coverageDate").addEventListener("change", syncCoverageDay);
+  document.querySelector("#backCoverage").addEventListener("click", () => navigateHome());
   syncCoverageDay();
 
   document.querySelector("#coverageAssignmentForm").addEventListener("submit", async (event) => {
@@ -2363,24 +2441,39 @@ async function renderCoverage() {
     const form = event.currentTarget;
     if (!form.reportValidity()) return;
 
-    const data = {
-      التاريخ: value("coverageDate"),
-      اليوم: value("coverageDay"),
-      الحصة: value("coveragePeriod"),
-      المعلمة_الغائبة: value("coverageAbsentTeacher"),
-      المادة: value("coverageSubject"),
-      الصف_الفصل: value("coverageClass"),
-      معلمة_الانتظار: value("coverageSubstitute"),
-      حالة_الانتظار: value("coverageStatus")
+    const grade = value("coverageGrade");
+    const section = value("coverageSection");
+    const payload = {
+      date: value("coverageDate"),
+      day: value("coverageDay"),
+      period: Number(value("coveragePeriod")) || undefined,
+      absentTeacherUid: value("coverageAbsentTeacher"),
+      subject: value("coverageSubject"),
+      grade,
+      section,
+      substituteUid: value("coverageSubstitute")
     };
 
-    setNotice(document.querySelector("#pageNotice"), "success", "تم حفظ بيانات جدول الانتظار.");
-    console.log("coverage assignment saved", data);
-    form.reset();
-    document.querySelector("#coverageStatus").value = "لم يتم";
+    try {
+      if (form.dataset.coverageEditId) {
+        await api.patch(`/coverage/${encodeURIComponent(form.dataset.coverageEditId)}`, payload);
+        setNotice(document.querySelector("#pageNotice"), "success", "تم تعديل بيانات جدول الانتظار.");
+      } else {
+        await api.post("/coverage", payload);
+        setNotice(document.querySelector("#pageNotice"), "success", "تم حفظ بيانات جدول الانتظار.");
+      }
+      form.reset();
+      delete form.dataset.coverageEditId;
+      const saveButton = document.querySelector("#saveCoverageAssignment");
+      if (saveButton) saveButton.textContent = "حفظ";
+      syncCoverageDay();
+      await loadCoverageManageRows(value("coverageManageDate") || localDate(), value("coverageManageTeacher") || "");
+    } catch (error) {
+      showError(error);
+    }
   });
 
-  document.querySelector("#printCoverage").addEventListener("click", (event) => printPortalPage(event.currentTarget));
+  document.querySelector("#printCoverage")?.addEventListener("click", (event) => printPortalPage(event.currentTarget));
 }
 
 async function renderMyCoverage() {
@@ -2411,13 +2504,13 @@ async function renderMyCoverage() {
           [`${row.startTime} - ${row.endTime}`, row.subject || row.location || "—", row.absentTeacherName, row.substituteName].forEach((item) => tr.append(createCell(item)));
           const action = document.createElement("td");
           if (row.acknowledgedAt || row.status === "مؤكد") {
-            action.innerHTML = "<span aria-label=\"تم الإقرار\">✓</span> تم الإقرار";
+            action.innerHTML = "<span aria-label=\"تم الاطلاع\">✓</span> تم الاطلاع";
           } else {
             const button = document.createElement("button");
             button.type = "button";
             button.className = "btn btn-success btn-small";
-            button.textContent = "✓ إقرار";
-            button.title = "إقرار الاطلاع على الحصة";
+            button.textContent = "✓ تم الاطلاع";
+            button.title = "تأكيد الاطلاع على الحصة";
             button.addEventListener("click", async () => {
               button.disabled = true;
               try {
@@ -2550,19 +2643,14 @@ async function renderSchedule() {
         "ترتيب حصص المعلمات والمناوبات وإدارتها"
       )
     );
+  }
+
+  if (has("view_substitution_assignments")) {
     links.push(
       studentHubLink(
         "coverage",
         "جدول الانتظار",
-        "تسجيل غياب المعلمة وتوزيع حصصها ومناوباتها على البديلات"
-      )
-    );
-  } else if (has("view_substitution_assignments")) {
-    links.push(
-      studentHubLink(
-        "coverage-mine",
-        "جدول الانتظار",
-        "عرض حصص الانتظار المكلفة لكِ والإقرار بالاطلاع"
+        "إدخال بيانات حصص الانتظار والإقرار من قبل المعلمة المختارة"
       )
     );
   }
@@ -2616,9 +2704,9 @@ function scheduleTeacherOptions(employees) {
   );
 }
 
-function setScheduleSelectOptions(select, values, label, placeholder) {
+function setScheduleSelectOptions(select, values, label, placeholder, valueResolver = (item) => item) {
   select.replaceChildren(new Option(placeholder, ""));
-  values.forEach((item) => select.append(new Option(label(item), item)));
+  values.forEach((item) => select.append(new Option(label(item), valueResolver(item))));
   select.disabled = values.length === 0;
 }
 
@@ -2653,7 +2741,13 @@ function setupScheduleClassSelectors(classes) {
 
   grade.addEventListener("change", () => {
     const matching = classes.filter((item) => item.grade === grade.value);
-    setScheduleSelectOptions(section, matching, (item) => item.id, (item) => `${item.section} - ${labels.gender[item.gender] ?? item.gender}`, "اختاري الفصل");
+    setScheduleSelectOptions(
+      section,
+      matching,
+      (item) => `${sectionLabel(displaySection(item))} - ${labels.gender[item.gender] ?? item.gender}`,
+      "اختاري الفصل",
+      (item) => item.id
+    );
     refreshSubjects();
   });
 }
@@ -2695,11 +2789,11 @@ async function renderAllSchedules() {
 }
 
 async function renderScheduleViewer({ title, description, scope, showTeacherFilter }) {
+  const canViewCoverageInSchedule = hasRole("principal", "vice_principal", "admin", "system_admin", "schedule_admin", "upper_management") || has("view_substitution_assignments");
   page(title, description, `
     <div class="schedule-tabs no-print" role="tablist" aria-label="نوع الجدول">
       <button class="schedule-tab active" type="button" data-schedule-view="class" role="tab" aria-selected="true">الحصص الدراسية</button>
       <button class="schedule-tab" type="button" data-schedule-view="break" role="tab" aria-selected="false">المناوبات</button>
-      <button class="schedule-tab" type="button" data-schedule-view="coverage" role="tab" aria-selected="false">جدول الانتظار</button>
     </div>
     ${showTeacherFilter ? `<div class="schedule-view-filter no-print"><div class="field"><label for="scheduleViewTeacher">المعلمة</label><select id="scheduleViewTeacher"><option value="">جميع المعلمات</option></select></div></div>` : ""}
     <div class="table-wrap"><div id="scheduleGrid" class="schedule-grid" data-schedule-scope="${scope}"></div></div>
@@ -2781,37 +2875,80 @@ async function loadAndDrawSchedule() {
     const classNames = new Map(classes.map((item) => [item.id, classLabel(item)]));
     grid.classList.toggle("schedule-grid-empty", !rows.some((item) => item.blockType === type));
 
-    Object.entries(labels.day).forEach(([key, title]) => {
-      const day = document.createElement("section");
-      day.className = "schedule-day";
-      const heading = document.createElement("h3");
-      heading.textContent = title;
-      day.append(heading);
-      const items = rows.filter((item) => item.day === key && item.blockType === type);
-      if (!items.length) {
-        const empty = document.createElement("small");
-        empty.textContent = "لا توجد سجلات";
-        day.append(empty);
-      }
-      items.forEach((item) => {
-        const block = document.createElement("div");
-        block.className = "schedule-block";
-        block.style.borderRightColor = item.teacherColor ?? "#0f6b55";
-        const strong = document.createElement("strong");
-        strong.textContent = item.subject ?? item.periodName;
-        const detail = document.createElement("span");
-        const className = item.classId ? classNames.get(item.classId) : item.location;
-        detail.textContent = [
-          item.periodNumber ? `الحصة ${item.periodNumber}` : item.periodName,
-          `\u2066${item.startTime} - ${item.endTime}\u2069`,
-          item.teacherName,
-          className
-        ].filter(Boolean).join(" • ");
-        block.append(strong, detail);
-        day.append(block);
-      });
-      grid.append(day);
+    const dayEntries = Object.entries(labels.day);
+    const periodNumbers = Array.from({ length: 8 }, (_, index) => index + 1);
+    const table = document.createElement("div");
+    table.className = "schedule-timetable";
+
+    const header = document.createElement("div");
+    header.className = "schedule-timetable-header";
+
+    const periodHeader = document.createElement("div");
+    periodHeader.className = "schedule-timetable-cell schedule-timetable-head";
+    periodHeader.textContent = "الحصة";
+    header.append(periodHeader);
+
+    dayEntries.forEach(([key, title]) => {
+      const dayHeader = document.createElement("div");
+      dayHeader.className = "schedule-timetable-cell schedule-timetable-head";
+      dayHeader.textContent = title;
+      header.append(dayHeader);
     });
+    table.append(header);
+
+    periodNumbers.forEach((periodNumber) => {
+      const row = document.createElement("div");
+      row.className = "schedule-timetable-row";
+
+      const periodLabel = document.createElement("div");
+      periodLabel.className = "schedule-timetable-cell schedule-period-label";
+      periodLabel.textContent = `الحصة ${periodNumber}`;
+      row.append(periodLabel);
+
+      dayEntries.forEach(([key]) => {
+        const cell = document.createElement("div");
+        cell.className = "schedule-timetable-cell schedule-period-cell";
+
+        const items = rows
+          .filter((item) => item.day === key && item.blockType === type && Number(item.periodNumber) === periodNumber)
+          .sort((a, b) => String(a.startTime ?? "").localeCompare(String(b.startTime ?? "")));
+
+        if (!items.length) {
+          const empty = document.createElement("span");
+          empty.className = "schedule-empty";
+          empty.textContent = "—";
+          cell.append(empty);
+          row.append(cell);
+          return;
+        }
+
+        items.forEach((item) => {
+          const block = document.createElement("div");
+          block.className = "schedule-period-item";
+          block.style.borderRightColor = item.teacherColor ?? "#0f6b55";
+
+          const strong = document.createElement("strong");
+          strong.textContent = item.subject ?? item.periodName ?? "حصة";
+
+          const detail = document.createElement("span");
+          const className = item.classId ? classNames.get(item.classId) : item.location;
+          detail.textContent = [
+            item.teacherName,
+            className,
+            `${item.startTime} - ${item.endTime}`
+          ].filter(Boolean).join(" • ");
+
+          block.append(strong, detail);
+          cell.append(block);
+        });
+
+        row.append(cell);
+      });
+
+      table.append(row);
+    });
+
+    grid.append(table);
   } catch (error) {
     showError(error);
   }
@@ -2832,7 +2969,6 @@ async function renderScheduleManage() {
       <div class="schedule-tabs no-print" role="tablist" aria-label="إدارة نوع الجدول">
         <button class="schedule-tab active" type="button" data-schedule-manage="class" role="tab" aria-selected="true">الحصص الدراسية</button>
         <button class="schedule-tab" type="button" data-schedule-manage="break" role="tab" aria-selected="false">المناوبات</button>
-        <button class="schedule-tab" type="button" data-schedule-manage="coverage" role="tab" aria-selected="false">جدول الانتظار</button>
       </div>
 
       <section id="scheduleClassPanel" class="schedule-manage-panel">
@@ -2842,11 +2978,10 @@ async function renderScheduleManage() {
         <div class="field"><label for="classScheduleDay">اليوم</label><select id="classScheduleDay" required><option value="">اختاري اليوم</option><option value="sunday">الأحد</option><option value="monday">الاثنين</option><option value="tuesday">الثلاثاء</option><option value="wednesday">الأربعاء</option><option value="thursday">الخميس</option></select></div>
         <div class="field"><label for="classScheduleGrade">الصف</label><select id="classScheduleGrade" required><option value="">اختاري الصف</option></select></div>
         <div class="field"><label for="classScheduleSection">الفصل</label><select id="classScheduleSection" required disabled><option value="">اختاري الفصل</option></select></div>
-        <div class="field"><label for="classPeriodNumber">الحصة</label><select id="classPeriodNumber"><option value="">اختياري</option>${Array.from({ length: 8 }, (_, index) => `<option value="${index + 1}">الحصة ${index + 1}</option>`).join("")}</select></div>
+        <div class="field"><label for="classPeriodNumber">الحصة</label><select id="classPeriodNumber"><option value="">اختياري</option>${Array.from({ length: 9 }, (_, index) => `<option value="${index + 1}">الحصة ${index + 1}</option>`).join("")}</select></div>
         <div class="field"><label for="classScheduleSubject">المادة</label><select id="classScheduleSubject" required><option value="">اختاري المادة</option></select></div>
-        <div class="field"><label for="classPeriodName">اسم الحصة</label><input id="classPeriodName" maxlength="40" placeholder="اختياري: مثال الحصة الأولى"></div>
-        <div class="field"><label for="classStartTime">وقت البداية</label><input id="classStartTime" type="time" min="07:30" max="14:30" required></div>
-        <div class="field"><label for="classEndTime">وقت النهاية</label><input id="classEndTime" type="time" min="07:30" max="14:30" required></div>
+        <div class="field"><label for="classStartTime">وقت البداية</label><input id="classStartTime" type="time" min="06:30" max="14:30" required></div>
+        <div class="field"><label for="classEndTime">وقت النهاية</label><input id="classEndTime" type="time" min="06:30" max="14:30" required></div>
 <div class="form-actions">
   <button id="saveClassSchedule" class="btn btn-small" type="submit">حفظ</button>
   <button id="cancelClassScheduleEdit" class="btn btn-secondary btn-small hidden" type="button">إلغاء </button>
@@ -2858,25 +2993,16 @@ async function renderScheduleManage() {
       <form id="scheduleBreakForm" class="form-grid schedule-form" novalidate>
         <div class="field"><label for="breakScheduleTeacher">المعلمة</label><select id="breakScheduleTeacher" required><option value="">اختاري المعلمة</option></select></div>
         <div class="field"><label for="breakScheduleDay">اليوم</label><select id="breakScheduleDay" required><option value="">اختاري اليوم</option><option value="sunday">الأحد</option><option value="monday">الاثنين</option><option value="tuesday">الثلاثاء</option><option value="wednesday">الأربعاء</option><option value="thursday">الخميس</option></select></div>
-        <div class="field"><label for="breakPeriodName">اسم المناوبة</label><input id="breakPeriodName" maxlength="40" placeholder="مثال: مناوبة الصباح" required></div>
+        <div class="field"><label for="breakPeriodName">اسم المناوبة</label><select id="breakPeriodName" required><option value="">اختاري اسم المناوبة</option><option value="مناوبة الصباح">مناوبة الصباح</option><option value="مناوبة الفطور">مناوبة الفطور</option><option value="مناوبة الغداء">مناوبة الغداء</option><option value="مناوبة الانصراف">مناوبة الانصراف</option></select></div>
         <div class="field"><label for="breakStage">المرحلة الدراسية</label><select id="breakStage" required><option value="">اختاري المرحلة</option><option value="primary">ابتدائي</option><option value="kindergarten">رياض أطفال</option></select></div>
-        <div class="field"><label for="breakStartTime">وقت البداية</label><input id="breakStartTime" type="time" min="07:30" max="14:30" required></div>
-        <div class="field"><label for="breakEndTime">وقت النهاية</label><input id="breakEndTime" type="time" min="07:30" max="14:30" required></div>
+        <div class="field"><label for="breakStartTime">وقت البداية</label><input id="breakStartTime" type="time" min="06:30" max="14:30" required></div>
+        <div class="field"><label for="breakEndTime">وقت النهاية</label><input id="breakEndTime" type="time" min="06:30" max="14:30" required></div>
 <div class="form-actions">
   <button id="saveBreakSchedule" class="btn btn-small" type="submit">حفظ</button>
   <button id="cancelBreakScheduleEdit" class="btn btn-secondary btn-small hidden" type="button">إلغاء </button>
 </div>      </form>
       </section>
 
-      <section id="scheduleCoveragePanel" class="schedule-manage-panel hidden">
-        <h2>جدول الانتظار</h2>
-        <form id="coverageManageFilters" class="form-grid schedule-form" novalidate>
-          <div class="field"><label for="coverageManageDate">التاريخ</label><input id="coverageManageDate" type="date" value="${localDate()}" required></div>
-          <div class="field"><label for="coverageManageTeacher">المعلمة</label><select id="coverageManageTeacher"><option value="">كل المعلمات</option></select></div>
-          <div class="form-actions"><button id="loadCoverageManage" class="btn btn-small" type="button">عرض</button></div>
-        </form>
-        <div id="coverageManageTable" class="table-wrap"><div class="empty-state">اختر التاريخ لعرض جدول الانتظار.</div></div>
-      </section>
     </div>
 
     <section id="scheduleRecordsPanel" class="subsection hidden">
@@ -2898,10 +3024,6 @@ async function renderScheduleManage() {
   document.querySelector("#scheduleBreakForm").addEventListener("submit", (event) => saveSchedule(event, "break"));
   document.querySelector("#cancelClassScheduleEdit").addEventListener("click", () => resetScheduleEdit("class"));
   document.querySelector("#cancelBreakScheduleEdit").addEventListener("click", () => resetScheduleEdit("break"));
-  document.querySelector("#loadCoverageManage").addEventListener("click", async () => {
-    const date = value("coverageManageDate") || localDate();
-    await loadCoverageManageRows(date, value("coverageManageTeacher"));
-  });
   document.querySelectorAll("[data-schedule-section]").forEach((button) => {
     button.addEventListener("click", () => setScheduleManageSection(button.dataset.scheduleSection));
   });
@@ -2927,12 +3049,21 @@ async function setScheduleManageTab(type) {
     button.classList.toggle("active", selected);
     button.setAttribute("aria-selected", String(selected));
   });
-  document.querySelector("#scheduleClassPanel").classList.toggle("hidden", type !== "class");
-  document.querySelector("#scheduleBreakPanel").classList.toggle("hidden", type !== "break");
-  document.querySelector("#scheduleCoveragePanel").classList.toggle("hidden", type !== "coverage");
-  document.querySelector("#managedScheduleTitle").textContent = type === "class" ? "الحصص المسجلة" : type === "break" ? "المناوبات المسجلة" : "جدول الانتظار";
+
+  const classPanel = document.querySelector("#scheduleClassPanel");
+  const breakPanel = document.querySelector("#scheduleBreakPanel");
+  const coveragePanel = document.querySelector("#scheduleCoveragePanel");
+  const managedTitle = document.querySelector("#managedScheduleTitle");
+
+  if (classPanel) classPanel.classList.toggle("hidden", type !== "class");
+  if (breakPanel) breakPanel.classList.toggle("hidden", type !== "break");
+  if (coveragePanel) coveragePanel.classList.toggle("hidden", type !== "coverage");
+  if (managedTitle) {
+    managedTitle.textContent = type === "class" ? "الحصص المسجلة" : type === "break" ? "المناوبات المسجلة" : "جدول الانتظار";
+  }
 
   if (type === "coverage") {
+    if (!coveragePanel) return;
     const date = value("coverageManageDate") || localDate();
     await loadCoverageManageRows(date, value("coverageManageTeacher"));
     return;
@@ -2963,14 +3094,53 @@ async function loadCoverageManageRows(selectedDate, selectedTeacherUid = "") {
 
     const table = document.createElement("table");
     const head = document.createElement("thead");
-    head.innerHTML = "<tr><th>اليوم</th><th>الحصة / المكان</th><th>المعلمة الغائبة</th><th>البديلة</th><th>الحالة</th><th>الوقت</th></tr>";
+    head.innerHTML = "<tr><th>اليوم</th><th>الحصة / المكان</th><th>المعلمة الغائبة</th><th>البديلة</th><th>الحالة</th><th>الوقت</th><th>إجراءات</th></tr>";
     table.append(head);
 
     const body = document.createElement("tbody");
     filteredRows.forEach((row) => {
       const tr = document.createElement("tr");
       const dayName = labels.day[Object.keys(labels.day).find((key) => row.date === week.days.find((entry) => entry.day === key)?.date)] ?? "—";
-      [dayName, row.subject || row.periodName || row.location || "—", row.absentTeacherName || "—", row.substituteName || "—", row.status || "مكلف", `${row.startTime || "—"} - ${row.endTime || "—"}`].forEach((value) => tr.append(createCell(value)));
+      const cells = [dayName, row.subject || row.periodName || row.location || "—", row.absentTeacherName || "—", row.substituteName || "—", row.status || "مكلف", `${row.startTime || "—"} - ${row.endTime || "—"}`];
+      cells.forEach((value) => tr.append(createCell(value)));
+
+      const actions = document.createElement("td");
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.className = "btn btn-secondary btn-small";
+      editButton.textContent = "تعديل";
+      editButton.addEventListener("click", async () => {
+        const form = document.querySelector("#coverageAssignmentForm");
+        if (!form) return;
+        form.dataset.coverageEditId = row.id;
+        document.querySelector("#coverageDate").value = row.date || localDate();
+        document.querySelector("#coverageDay").value = row.day || "";
+        document.querySelector("#coverageAbsentTeacher").value = row.absentTeacherUid || "";
+        document.querySelector("#coveragePeriod").value = row.periodNumber || row.period || "";
+        document.querySelector("#coverageSubject").value = row.subject || "";
+        document.querySelector("#coverageSubstitute").value = row.substituteUid || "";
+        const saveButton = document.querySelector("#saveCoverageAssignment");
+        if (saveButton) saveButton.textContent = "حفظ التعديل";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "btn btn-danger btn-small";
+      deleteButton.textContent = "حذف";
+      deleteButton.addEventListener("click", async () => {
+        if (!await confirmAction("هل تريد حذف سجل الانتظار هذا؟", "تأكيد الحذف", "حذف")) return;
+        try {
+          await api.delete(`/coverage/${encodeURIComponent(row.id)}`);
+          setNotice(document.querySelector("#pageNotice"), "success", "تم حذف سجل جدول الانتظار.");
+          await loadCoverageManageRows(selectedDate || localDate(), selectedTeacherUid || "");
+        } catch (error) {
+          showError(error);
+        }
+      });
+
+      actions.append(editButton, document.createTextNode(" "), deleteButton);
+      tr.append(actions);
       body.append(tr);
     });
 
@@ -3030,7 +3200,6 @@ async function saveSchedule(event, blockType) {
       teacherUid: employee.authUid ?? employee.id,
       classId: academicClass.id,
       periodNumber: value("classPeriodNumber") ? Number(value("classPeriodNumber")) : undefined,
-      periodName: value("classPeriodName") || undefined,
       subject: value("classScheduleSubject"),
       startTime: value("classStartTime"),
       endTime: value("classEndTime")
@@ -3064,6 +3233,8 @@ async function saveSchedule(event, blockType) {
 
 function beginScheduleEdit(item, blockType, classes) {
   const isClass = blockType === "class";
+  setScheduleManageSection("entry");
+
   const form = document.querySelector(
     isClass ? "#scheduleClassForm" : "#scheduleBreakForm"
   );
@@ -3085,7 +3256,6 @@ function beginScheduleEdit(item, blockType, classes) {
     document.querySelector("#classScheduleDay").value = item.day;
     document.querySelector("#classPeriodNumber").value = item.periodNumber;
     document.querySelector("#classScheduleSubject").value = item.subject ?? "";
-    document.querySelector("#classPeriodName").value = item.periodName;
     document.querySelector("#classStartTime").value = item.startTime;
     document.querySelector("#classEndTime").value = item.endTime;
 
@@ -3103,9 +3273,19 @@ function beginScheduleEdit(item, blockType, classes) {
       section.value = selectedClass.id;
     }
   } else {
-    document.querySelector("#breakScheduleTeacher").value = item.teacherUid;
+    const breakPanel = document.querySelector("#scheduleBreakPanel");
+    if (breakPanel && breakPanel.classList.contains("hidden")) {
+      setScheduleManageTab("break");
+    }
+
+    document.querySelector("#breakScheduleTeacher").value = item.teacherUid ?? "";
     document.querySelector("#breakScheduleDay").value = item.day;
-    document.querySelector("#breakPeriodName").value = item.periodName;
+    const breakPeriodName = document.querySelector("#breakPeriodName");
+    const desiredBreakName = item.periodName || "";
+    if (desiredBreakName && !Array.from(breakPeriodName.options).some((option) => option.value === desiredBreakName)) {
+      breakPeriodName.add(new Option(desiredBreakName, desiredBreakName));
+    }
+    breakPeriodName.value = desiredBreakName;
     document.querySelector("#breakStage").value = item.stage ?? "";
     document.querySelector("#breakStartTime").value = item.startTime;
     document.querySelector("#breakEndTime").value = item.endTime;
@@ -7108,11 +7288,11 @@ async function route() {
     "attendance-entry": renderAttendance,
     "attendance-monitor": renderAttendanceMonitor,
     schedule: renderSchedule,
-    coverage: renderCoverage,
-    "coverage-mine": renderMyCoverage,
     "schedule-my": renderMySchedule,
     "schedule-all": renderAllSchedules,
     "schedule-manage": renderScheduleManage,
+    coverage: renderCoverage,
+    "coverage-mine": renderMyCoverage,
     leave: renderLeaveHub,
     "leave-request": renderLeaveRequest,
     "leave-history": renderLeaveHistory,

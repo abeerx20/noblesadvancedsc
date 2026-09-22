@@ -125,7 +125,7 @@ export async function createEmployee(data, actor) {
     active: normalizedStatus === "active",
     ...(employeeData.role === "upper_management" ? {
       view_students: true, view_all_students: true, manage_students: true, view_attendance: true, manage_attendance: true, enter_attendance: true,
-      manage_absence: true, attendance_override: true, view_schedules: true, view_all_schedules: true, manage_schedules: true, view_substitution_assignments: true,
+      manage_absence: true, attendance_override: true, view_schedules: true, view_all_schedules: true, manage_schedules: true,
       request_leave: true, manage_leave_requests: true, manage_leave_hr_requests: true, request_training: true, manage_training_requests: true,
       issue_work_assignments: true, view_all_work_assignments: true, request_assets: true, manage_assets: true, request_loans: true, manage_loans: true,
       manage_employees: true, manage_permissions: true, manage_announcements: true, request_materials: true, manage_materials: true, manage_invoices: true,
@@ -174,7 +174,7 @@ export async function getAccess(targetUid) {
   const employee = employeeDoc?.data();
   const defaults = employee?.role === "upper_management" ? {
     view_students: true, view_all_students: true, manage_students: true, view_attendance: true, manage_attendance: true, enter_attendance: true,
-    manage_absence: true, attendance_override: true, view_schedules: true, view_all_schedules: true, manage_schedules: true, view_substitution_assignments: true,
+    manage_absence: true, attendance_override: true, view_schedules: true, view_all_schedules: true, manage_schedules: true,
     request_leave: true, manage_leave_requests: true, manage_leave_hr_requests: true, request_training: true, manage_training_requests: true,
     issue_work_assignments: true, view_all_work_assignments: true, request_assets: true, manage_assets: true, request_loans: true, manage_loans: true,
     manage_employees: true, manage_permissions: true, manage_announcements: true, request_materials: true, manage_materials: true, manage_invoices: true,

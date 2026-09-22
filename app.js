@@ -76,9 +76,14 @@ app.use(express.json({ limit: "150kb", strict: true }));
 app.use(express.urlencoded({ extended: false, limit: "50kb" }));
 
 app.use("/api/v1", apiRouter);
-app.use("/templates", express.static(templatesDirectory, { maxAge: env.NODE_ENV === "production" ? "1h" : 0 }));
-app.use(express.static(clientDirectory, { extensions: ["html"], maxAge: env.NODE_ENV === "production" ? "1h" : 0 }));
-app.get("/", (_req, res) => res.sendFile(path.join(clientDirectory, "index.html")));
+app.use("/templates", express.static(templatesDirectory, { maxAge: 0, etag: false, lastModified: false }));
+app.use(express.static(clientDirectory, { extensions: ["html"], maxAge: 0, etag: false, lastModified: false }));
+app.get("/", (_req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  res.sendFile(path.join(clientDirectory, "index.html"));
+});
 
 app.use(notFound);
 app.use(errorHandler);

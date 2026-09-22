@@ -8,8 +8,8 @@ export function toMinutes(time) {
 export function assertSchoolTime(startTime, endTime) {
   const start = toMinutes(startTime);
   const end = toMinutes(endTime);
-  if (start < 450 || end > 870 || start >= end) {
-    throw new AppError(422, "INVALID_SCHOOL_TIME", "يجب أن يكون الوقت بين 07:30 و14:30، وأن يسبق وقت البداية وقت النهاية.");
+  if (start < 390 || end > 870 || start >= end) {
+    throw new AppError(422, "INVALID_SCHOOL_TIME", "يجب أن يكون الوقت بين 06:30 و14:30، وأن يسبق وقت البداية وقت النهاية.");
   }
 }
 

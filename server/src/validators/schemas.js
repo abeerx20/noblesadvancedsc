@@ -174,7 +174,7 @@ export const leaveQuerySchema = z.object({
 export const scheduleSchema = z.object({
   blockType: z.enum(["class", "break"]),
   day: z.enum(["sunday", "monday", "tuesday", "wednesday", "thursday"]),
-  periodNumber: z.coerce.number().int().min(1).max(8).optional(),
+  periodNumber: z.coerce.number().int().min(1).max(9).optional(),
   periodName: clean(1, 40, "اسم الحصة أو الفترة").optional(),
   startTime: time,
   endTime: time,
@@ -374,6 +374,7 @@ export const accessUpdateSchema = z.object({
   manage_employees: z.boolean().optional(),
   manage_permissions: z.boolean().optional(),
   manage_announcements: z.boolean().optional(),
+  view_reports: z.boolean().optional(),
   request_materials: z.boolean().optional(),
   manage_materials: z.boolean().optional(),
   manage_invoices: z.boolean().optional(),

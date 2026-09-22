@@ -1,10 +1,29 @@
 export function setNotice(element, type, message) {
+  if (!element) return;
+
+  if (element._noticeTimeout) {
+    clearTimeout(element._noticeTimeout);
+  }
+
   element.className = `notice visible notice-${type}`;
   element.textContent = message;
   element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+  element._noticeTimeout = window.setTimeout(() => {
+    element.className = "notice";
+    element.textContent = "";
+    delete element._noticeTimeout;
+  }, 3500);
 }
 
 export function clearNotice(element) {
+  if (!element) return;
+
+  if (element._noticeTimeout) {
+    clearTimeout(element._noticeTimeout);
+    delete element._noticeTimeout;
+  }
+
   element.className = "notice";
   element.textContent = "";
 }

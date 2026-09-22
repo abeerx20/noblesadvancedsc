@@ -15,3 +15,4 @@ coverageRoutes.get("/", requireRole(...managementRoles), requirePermission("mana
 coverageRoutes.post("/absences", requireRole(...managementRoles), requirePermission("manage_schedules"), validate(coverageAbsenceSchema), asyncHandler(controller.createAbsence));
 coverageRoutes.post("/", requireRole(...managementRoles), requirePermission("manage_schedules"), validate(coverageSchema), asyncHandler(controller.assign));
 coverageRoutes.patch("/:id", requireRole(...managementRoles), requirePermission("manage_schedules"), validate(idParamSchema, "params"), validate(coverageUpdateSchema), asyncHandler(controller.update));
+coverageRoutes.delete("/:id", requireRole(...managementRoles), requirePermission("manage_schedules"), validate(idParamSchema, "params"), asyncHandler(controller.remove));

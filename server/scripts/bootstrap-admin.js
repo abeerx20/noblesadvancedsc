@@ -13,7 +13,7 @@ const permissions = [
   "view_students", "view_all_students", "manage_students", "view_attendance", "manage_attendance", "enter_attendance", "attendance_override",
   "view_schedules", "view_all_schedules", "manage_schedules", "request_leave", "manage_leave_requests", "request_training", "manage_training_requests",
   "issue_work_assignments", "view_all_work_assignments", "request_assets", "manage_assets", "request_loans", "manage_loans", "manage_employees",
-  "manage_permissions", "manage_announcements", "view_reports", "upload_files", "request_support", "manage_support", "request_materials", "request_suggestions"
+  "manage_permissions", "manage_announcements", "upload_files", "request_support", "manage_support", "request_materials", "request_suggestions"
 ];
 
 const access = { active: true };

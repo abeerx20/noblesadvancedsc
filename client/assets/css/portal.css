@@ -2579,38 +2579,77 @@ tbody tr:hover {
 
 .schedule-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(170px, 1fr));
   gap: 10px;
-  min-width: 920px;
+  min-width: 980px;
 }
 
-.schedule-day {
+.schedule-timetable {
   border: 1px solid #dce6e2;
-  border-radius: 10px;
-  padding: 10px;
-  background: #f5f9f7;
-}
-
-.schedule-day h3 {
-  margin: 0 0 8px;
-  color: var(--green-900);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.schedule-block {
-  margin-bottom: 7px;
-  border-right: 4px solid var(--green-700);
-  border-radius: 7px;
-  padding: 8px;
+  border-radius: 12px;
+  overflow: hidden;
   background: #fff;
-  font-size: 9px;
 }
 
-.schedule-block strong {
-  display: block;
+.schedule-timetable-header,
+.schedule-timetable-row {
+  display: grid;
+  grid-template-columns: 90px repeat(5, minmax(140px, 1fr));
+}
+
+.schedule-timetable-head,
+.schedule-period-label,
+.schedule-period-cell {
+  border-left: 1px solid #dfe7e4;
+  border-bottom: 1px solid #dfe7e4;
+}
+
+.schedule-timetable-head {
+  background: #edf5f2;
+  color: var(--green-900);
+  padding: 10px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.schedule-period-label {
+  background: #f7faf8;
+  color: var(--green-900);
+  padding: 10px 8px;
   font-size: 10px;
   font-weight: 500;
+  text-align: center;
+}
+
+.schedule-period-cell {
+  min-height: 90px;
+  padding: 8px;
+  background: #fff;
+}
+
+.schedule-period-item {
+  margin-bottom: 6px;
+  border-right: 4px solid var(--green-700);
+  border-radius: 7px;
+  padding: 7px 8px;
+  background: #f4faf6;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.schedule-period-item strong {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--green-900);
+}
+
+.schedule-empty {
+  display: block;
+  color: #b7c4bf;
+  text-align: center;
+  font-size: 12px;
+  padding-top: 18px;
 }
 
 .checkbox-grid {
@@ -3510,6 +3549,42 @@ tbody tr:hover {
 .schedule-form .form-actions {
   grid-column: 1 / -1;
   margin-top: 6px;
+}
+
+.coverage-panel {
+  width: min(900px, 100%);
+  margin-inline: auto;
+}
+
+.coverage-admin-form {
+  width: min(780px, 100%);
+  margin-inline: auto;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 10px 12px;
+}
+
+.coverage-admin-form .field {
+  min-width: 0;
+}
+
+.coverage-admin-form .field[style*="grid-column: 1 / -1;"] {
+  grid-column: 1 / -1;
+}
+
+.coverage-admin-form .form-actions {
+  grid-column: 1 / -1;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.coverage-admin-form .btn {
+  min-width: 140px;
+}
+
+@media (max-width: 700px) {
+  .coverage-admin-form {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 850px) {
@@ -6385,6 +6460,6 @@ label:has(#agreement) {
   text-align: center;
 }
 
-#scheduleEntryPanel > .schedule-tabs {
+#scheduleEntryPanel>.schedule-tabs {
   margin-top: 14px;
 }

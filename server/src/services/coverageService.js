@@ -52,6 +52,29 @@ function assignmentKey(absenceReportId, scheduleId) {
     return `${absenceReportId}_${scheduleId}`;
 }
 
+export function getComparableEmployeeUid(employee) {
+    if (!employee || typeof employee !== "object") return "";
+    const candidates = [employee.authUid, employee.id, employee.employeeUid].filter((value) => typeof value === "string" && value.trim());
+    return String(candidates[0] ?? "").trim();
+}
+
+export function employeeMatchesUid(employee, candidateUid) {
+    if (!employee || !candidateUid) return false;
+    const normalized = String(candidateUid).trim();
+    if (!normalized) return false;
+    return [employee.authUid, employee.id, employee.employeeUid].some((value) => String(value ?? "").trim() === normalized);
+}
+
+function buildEmployeeAliasMap(employees) {
+    const map = new Map();
+    employees.forEach((employee) => {
+        [employee.authUid, employee.id, employee.employeeUid].filter((value) => typeof value === "string" && value.trim()).forEach((value) => {
+            map.set(String(value).trim(), employee);
+        });
+    });
+    return map;
+}
+
 export async function listCoverage(from, to) {
     const [absenceSnapshot, scheduleSnapshot, employeeSnapshot, assignmentSnapshot] = await Promise.all([
         db.collection("absenceReports").limit(500).get(),
@@ -61,7 +84,7 @@ export async function listCoverage(from, to) {
     ]);
     const dates = new Set(dateRange(from, to).map((item) => item.value));
     const employees = employeeSnapshot.docs.map(publicDocument).filter((item) => item.status !== "inactive");
-    const employeeByUid = new Map(employees.map((item) => [item.authUid ?? item.id, item]));
+    const employeeByUid = buildEmployeeAliasMap(employees);
     const employeeByName = new Map(employees.map((item) => [normalizeName(item.nameAr), item]));
     const employeeByEmail = new Map(employees.map((item) => [String(item.email ?? "").toLowerCase(), item]));
     const schedules = scheduleSnapshot.docs
@@ -73,7 +96,7 @@ export async function listCoverage(from, to) {
             ?? employeeByName.get(normalizeName(schedule.teacherName))
             ?? employeeByEmail.get(String(schedule.teacherEmail ?? "").toLowerCase());
         if (!teacher) return;
-        const teacherUid = teacher.authUid ?? teacher.id;
+        const teacherUid = getComparableEmployeeUid(teacher) || String(schedule.teacherUid ?? "").trim();
         dateRange(from, to).forEach((date) => {
             if (date.day !== normalizeDay(schedule.day)) return;
             const key = `${teacherUid}:${date.value}`;
@@ -87,11 +110,16 @@ export async function listCoverage(from, to) {
     absenceSnapshot.docs.map(publicDocument)
         .filter((item) => dates.has(item.date) && item.status !== "مرفوض")
         .forEach((absence) => {
-            const absentTeacher = employeeByUid.get(absence.employeeUid);
-            const teacherSchedules = schedulesByTeacherAndDate.get(`${absence.employeeUid}:${absence.date}`) ?? [];
+            const absentTeacher = employeeByUid.get(absence.employeeUid)
+                ?? employeeByName.get(normalizeName(absence.employeeName ?? ""))
+                ?? employeeByEmail.get(String(absence.employeeEmail ?? "").toLowerCase());
+            const absentTeacherUid = getComparableEmployeeUid(absentTeacher) || String(absence.employeeUid ?? "").trim();
+            const teacherSchedules = schedulesByTeacherAndDate.get(`${absentTeacherUid}:${absence.date}`)
+                ?? schedulesByTeacherAndDate.get(`${absence.employeeUid}:${absence.date}`)
+                ?? [];
             teacherSchedules.forEach((schedule) => {
                 const assignment = assignments.get(assignmentKey(absence.id, schedule.id));
-                const substitute = employeeByUid.get(assignment?.substituteUid);
+                const substitute = assignment?.substituteUid ? employeeByUid.get(assignment.substituteUid) : null;
                 rows.push({
                     id: assignment?.id ?? assignmentKey(absence.id, schedule.id),
                     date: absence.date,
@@ -106,7 +134,7 @@ export async function listCoverage(from, to) {
                     location: schedule.location ?? "",
                     startTime: schedule.startTime,
                     endTime: schedule.endTime,
-                    absentTeacherUid: absence.employeeUid,
+                    absentTeacherUid: absentTeacherUid,
                     absentTeacherName: absence.employeeName ?? absentTeacher?.nameAr ?? "—",
                     assigned: Boolean(assignment),
                     substituteUid: assignment?.substituteUid ?? "",
@@ -130,17 +158,26 @@ export async function assignCoverage(user, data) {
     if (!absenceSnapshot.exists || absenceSnapshot.data()?.date !== data.date) {
         throw new AppError(404, "ABSENCE_REPORT_NOT_FOUND", "بلاغ غياب الموظفة غير موجود لهذا التاريخ.");
     }
+    const absence = publicDocument(absenceSnapshot);
     const scheduleSnapshot = await db.collection("teacherSchedule").doc(data.scheduleId).get();
-    if (!scheduleSnapshot.exists || scheduleSnapshot.data()?.teacherUid !== absenceSnapshot.data()?.employeeUid) {
+    if (!scheduleSnapshot.exists) {
         throw new AppError(404, "SCHEDULE_NOT_FOUND", "الحصة أو المناوبة غير مرتبطة بالمعلمة الغائبة.");
     }
-    const substituteSnapshot = await db.collection("employees").doc(data.substituteUid).get();
+    const schedule = publicDocument(scheduleSnapshot);
+    const scheduleTeacherUid = getComparableEmployeeUid({ authUid: schedule.teacherUid, id: schedule.teacherUid }) || schedule.teacherUid;
+    const absenceTeacherUid = getComparableEmployeeUid({ authUid: absence.employeeUid, id: absence.employeeUid }) || absence.employeeUid;
+    if (scheduleTeacherUid !== absenceTeacherUid && !employeeMatchesUid({ authUid: schedule.teacherUid, id: schedule.teacherUid }, absenceTeacherUid)) {
+        throw new AppError(404, "SCHEDULE_NOT_FOUND", "الحصة أو المناوبة غير مرتبطة بالمعلمة الغائبة.");
+    }
+    let substituteSnapshot = await db.collection("employees").doc(data.substituteUid).get();
+    if (!substituteSnapshot.exists) {
+        const authMatches = await db.collection("employees").where("authUid", "==", data.substituteUid).limit(1).get();
+        if (!authMatches.empty) substituteSnapshot = authMatches.docs[0];
+    }
     if (!substituteSnapshot.exists || substituteSnapshot.data()?.status === "inactive") {
         throw new AppError(404, "SUBSTITUTE_NOT_FOUND", "المعلمة البديلة غير موجودة أو غير نشطة.");
     }
     const substitute = publicDocument(substituteSnapshot);
-    const absence = publicDocument(absenceSnapshot);
-    const schedule = publicDocument(scheduleSnapshot);
     const id = assignmentKey(data.absenceReportId, data.scheduleId);
     await db.collection("teacherCoverage").doc(id).set({
         ...data,
@@ -174,18 +211,22 @@ export async function assignCoverage(user, data) {
 
 export async function listMyCoverage(user, from, to) {
     const snapshot = await db.collection("teacherCoverage")
-        .where("substituteUid", "==", user.uid)
         .where("date", ">=", from)
         .where("date", "<=", to)
         .limit(200)
         .get();
-    return snapshot.docs.map(publicDocument).sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`));
+    const eligibleUids = new Set([user.uid, user?.employee?.authUid, user?.employee?.id].filter(Boolean));
+    return snapshot.docs
+        .map(publicDocument)
+        .filter((item) => eligibleUids.has(item.substituteUid) || eligibleUids.has(item.substituteUid ?? ""))
+        .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`));
 }
 
 export async function acknowledgeCoverage(user, id) {
     const ref = db.collection("teacherCoverage").doc(id);
     const snapshot = await ref.get();
-    if (!snapshot.exists || snapshot.data()?.substituteUid !== user.uid) {
+    const acceptedIds = [user.uid, user?.employee?.authUid, user?.employee?.id].filter(Boolean);
+    if (!snapshot.exists || !acceptedIds.includes(snapshot.data()?.substituteUid)) {
         throw new AppError(404, "COVERAGE_NOT_FOUND", "تكليف الانتظار غير موجود.");
     }
     await ref.update({ acknowledgedAt: FieldValue.serverTimestamp(), status: "مؤكد", updatedAt: FieldValue.serverTimestamp() });
@@ -213,7 +254,7 @@ export async function createCoverageAbsence(user, data) {
         throw new AppError(404, "EMPLOYEE_NOT_FOUND", "المعلمة المحددة غير موجودة أو غير نشطة.");
     }
     const employee = publicDocument(employeeSnapshot);
-    const employeeUidForRecord = employeeSnapshot.id;
+    const employeeUidForRecord = employee.authUid ?? employee.id;
     const ref = await db.collection("absenceReports").add({
         employeeUid: employeeUidForRecord,
         employeeName: employee.nameAr,
@@ -235,9 +276,22 @@ export async function updateCoverage(user, id, data) {
     if (!snapshot.exists) throw new AppError(404, "COVERAGE_NOT_FOUND", "تكليف الانتظار غير موجود.");
     const changes = { ...data, updatedBy: user.uid, updatedAt: FieldValue.serverTimestamp() };
     if (data.substituteUid) {
-        const substituteSnapshot = await db.collection("employees").doc(data.substituteUid).get();
+        let substituteSnapshot = await db.collection("employees").doc(data.substituteUid).get();
+        if (!substituteSnapshot.exists) {
+            const authMatches = await db.collection("employees").where("authUid", "==", data.substituteUid).limit(1).get();
+            if (!authMatches.empty) substituteSnapshot = authMatches.docs[0];
+        }
         if (!substituteSnapshot.exists) throw new AppError(404, "SUBSTITUTE_NOT_FOUND", "المعلمة البديلة غير موجودة.");
         changes.substituteName = publicDocument(substituteSnapshot).nameAr;
     }
     await ref.update(changes);
+}
+
+export async function deleteCoverage(user, id) {
+    const ref = db.collection("teacherCoverage").doc(id);
+    const snapshot = await ref.get();
+    if (!snapshot.exists) throw new AppError(404, "COVERAGE_NOT_FOUND", "تكليف الانتظار غير موجود.");
+    await ref.delete();
+    await db.collection("teacherCoverage").doc(id).delete();
+    return { id, deletedBy: user.uid };
 }
