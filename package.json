@@ -6,14 +6,14 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "server/src/server.js",
+  "main": "noblesadvancedsc/server/src/server.js",
   "scripts": {
-    "dev": "node --watch server/src/server.js",
-    "start": "node server/src/server.js",
-    "bootstrap:admin": "node server/scripts/bootstrap-admin.js",
-    "templates": "node server/scripts/create-excel-templates.js",
-    "test": "node --test",
-    "check": "node --check server/src/server.js && node --check server/src/app.js && node --check client/assets/js/portal.js"
+    "dev": "npm --prefix noblesadvancedsc run dev",
+    "start": "npm --prefix noblesadvancedsc start",
+    "bootstrap:admin": "npm --prefix noblesadvancedsc run bootstrap:admin",
+    "templates": "npm --prefix noblesadvancedsc run templates",
+    "test": "npm --prefix noblesadvancedsc test",
+    "check": "npm --prefix noblesadvancedsc run check"
   },
   "dependencies": {
     "cors": "^2.8.6",

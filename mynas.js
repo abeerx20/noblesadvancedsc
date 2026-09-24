@@ -2,12 +2,23 @@ import { api } from "./api.js";
 import { logout } from "./firebase-client.js";
 import { setNotice } from "./ui.js";
 
+const normalizeRoleKey = (role) => {
+  if (role == null || role === "") return "";
+  return String(role).trim().toLowerCase().replace(/[\s-]+/g, "_");
+};
+
 const roleLabels = {
   teacher: "معلمة", principal: "مديرة المدرسة", vice_principal: "وكيلة", hr: "الموارد البشرية",
-  it: "تقنية المعلومات", it_teacher: "تقنية المعلومات", admin: "إدارية", registrar: "القبول والتسجيل",
+  resource_user: "الموارد البشرية والمالية", it: "تقنية المعلومات", it_teacher: "تقنية المعلومات", admin: "إدارية", registrar: "القبول والتسجيل",
   accountant: "المحاسبة", doctor: "طبيبة", system_admin: "مسؤولة النظام",
   schedule_admin: "مسؤولة الجداول", upper_management: "الإدارة العليا"
 };
+
+function resolveRoleLabel(role) {
+  if (!role) return "";
+  const key = normalizeRoleKey(role);
+  return roleLabels[key] ?? String(role).trim();
+}
 const demoMode = new URLSearchParams(location.search).get("demo") === "1";
 const demoParent = new URLSearchParams(location.search).get("parent") === "1";
 

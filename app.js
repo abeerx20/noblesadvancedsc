@@ -77,8 +77,8 @@ app.use(express.json({ limit: "150kb", strict: true }));
 app.use(express.urlencoded({ extended: false, limit: "50kb" }));
 
 app.use("/api/v1", apiRouter);
-app.use("/templates", express.static(templatesDirectory, { maxAge: env.NODE_ENV === "production" ? "1h" : 0 }));
-app.use(express.static(clientDirectory, { extensions: ["html"], maxAge: env.NODE_ENV === "production" ? "1h" : 0 }));
+app.use("/templates", express.static(templatesDirectory, { maxAge: env.NODE_ENV === "production" ? "1h" : 0, etag: false, lastModified: false }));
+app.use(express.static(clientDirectory, { extensions: ["html"], maxAge: env.NODE_ENV === "production" ? "1h" : 0, etag: false, lastModified: false }));
 app.use(express.static(currentDirectory, {
   index: false,
   extensions: ["html", "js", "css"],
@@ -86,6 +86,12 @@ app.use(express.static(currentDirectory, {
   etag: false,
   lastModified: false
 }));
+app.get("/", (_req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  res.sendFile(path.join(clientDirectory, "index.html"));
+});
 app.get(/^\/((?!api\/)[^?#]+)\.(js|css|html)$/i, (req, res, next) => {
   const relativePath = req.path.replace(/^\/+/, "");
   if (!relativePath || relativePath.includes("..")) {
@@ -99,7 +105,20 @@ app.get(/^\/((?!api\/)[^?#]+)\.(js|css|html)$/i, (req, res, next) => {
 
   return next();
 });
-app.get("/", (_req, res) => res.sendFile(path.join(clientDirectory, "index.html")));
+
+app.get(/^\/((?!api\/)[^?#]+)\.(js|css|html)$/i, (req, res, next) => {
+  const relativePath = req.path.replace(/^\/+/, "");
+  if (!relativePath || relativePath.includes("..")) {
+    return next();
+  }
+
+  const candidate = path.resolve(currentDirectory, relativePath);
+  if (candidate.startsWith(currentDirectory) && existsSync(candidate) && statSync(candidate).isFile()) {
+    return res.sendFile(candidate);
+  }
+
+  return next();
+});
 
 app.use(notFound);
 app.use(errorHandler);

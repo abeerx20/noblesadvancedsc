@@ -1,6 +1,6 @@
 ﻿import { api, apiFetch, downloadFile } from "./api.js";
 import { logout } from "./firebase-client.js";
-import { getRoleTitle } from "../../../role-display.js";
+import { getRoleTitle } from "./role-display.js";
 import { clearNotice, createCell, fillSelect, formatDate, setNotice, submitSafely } from "./ui.js?v=20260919-8";
 import {
   confirmDelete,
@@ -46,6 +46,12 @@ const labels = {
   day: { sunday: "الأحد", monday: "الاثنين", tuesday: "الثلاثاء", wednesday: "الأربعاء", thursday: "الخميس" },
   leave: { sick: "مرضية", emergency: "اضطرارية", maternity: "وضع", nursing_hour: "ساعة الأمومة", marriage: "زواج", bereavement: "وفاة", unpaid: "بدون راتب", exam: "اختبار" }
 };
+
+function resolveRoleLabel(role) {
+  if (!role) return "";
+  const key = normalizeRoleKey(role);
+  return labels.role[key] ?? getRoleTitle(role) ?? String(role).trim();
+}
 
 const menuGroups = [
   {
@@ -753,7 +759,7 @@ async function renderDashboard() {
   document.querySelector("#dashEmployeeName").textContent = employee.nameAr;
   document.querySelector("#dashEmployeeNameEn").textContent = employee.nameEn || "غير مسجل";
   document.querySelector("#dashNumber").textContent = String(employee.employeeNumber ?? employee.employeeId ?? employee.number ?? "—");
-  document.querySelector("#dashRole").textContent = labels.role[employee.role] ?? employee.role;
+  document.querySelector("#dashRole").textContent = resolveRoleLabel(employee.role);
   document.querySelector("#dashEmail").textContent = state.me.email ?? "—";
   const isMgmt = hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management");
   const quick = [];
@@ -5709,7 +5715,7 @@ function drawEmployeeProfile(selector, employee, accountEmail = "") {
     ["الاسم باللغة الإنجليزية", employee.nameEn, "ltr"],
     ["رقم الهوية الوطنية", employee.nationalId, "ltr"],
     ["الرقم الوظيفي", String(employee.employeeNumber ?? employee.employeeId ?? employee.number ?? "—"), "ltr"],
-    ["المسمى الوظيفي", labels.role[employee.role] ?? employee.role],
+    ["المسمى الوظيفي", resolveRoleLabel(employee.role)],
     ["القسم", employee.department],
     ["البريد الإلكتروني الرسمي", accountEmail || employee.email, "ltr"],
     ["رقم الجوال", employee.phone, "ltr"],

@@ -3,8 +3,8 @@ services:
     name: noblesadvancedsc
     runtime: node
     plan: free
-    buildCommand: npm ci
-    startCommand: npm start
+    buildCommand: npm --prefix noblesadvancedsc ci
+    startCommand: npm --prefix noblesadvancedsc start
     healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_ENV

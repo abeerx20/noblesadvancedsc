@@ -47,6 +47,12 @@ const labels = {
   leave: { sick: "مرضية", emergency: "اضطرارية", maternity: "وضع", nursing_hour: "ساعة الأمومة", marriage: "زواج", bereavement: "وفاة", unpaid: "بدون راتب", exam: "اختبار" }
 };
 
+function resolveRoleLabel(role) {
+  if (!role) return "";
+  const key = normalizeRoleKey(role);
+  return labels.role[key] ?? getRoleTitle(role) ?? String(role).trim();
+}
+
 const menuGroups = [
   {
     key: "academic",
@@ -681,7 +687,7 @@ async function renderDashboard() {
   document.querySelector("#dashEmployeeName").textContent = employee.nameAr;
   document.querySelector("#dashEmployeeNameEn").textContent = employee.nameEn || "غير مسجل";
   document.querySelector("#dashNumber").textContent = employee.employeeNumber;
-  document.querySelector("#dashRole").textContent = labels.role[employee.role] ?? employee.role;
+  document.querySelector("#dashRole").textContent = resolveRoleLabel(employee.role);
   document.querySelector("#dashEmail").textContent = state.me.email ?? "—";
   const quick = [];
   if (has("enter_attendance") || has("manage_attendance")) {
@@ -5165,7 +5171,7 @@ function drawEmployeeProfile(selector, employee, accountEmail = "") {
     ["الاسم باللغة الإنجليزية", employee.nameEn, "ltr"],
     ["رقم الهوية الوطنية", employee.nationalId, "ltr"],
     ["الرقم الوظيفي", employee.employeeNumber, "ltr"],
-    ["المسمى الوظيفي", labels.role[employee.role] ?? employee.role],
+    ["المسمى الوظيفي", resolveRoleLabel(employee.role)],
     ["القسم", employee.department],
     ["البريد الإلكتروني الرسمي", accountEmail || employee.email, "ltr"],
     ["رقم الجوال", employee.phone, "ltr"],
