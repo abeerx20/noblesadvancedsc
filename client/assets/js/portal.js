@@ -3617,7 +3617,7 @@ function requestTrainingDecisionNote(status) {
 
 const requestPages = {
   leave: { title: "الإجازات", description: "تقديم الإجازة ومتابعة قرارات المديرة والموارد البشرية.", path: "/requests/leave", createPermission: "request_leave", managePermission: "manage_leave_requests", attachment: false, fields: `<div class="field"><label for="leaveType">نوع الإجازة</label><select id="leaveType" required><option value="">اختاري النوع</option><option value="sick">مرضية</option><option value="emergency">اضطرارية</option><option value="maternity">أمومة</option><option value="nursing_hour">ساعة رضاعة</option><option value="marriage">زواج</option><option value="bereavement">وفاة من الدرجة الأولى</option><option value="unpaid">بدون راتب</option></select></div><div class="field"><label for="startDate">تاريخ البداية</label><input id="startDate" type="date" required></div><div class="field"><label for="endDate">تاريخ النهاية</label><input id="endDate" type="date" required></div><div class="field"><label for="leaveDuration">مدة الإجازة</label><input id="leaveDuration" readonly placeholder="تحسب تلقائيًا"></div><div class="field span-2"><label for="requestAttachment">رابط المرفق (اختياري)</label><input id="requestAttachment" type="url" placeholder="https://..."><span class="field-hint">أضيفي رابط المستند حسب نوع الإجازة.</span></div><div class="field"><label for="requestNotes">ملاحظات اختيارية</label><input id="requestNotes" maxlength="500"></div>`, data: () => ({ leaveType: value("leaveType"), startDate: value("startDate"), endDate: value("endDate"), attachmentUrl: value("requestAttachment"), notes: value("requestNotes") }), columns: ["نوع الإجازة", "من", "إلى", "المدة", "الحالة", "قرار المديرة", "سبب رفض المديرة", "قرار الموارد البشرية", "سبب رفض الموارد البشرية"], row: (x) => [labels.leave[x.leaveType] ?? x.leaveType, x.startDate, x.endDate, x.durationDays, x.status, x.managerDecision || "—", x.managerDecision === "رفض" ? x.managerDecisionNote : "—", x.hrDecision || "—", x.hrDecision === "رفض" ? x.hrDecisionNote : "—"] },
-  permission: { title: "الاستئذان", description: "إرسال طلب استئذان ومتابعة حالته.", path: "/requests/permission", createPermission: "request_leave", managePermission: "manage_leave_requests", attachment: true, fields: `<div class="field"><label for="requestDate">التاريخ</label><input id="requestDate" type="date" required></div><div class="field"><label for="exitTime">وقت الخروج</label><input id="exitTime" type="time" required></div><div class="field"><label for="returnTime">وقت العودة (اختياري)</label><input id="returnTime" type="time"></div><div class="field"><label for="requestReason">السبب</label><input id="requestReason" required maxlength="500"></div>`, data: () => ({ date: value("requestDate"), exitTime: value("exitTime"), returnTime: value("returnTime"), reason: value("requestReason") }), columns: ["التاريخ", "الخروج", "العودة", "السبب", "الحالة", "ملاحظة القرار"], row: (x) => [x.date, x.exitTime, x.returnTime, x.reason, x.status, x.decisionNote || "—"] },
+  permission: { title: "الاستئذان", description: "إرسال طلب استئذان ومتابعة حالته.", path: "/requests/permission", createPermission: "request_leave", managePermission: "manage_leave_requests", attachment: true, attachmentType: "url", fields: `<div class="field"><label for="requestDate">التاريخ</label><input id="requestDate" type="date" required></div><div class="field"><label for="requestDay">اليوم</label><input id="requestDay" type="text" readonly placeholder="سيظهر اليوم تلقائيًا"></div><div class="field"><label for="exitTime">وقت الخروج</label><input id="exitTime" type="time" required></div><div class="field"><label for="returnTime">وقت العودة (اختياري)</label><input id="returnTime" type="time"></div><div class="field"><label for="requestAttachment">رابط المرفق (اختياري)</label><input id="requestAttachment" type="url" placeholder="https://..."><span class="field-hint">أدخل رابط المستند أو المرفق إن وُجد.</span></div><div class="field"><label for="requestReason">السبب</label><input id="requestReason" required maxlength="500"></div>`, data: () => ({ date: value("requestDate"), day: value("requestDay"), exitTime: value("exitTime"), returnTime: value("returnTime"), reason: value("requestReason"), attachmentUrl: value("requestAttachment") }), columns: ["التاريخ", "اليوم", "الخروج", "العودة", "السبب", "الحالة", "ملاحظة القرار"], row: (x) => [x.date, x.day || "—", x.exitTime, x.returnTime, x.reason, x.status, x.decisionNote || "—"] },
   "training-course": { title: "دورة تدريبية", description: "تقديم طلب حضور دورة أو مؤتمر أو ورشة تدريبية.", path: "/requests/training-courses", createPermission: "request_training", managePermission: "manage_training_requests", fields: `<div class="field"><label for="courseName">اسم الدورة</label><input id="courseName" required maxlength="160"></div><div class="field"><label for="field">مجال الدورة</label><input id="field" required maxlength="160"></div><div class="field"><label for="startDate">تاريخ البداية</label><input id="startDate" type="date" required></div><div class="field"><label for="endDate">تاريخ الانتهاء</label><input id="endDate" type="date" required></div><div class="field"><label for="departureTime">وقت الخروج</label><input id="departureTime" type="time" required></div><div class="field"><label for="location">مكان الدورة</label><input id="location" required maxlength="300"></div><div class="field span-2"><label for="description">وصف الدورة</label><textarea id="description" required minlength="3" maxlength="1000"></textarea></div>`, data: () => ({ courseName: value("courseName"), field: value("field"), startDate: value("startDate"), endDate: value("endDate"), departureTime: value("departureTime"), location: value("location"), description: value("description") }), columns: ["اسم الدورة", "المجال", "التاريخ", "وقت الخروج", "المكان", "الحالة", "سبب القرار"], row: (x) => [x.courseName, x.field, `${x.startDate} — ${x.endDate}`, x.departureTime, x.location, x.status, x.decisionNote || "—"] },
   "absence-report": {
     title: "تبليغ الغياب", description: "إرسال بلاغ غياب ومتابعة حالته.", path: "/requests/absence-report", createPermission: "request_absence", managePermission: "manage_absence", attachment: true,
@@ -3853,7 +3853,7 @@ async function renderRequestPage(key, overrides = {}, viewKey = key) {
   const canCreate = true;  // ط£ظˆ: has(config.createPermission) || true; 
   const isViewOnly = config.isViewOnly ?? false;
   //  const isViewOnly = config.isViewOnly; // طµظپط­ط© ط§ط³طھط¹ظ„ط§ظ… ظپظ‚ط·
-  const attachmentField = config.attachment && has("upload_files") ? `<div class="field span-2"><label for="requestAttachment">المرفق (اختياري)</label><input id="requestAttachment" type="file" accept=".pdf,.jpg,.jpeg,.png"><span class="field-hint">PDF أو JPG أو PNG، بحد أقصى 5 ميغابايت.</span></div>` : "";
+  const attachmentField = config.attachmentType === "url" ? "" : (config.attachment && has("upload_files") ? `<div class="field span-2"><label for="requestAttachment">المرفق (اختياري)</label><input id="requestAttachment" type="file" accept=".pdf,.jpg,.jpeg,.png"><span class="field-hint">PDF أو JPG أو PNG، بحد أقصى 5 ميغابايت.</span></div>` : "");
 
   // ط¥ط°ط§ ظƒط§ظ†طھ طµظپط­ط© ط¹ط±ط¶ ظپظ‚ط· (ط±ط§ط¨ط·ظٹظ† ظ„ظ„ظ…ظˆط¸ظپط© ظˆط§ظ„ط¥ط¯ط§ط±ط©)
   if (isViewOnly) {
@@ -4002,6 +4002,26 @@ ${canManageSection ? `
     // طµظپط­ط© ط§ظ„ط·ظ„ط¨ ط§ظ„ط¹ط§ط¯ظٹط©
     page(config.title, config.description, `${canCreate ? `<form id="requestForm" class="form-grid" novalidate>${config.fields}${attachmentField}<div class="form-actions span-2"><button id="sendRequest" class="btn" type="submit">إرسال الطلب</button></div></form>` : ""}${viewKey === "suggestions-history" ? '<div id="requestTable" class="table-wrap"><div class="empty-state">جاري التحميل...</div></div>' : ""} 
      </div>`);
+
+    const requestDateField = document.querySelector("#requestDate");
+    const requestDayField = document.querySelector("#requestDay");
+    const setPermissionDay = () => {
+      if (!requestDateField) return;
+      if (!requestDateField.value) {
+        requestDateField.value = new Date().toISOString().slice(0, 10);
+      }
+      if (!requestDayField) return;
+      const dayNames = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+      const selectedDate = new Date(`${requestDateField.value}T00:00:00`);
+      if (!Number.isNaN(selectedDate.getTime())) {
+        requestDayField.value = dayNames[selectedDate.getDay()];
+      }
+    };
+
+    if (requestDateField) {
+      requestDateField.addEventListener("change", setPermissionDay);
+    }
+    setPermissionDay();
 
     document.querySelector("#showMaterialsLink")
       ?.addEventListener("click", async (e) => {
@@ -5614,27 +5634,37 @@ async function renderApprovals() {
   if (!hasRole("system_admin", "principal", "vice_principal", "admin", "upper_management")) {
     throw new Error("لوحة الإحصائيات متاحة لكِ وللإدارة فقط.");
   }
-  page("لوحة إحصائيات الطلبات", "اختاري الموظفة لعرض ملخص طلباتها وتنبيهاتها.", `<div class="approval-filter"><div class="field"><label for="approvalEmployee">اسم الموظفة</label><select id="approvalEmployee"><option value="">اختاري الموظفة</option></select></div></div><div id="approvalStats" class="approval-dashboard hidden"></div>`);
+  page("لوحة إحصائيات الطلبات", "ملخص الطلبات والإحصائيات العامة.", `<div id="approvalStats" class="approval-dashboard"></div>`);
   try {
     const rows = (await api.get("/requests/statistics")).data;
-    const employeeSelect = document.querySelector("#approvalEmployee");
-    fillSelect(employeeSelect, rows, (item) => item.employeeUid, (item) => `${item.employeeName} - ${item.employeeNumber}`, "اختاري الموظفة");
     const dashboard = document.querySelector("#approvalStats");
-    const draw = (item) => {
-      dashboard.classList.toggle("hidden", !item);
-      if (!item) return;
-      const leave = item.byType.leave ?? 0;
-      const permission = item.byType.permission ?? 0;
-      const absence = item.byType.absence ?? 0;
-      const other = Object.entries(item.byType).filter(([type]) => !["leave", "permission", "absence"].includes(type)).reduce((sum, [, count]) => sum + count, 0);
-      const total = leave + permission + absence + other;
+    const draw = (items) => {
+      dashboard.classList.remove("hidden");
+      if (!items || !items.length) {
+        dashboard.innerHTML = "<div class=\"empty-state\">لا توجد بيانات للعرض.</div>";
+        return;
+      }
+      const total = items.reduce((sum, item) => sum + (item.total ?? 0), 0);
+      const leave = items.reduce((sum, item) => sum + (item.byType?.leave ?? 0), 0);
+      const permission = items.reduce((sum, item) => sum + (item.byType?.permission ?? 0), 0);
+      const absence = items.reduce((sum, item) => sum + (item.byType?.absence ?? 0), 0);
+      const other = items.reduce((sum, item) => {
+        const byType = item.byType ?? {};
+        return sum + Object.entries(byType).filter(([type]) => !["leave", "permission", "absence"].includes(type)).reduce((inner, [, count]) => inner + (count ?? 0), 0);
+      }, 0);
+      const pending = items.reduce((sum, item) => sum + (item.pending ?? 0), 0);
+      const approved = items.reduce((sum, item) => sum + (item.approved ?? 0), 0);
+      const rejected = items.reduce((sum, item) => sum + (item.rejected ?? 0), 0);
+      const read = items.reduce((sum, item) => sum + (item.read ?? 0), 0);
+      const unread = items.reduce((sum, item) => sum + (item.unread ?? 0), 0);
+      const rowsHtml = items.map((item) => `<tr><td>${item.employeeName || "—"}</td><td>${item.total ?? 0}</td><td>${item.byType?.leave ?? 0}</td><td>${item.byType?.permission ?? 0}</td><td>${item.byType?.absence ?? 0}</td><td>${Object.entries(item.byType ?? {}).filter(([type]) => !["leave", "permission", "absence"].includes(type)).reduce((sum, [, count]) => sum + (count ?? 0), 0)}</td><td>${item.pending ?? 0}</td><td>${item.approved ?? 0}</td><td>${item.rejected ?? 0}</td><td>${item.read ?? 0}</td><td>${item.unread ?? 0}</td></tr>`).join("");
       const typeParts = [["إجازات", leave, "#74b894"], ["استئذان", permission, "#a8d8bd"], ["غياب", absence, "#4d9a78"], ["طلبات أخرى", other, "#d5eadc"]];
-      const statusParts = [["قيد المراجعة", item.pending, "#74b894"], ["المعتمد", item.approved, "#4d9a78"], ["المرفوض", item.rejected, "#8fc9a9"], ["غير مصنف", Math.max(total - item.pending - item.approved - item.rejected, 0), "#dceee3"]];
+      const statusParts = [["قيد المراجعة", pending, "#74b894"], ["المعتمد", approved, "#4d9a78"], ["المرفوض", rejected, "#8fc9a9"], ["غير مصنف", Math.max(total - pending - approved - rejected, 0), "#dceee3"]];
       const gradient = (parts) => { let start = 0; return parts.map(([, value, color]) => { const end = total ? start + (value / total) * 360 : start; const segment = `${color} ${start}deg ${end}deg`; start = end; return segment; }).join(", "); };
       const legend = (parts) => parts.map(([label, value, color]) => `<li><span class="chart-key" style="background:${color}"></span><span>${label}</span><strong>${value}</strong></li>`).join("");
-      dashboard.innerHTML = `<div class="approval-cards"><div class="approval-card"><span class="approval-card-icon">◉</span><span>إجمالي الطلبات</span><strong>${item.total}</strong><small>طلب</small></div><div class="approval-card"><span class="approval-card-icon">✓</span><span>الإجازات</span><strong>${leave}</strong><small>طلب</small></div><div class="approval-card"><span class="approval-card-icon">◷</span><span>الغياب</span><strong>${absence}</strong><small>طلب</small></div><div class="approval-card"><span class="approval-card-icon">•••</span><span>طلبات أخرى</span><strong>${other}</strong><small>طلب</small></div><div class="approval-card"><span class="approval-card-icon">⌛</span><span>قيد المراجعة</span><strong>${item.pending}</strong><small>طلب</small></div></div><section class="approval-table-section"><h2>تفصيل الطلبات حسب الموظفة</h2><div class="stats-dashboard"><table><thead><tr><th>الموظفة</th><th>الإجمالي</th><th>الإجازات</th><th>الاستئذان</th><th>الغياب</th><th>طلبات أخرى</th><th>قيد المراجعة</th><th>المعتمد</th><th>المرفوض</th><th>مقروء</th><th>غير مقروء</th></tr></thead><tbody><tr>${[item.employeeName, item.total, leave, permission, absence, other, item.pending, item.approved, item.rejected, item.read, item.unread].map((value) => `<td>${value}</td>`).join("")}</tr></tbody></table></div></section><div class="approval-charts"><section class="approval-chart"><h2>نوع الطلب</h2><div class="donut-chart" style="background:conic-gradient(${gradient(typeParts)})"><span><strong>${total}</strong><small>الإجمالي</small></span></div><ul>${legend(typeParts)}</ul></section><section class="approval-chart"><h2>حالة الطلبات</h2><div class="donut-chart" style="background:conic-gradient(${gradient(statusParts)})"><span><strong>${total}</strong><small>الإجمالي</small></span></div><ul>${legend(statusParts)}</ul></section></div>`;
+      dashboard.innerHTML = `<div class="approval-cards"><div class="approval-card"><span class="approval-card-icon">◉</span><span>إجمالي الطلبات</span><strong>${total}</strong><small>طلب</small></div><div class="approval-card"><span class="approval-card-icon">✓</span><span>الإجازات</span><strong>${leave}</strong><small>طلب</small></div><div class="approval-card"><span class="approval-card-icon">◷</span><span>الغياب</span><strong>${absence}</strong><small>طلب</small></div><div class="approval-card"><span class="approval-card-icon">•••</span><span>طلبات أخرى</span><strong>${other}</strong><small>طلب</small></div><div class="approval-card"><span class="approval-card-icon">⌛</span><span>قيد المراجعة</span><strong>${pending}</strong><small>طلب</small></div></div><section class="approval-table-section"><h2>تفصيل الطلبات حسب الموظفة</h2><div class="stats-dashboard"><table><thead><tr><th>الموظفة</th><th>الإجمالي</th><th>الإجازات</th><th>الاستئذان</th><th>الغياب</th><th>طلبات أخرى</th><th>قيد المراجعة</th><th>المعتمد</th><th>المرفوض</th><th>مقروء</th><th>غير مقروء</th></tr></thead><tbody>${rowsHtml}</tbody></table></div></section><div class="approval-charts"><section class="approval-chart"><h2>نوع الطلب</h2><div class="donut-chart" style="background:conic-gradient(${gradient(typeParts)})"><span><strong>${total}</strong><small>الإجمالي</small></span></div><ul>${legend(typeParts)}</ul></section><section class="approval-chart"><h2>حالة الطلبات</h2><div class="donut-chart" style="background:conic-gradient(${gradient(statusParts)})"><span><strong>${total}</strong><small>الإجمالي</small></span></div><ul>${legend(statusParts)}</ul></section></div>`;
     };
-    employeeSelect.addEventListener("change", () => draw(rows.find((item) => item.employeeUid === employeeSelect.value)));
+    draw(rows);
   } catch (error) { showError(error); }
 }
 
