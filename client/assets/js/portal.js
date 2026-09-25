@@ -176,7 +176,7 @@ const menuGroups = [
       {
         title: "طلباتي", items: [
           { route: "leave", label: "الإجازات", any: ["request_leave", "manage_leave_requests", "manage_leave_hr_requests"], roleAny: ["hr", "resource_user"] },
-          { route: "permission", label: "الاستئذان", any: ["request_leave", "manage_leave_requests"] },
+          { route: "permission", label: "الاستئذان", any: ["request_leave", "manage_leave_requests", "manage_leave_hr_requests"], roleAny: ["hr"] },
           { route: "approvals", label: "الموافقات على الطلبات", roles: ["system_admin", "principal", "vice_principal", "admin", "upper_management"], any: ["manage_leave_requests", "manage_training_requests"], roleAny: ["system_admin"] },
           { route: "materials", label: "طلب المواد", any: ["request_assets", "request_materials"] },
           { route: "absence-report", label: "تبليغ الغياب", any: ["request_absence", "request_leave", "manage_absence", "manage_leave_requests"] },
@@ -3623,7 +3623,7 @@ function requestTrainingDecisionNote(status) {
 
 const requestPages = {
   leave: { title: "الإجازات", description: "تقديم الإجازة ومتابعة قرارات المديرة والموارد البشرية.", path: "/requests/leave", createPermission: "request_leave", managePermission: "manage_leave_requests", attachment: false, fields: `<div class="field"><label for="leaveType">نوع الإجازة</label><select id="leaveType" required><option value="">اختاري النوع</option><option value="sick">مرضية</option><option value="emergency">اضطرارية</option><option value="maternity">أمومة</option><option value="nursing_hour">ساعة رضاعة</option><option value="marriage">زواج</option><option value="bereavement">وفاة من الدرجة الأولى</option><option value="unpaid">بدون راتب</option></select></div><div class="field"><label for="startDate">تاريخ البداية</label><input id="startDate" type="date" required></div><div class="field"><label for="endDate">تاريخ النهاية</label><input id="endDate" type="date" required></div><div class="field"><label for="leaveDuration">مدة الإجازة</label><input id="leaveDuration" readonly placeholder="تحسب تلقائيًا"></div><div class="field span-2"><label for="requestAttachment">رابط المرفق (اختياري)</label><input id="requestAttachment" type="url" placeholder="https://..."><span class="field-hint">أضيفي رابط المستند حسب نوع الإجازة.</span></div><div class="field"><label for="requestNotes">ملاحظات اختيارية</label><input id="requestNotes" maxlength="500"></div>`, data: () => ({ leaveType: value("leaveType"), startDate: value("startDate"), endDate: value("endDate"), attachmentUrl: value("requestAttachment"), notes: value("requestNotes") }), columns: ["نوع الإجازة", "من", "إلى", "المدة", "الحالة", "قرار المديرة", "سبب رفض المديرة", "قرار الموارد البشرية", "سبب رفض الموارد البشرية"], row: (x) => [labels.leave[x.leaveType] ?? x.leaveType, x.startDate, x.endDate, x.durationDays, x.status, x.managerDecision || "—", x.managerDecision === "رفض" ? x.managerDecisionNote : "—", x.hrDecision || "—", x.hrDecision === "رفض" ? x.hrDecisionNote : "—"] },
-  permission: { title: "الاستئذان", description: "إرسال طلب استئذان ومتابعة حالته.", path: "/requests/permission", createPermission: "request_leave", managePermission: "manage_leave_requests", attachment: true, attachmentType: "url", fields: `<div class="field"><label for="requestDate">التاريخ</label><input id="requestDate" type="date" required></div><div class="field"><label for="requestDay">اليوم</label><input id="requestDay" type="text" readonly placeholder="سيظهر اليوم تلقائيًا"></div><div class="field"><label for="exitTime">وقت الخروج</label><input id="exitTime" type="time" required></div><div class="field"><label for="returnTime">وقت العودة (اختياري)</label><input id="returnTime" type="time"></div><div class="field"><label for="requestAttachment">رابط المرفق (اختياري)</label><input id="requestAttachment" type="url" placeholder="https://..."><span class="field-hint">أدخل رابط المستند أو المرفق إن وُجد.</span></div><div class="field"><label for="requestReason">السبب</label><input id="requestReason" required maxlength="500"></div>`, data: () => ({ date: value("requestDate"), day: value("requestDay"), exitTime: value("exitTime"), returnTime: value("returnTime"), reason: value("requestReason"), attachmentUrl: value("requestAttachment") }), columns: ["التاريخ", "اليوم", "الخروج", "العودة", "السبب", "الحالة", "ملاحظة القرار"], row: (x) => [x.date, x.day || "—", x.exitTime, x.returnTime, x.reason, x.status, x.decisionNote || "—"] },
+  permission: { title: "الاستئذان", description: "إرسال طلب استئذان ومتابعة حالته.", path: "/requests/permission", createPermission: "request_leave", managePermission: "manage_leave_requests", attachment: true, attachmentType: "url", fields: `<div class="field"><label for="requestDate">التاريخ</label><input id="requestDate" type="date" required></div><div class="field"><label for="requestDay">اليوم</label><select id="requestDay" required><option value="">اختر اليوم</option><option value="الأحد">الأحد</option><option value="الإثنين">الإثنين</option><option value="الثلاثاء">الثلاثاء</option><option value="الأربعاء">الأربعاء</option><option value="الخميس">الخميس</option><option value="الجمعة">الجمعة</option><option value="السبت">السبت</option></select></div><div class="field"><label for="exitTime">وقت الخروج</label><input id="exitTime" type="time" required></div><div class="field"><label for="returnTime">وقت العودة (اختياري)</label><input id="returnTime" type="time"></div><div class="field"><label for="requestAttachment">رابط المرفق (اختياري)</label><input id="requestAttachment" type="url" placeholder="https://..."><span class="field-hint">أدخل رابط المستند أو المرفق إن وُجد.</span></div><div class="field"><label for="requestReason">السبب</label><input id="requestReason" required maxlength="500"></div>`, data: () => ({ date: value("requestDate"), day: value("requestDay"), exitTime: value("exitTime"), returnTime: value("returnTime"), reason: value("requestReason"), attachmentUrl: value("requestAttachment") }), columns: ["التاريخ", "اليوم", "الخروج", "العودة", "السبب", "الحالة", "ملاحظة القرار"], row: (x) => [x.date, x.day || "—", x.exitTime, x.returnTime, x.reason, x.status, x.decisionNote || "—"] },
   "training-course": { title: "دورة تدريبية", description: "تقديم طلب حضور دورة أو مؤتمر أو ورشة تدريبية.", path: "/requests/training-courses", createPermission: "request_training", managePermission: "manage_training_requests", fields: `<div class="field"><label for="courseName">اسم الدورة</label><input id="courseName" required maxlength="160"></div><div class="field"><label for="field">مجال الدورة</label><input id="field" required maxlength="160"></div><div class="field"><label for="startDate">تاريخ البداية</label><input id="startDate" type="date" required></div><div class="field"><label for="endDate">تاريخ الانتهاء</label><input id="endDate" type="date" required></div><div class="field"><label for="departureTime">وقت الخروج</label><input id="departureTime" type="time" required></div><div class="field"><label for="location">مكان الدورة</label><input id="location" required maxlength="300"></div><div class="field span-2"><label for="description">وصف الدورة</label><textarea id="description" required minlength="3" maxlength="1000"></textarea></div>`, data: () => ({ courseName: value("courseName"), field: value("field"), startDate: value("startDate"), endDate: value("endDate"), departureTime: value("departureTime"), location: value("location"), description: value("description") }), columns: ["اسم الدورة", "المجال", "التاريخ", "وقت الخروج", "المكان", "الحالة", "سبب القرار"], row: (x) => [x.courseName, x.field, `${x.startDate} — ${x.endDate}`, x.departureTime, x.location, x.status, x.decisionNote || "—"] },
   "absence-report": {
     title: "تبليغ الغياب", description: "إرسال بلاغ غياب ومتابعة حالته.", path: "/requests/absence-report", createPermission: "request_absence", managePermission: "manage_absence", attachment: true,
@@ -4011,23 +4011,51 @@ ${canManageSection ? `
 
     const requestDateField = document.querySelector("#requestDate");
     const requestDayField = document.querySelector("#requestDay");
-    const setPermissionDay = () => {
-      if (!requestDateField) return;
-      if (!requestDateField.value) {
-        requestDateField.value = new Date().toISOString().slice(0, 10);
-      }
-      if (!requestDayField) return;
+    const syncPermissionDay = (dateField = requestDateField) => {
+      if (!dateField || !requestDayField) return;
+
       const dayNames = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-      const selectedDate = new Date(`${requestDateField.value}T00:00:00`);
-      if (!Number.isNaN(selectedDate.getTime())) {
-        requestDayField.value = dayNames[selectedDate.getDay()];
+      const rawValue = dateField.value || "";
+
+      if (!rawValue) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, "0");
+        const day = String(today.getDate()).padStart(2, "0");
+        dateField.value = `${year}-${month}-${day}`;
       }
+
+      const normalizedValue = (dateField.value || "").replace(/\//g, "-");
+      const match = normalizedValue.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (!match) return;
+
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const day = Number(match[3]);
+      if (!year || !month || !day) return;
+
+      const selectedDate = new Date(year, month - 1, day);
+      const inferredDay = dayNames[selectedDate.getDay()];
+      if (inferredDay) requestDayField.value = inferredDay;
     };
 
     if (requestDateField) {
-      requestDateField.addEventListener("change", setPermissionDay);
+      requestDateField.addEventListener("input", () => syncPermissionDay(requestDateField));
+      requestDateField.addEventListener("change", () => syncPermissionDay(requestDateField));
     }
-    setPermissionDay();
+    document.addEventListener("input", (event) => {
+      const target = event.target;
+      if (target && target.id === "requestDate") {
+        syncPermissionDay(target);
+      }
+    }, { passive: true });
+    document.addEventListener("change", (event) => {
+      const target = event.target;
+      if (target && target.id === "requestDate") {
+        syncPermissionDay(target);
+      }
+    }, { passive: true });
+    syncPermissionDay(requestDateField);
 
     document.querySelector("#showMaterialsLink")
       ?.addEventListener("click", async (e) => {

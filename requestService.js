@@ -6,6 +6,7 @@ import { publicDocument } from "../utils/text.js";
 import { inclusiveDays, toMinutes } from "../utils/time.js";
 import { getEmployeeByUid } from "./employeeService.js";
 import { notifyEmployee as createNotification } from "./notificationService.js";
+import { resolvePermissionDecisionStage } from "./permissionWorkflow.js";
 
 const managerRoles = new Set(["principal", "vice_principal", "admin"]);
 
@@ -80,11 +81,11 @@ async function notifySuggestionRecipients(requestId, request) {
   await batch.commit();
 }
 
-async function notifyRequestManagers(requestId, request, type, title) {
+async function notifyRequestManagers(requestId, request, type, title, allowedRoles = ["principal", "vice_principal", "admin", "system_admin", "hr"]) {
   const managers = await db.collection("employees").limit(500).get();
   const recipients = managers.docs
     .map((snapshot) => ({ id: snapshot.id, ...snapshot.data() }))
-    .filter((employee) => employee.status === "active" && ["principal", "vice_principal", "admin", "system_admin"].includes(employee.role))
+    .filter((employee) => employee.status === "active" && allowedRoles.includes(employee.role))
     .map((employee) => employee.authUid ?? employee.id)
     .filter(Boolean)
     .filter((uid) => uid !== request.employeeUid);
@@ -97,6 +98,32 @@ async function notifyRequestManagers(requestId, request, type, title) {
       recipientUid,
       type,
       title,
+      requestId,
+      employeeName: request.employeeName,
+      read: false,
+      createdAt: FieldValue.serverTimestamp()
+    });
+  });
+  await batch.commit();
+}
+
+async function notifyPermissionHr(requestId, request) {
+  const employees = await db.collection("employees").limit(500).get();
+  const recipients = employees.docs
+    .map((snapshot) => ({ id: snapshot.id, ...snapshot.data() }))
+    .filter((employee) => employee.status === "active" && employee.role === "hr")
+    .map((employee) => employee.authUid ?? employee.id)
+    .filter(Boolean)
+    .filter((uid) => uid !== request.employeeUid);
+
+  if (!recipients.length) return;
+
+  const batch = db.batch();
+  recipients.forEach((recipientUid) => {
+    batch.set(db.collection("notifications").doc(), {
+      recipientUid,
+      type: "permission_request",
+      title: "طلب استئذان جديد في مرحلة الموارد البشرية",
       requestId,
       employeeName: request.employeeName,
       read: false,
@@ -180,11 +207,11 @@ export async function createPermissionRequest(user, data) {
     employeeUid: user.uid,
     employeeName: user.employee.nameAr,
     employeeNumber: user.employee.employeeNumber,
-    status: "قيد المراجعة",
+    status: "بانتظار المديرة",
     submittedAt: FieldValue.serverTimestamp(),
     createdAt: FieldValue.serverTimestamp()
   });
-  await notifyRequestManagers(ref.id, { employeeUid: user.uid, employeeName: user.employee.nameAr }, "permission_request", "طلب جديد: إذن/استئذان بانتظار المراجعة");
+  await notifyRequestManagers(ref.id, { employeeUid: user.uid, employeeName: user.employee.nameAr }, "permission_request", "طلب جديد: إذن/استئذان بانتظار المراجعة", ["principal", "vice_principal", "admin", "system_admin"]);
   return ref.id;
 }
 
@@ -293,6 +320,50 @@ export async function decideRequest(collectionName, user, requestId, decision) {
   if (!snapshot.exists) throw new AppError(404, "REQUEST_NOT_FOUND", "الطلب غير موجود.");
   const record = snapshot.data();
   console.log(record);
+
+  if (collectionName === "permissionRequests") {
+    const stage = resolvePermissionDecisionStage(record, user, decision.status);
+    if (!stage.stage) {
+      throw new AppError(409, "INVALID_PERMISSION_STAGE", "لا يمكن اتخاذ هذا القرار في المرحلة الحالية.");
+    }
+
+    if (stage.stage === "manager") {
+      await ref.update({
+        status: stage.nextStatus,
+        managerDecision: stage.decision,
+        managerDecisionNote: decision.decisionNote,
+        managerDecisionBy: user.uid,
+        managerDecisionAt: FieldValue.serverTimestamp(),
+        decisionNote: decision.decisionNote,
+        updatedAt: FieldValue.serverTimestamp()
+      });
+      await notifyPermissionHr(requestId, record);
+      return;
+    }
+
+    await ref.update({
+      status: stage.nextStatus,
+      hrDecision: stage.decision,
+      hrDecisionNote: decision.decisionNote,
+      hrDecisionBy: user.uid,
+      hrDecisionAt: FieldValue.serverTimestamp(),
+      decisionNote: decision.decisionNote,
+      decidedBy: user.uid,
+      decidedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp()
+    });
+    await createNotification({
+      recipientUid: record.employeeUid,
+      type: "request_decision",
+      title: decision.status === "approved" ? "تم اعتماد طلب الاستئذان" : "تم رفض طلب الاستئذان",
+      message: decision.decisionNote ?? "تم تحديث حالة طلبك.",
+      requestId,
+      requestCollection: collectionName,
+      status: stage.nextStatus
+    });
+    return;
+  }
+
   // if (record.employeeUid === user.uid) {
   //   throw new AppError(403, "SELF_APPROVAL_FORBIDDEN", "لا يمكن للموظفة اعتماد أو رفض طلبها بنفسها.");
   // }

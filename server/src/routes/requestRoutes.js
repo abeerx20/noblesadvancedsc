@@ -49,7 +49,7 @@ requestRoutes.get("/training-courses", requirePermission("request_training", "ma
 requestRoutes.post("/training-courses", requirePermission("request_training"), validate(trainingCourseSchema), asyncHandler(controller.createTrainingCourseRequest));
 requestRoutes.get("/training-attendance", requirePermission("request_training", "manage_training_requests"), validate(limitQuerySchema, "query"), asyncHandler(controller.trainingAttendanceIndex));
 requestRoutes.post("/training-attendance", requirePermission("request_training"), validate(trainingAttendanceSchema), asyncHandler(controller.createTrainingAttendanceRequest));
-requestRoutes.get("/permission", requirePermission("request_leave", "manage_leave_requests"), validate(limitQuerySchema, "query"), asyncHandler(controller.permissionIndex));
+requestRoutes.get("/permission", requirePermission("request_leave", "manage_leave_requests", "manage_leave_hr_requests"), validate(limitQuerySchema, "query"), asyncHandler(controller.permissionIndex));
 requestRoutes.post("/permission", requirePermission("request_leave"), validate(permissionSchema), asyncHandler(controller.createPermission));
 requestRoutes.get("/absence-report", requirePermission("request_absence", "request_leave", "manage_absence", "manage_leave_requests"), validate(limitQuerySchema, "query"), asyncHandler(controller.absenceReportIndex));
 requestRoutes.post("/absence-report", requirePermission("request_absence", "request_leave"), validate(absenceReportSchema), asyncHandler(controller.createAbsenceReport));
@@ -127,7 +127,8 @@ requestRoutes.patch(
     }[req.params.type];
     const canManageAbsence = req.params.type === "absence" && req.user.permissions.some((permission) => ["manage_absence", "manage_leave_requests"].includes(permission));
     const canManageLeaveHr = req.params.type === "leave" && (req.user.permissions.includes("manage_leave_hr_requests") || req.user.employee?.role === "hr");
-    if (req.user.employee?.role !== "system_admin" && !req.user.permissions.includes(required) && !canManageAbsence && !canManageLeaveHr) return next(new AppError(403, "FORBIDDEN", "لا توجد لديك صلاحية لاتخاذ قرار في هذا الطلب."));
+    const canManagePermissionHr = req.params.type === "permission" && (req.user.permissions.includes("manage_leave_hr_requests") || req.user.employee?.role === "hr");
+    if (req.user.employee?.role !== "system_admin" && !req.user.permissions.includes(required) && !canManageAbsence && !canManageLeaveHr && !canManagePermissionHr) return next(new AppError(403, "FORBIDDEN", "لا توجد لديك صلاحية لاتخاذ قرار في هذا الطلب."));
     if (req.params.type === "training" && !["system_admin", "principal", "vice_principal", "admin"].includes(req.user.employee?.role)) {
       return next(new AppError(403, "FORBIDDEN", "إدارة شهادات التدريب متاحة للإدارة المخولة فقط."));
     }

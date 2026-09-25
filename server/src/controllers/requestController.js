@@ -107,7 +107,8 @@ export async function trainingCourseIndex(req, res) {
 
 export async function permissionIndex(req, res) {
   const query = req.validated?.query ?? req.query;
-  res.json({ success: true, data: await listOwned("permissionRequests", req.user, has(req.user, "manage_leave_requests"), Number(query.limit ?? 100)) });
+  const canViewAll = has(req.user, "manage_leave_requests") || has(req.user, "manage_leave_hr_requests") || req.user.employee?.role === "hr" || req.user.employee?.role === "system_admin";
+  res.json({ success: true, data: await listOwned("permissionRequests", req.user, canViewAll, Number(query.limit ?? 100)) });
 }
 export async function absenceReportIndex(req, res) {
   const query = req.validated?.query ?? req.query;
