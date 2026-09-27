@@ -21,8 +21,9 @@ export async function listSchedule(user, filters) {
     "schedule_admin",
     "upper_management"
   ]);
-  const canViewAll = scheduleManagementRoles.has(user.employee?.role)
-    && (user.permissions.includes("view_all_schedules") || user.permissions.includes("manage_schedules"));
+  const canViewAll = user.employee?.role === "system_admin"
+    || (scheduleManagementRoles.has(user.employee?.role)
+      && (user.permissions.includes("view_all_schedules") || user.permissions.includes("manage_schedules")));
   const requestedAll = filters.scope === "all";
   if (requestedAll && !canViewAll) {
     throw new AppError(403, "FORBIDDEN", "لا توجد لديك صلاحية لعرض جداول المعلمات.");

@@ -96,7 +96,8 @@ const menuGroups = [
               "view_schedules",
               "view_all_schedules",
               "manage_schedules"
-            ]
+            ],
+            roleAny: ["system_admin"]
           },
         ]
       },
@@ -2163,16 +2164,11 @@ async function renderAttendance() {
       .filter((item) => item.blockType === "class" && item.classId && item.day === todayDay && Number(item.periodNumber) === 2)
       .map((item) => item.classId)
   );
-  const canManageAttendance = hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management")
-    || has("manage_attendance")
-    || has("attendance_override");
-  const classes = canManageAttendance
-    ? allClasses
-    : allClasses.filter((item) => teacherAssignedClassIds.has(item.id));
+  const classes = allClasses.filter((item) => teacherAssignedClassIds.has(item.id));
   const grade = document.querySelector("#attendanceGrade"); const section = document.querySelector("#attendanceSection"); const gender = document.querySelector("#attendanceGender");
   fillSelect(grade, uniqueValues(classes.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
-  if (!classes.length && !canManageAttendance) {
-    const message = "لا توجد حصة ثانية مسندة لك اليوم حسب الجدول.";
+  if (!classes.length) {
+    const message = "لا توجد حصة ثانية مسجلة في جدولك اليوم.";
     document.querySelector("#attendanceGrade").disabled = true;
     document.querySelector("#attendanceSection").disabled = true;
     document.querySelector("#attendanceGender").disabled = true;
@@ -2712,25 +2708,25 @@ async function renderSchedule() {
 }
 
 function canManageSchedulePage() {
-  return has("manage_schedules") && hasRole(
+  return hasRole("system_admin") || (has("manage_schedules") && hasRole(
     "principal",
     "vice_principal",
     "admin",
     "system_admin",
     "schedule_admin",
     "upper_management"
-  );
+  ));
 }
 
 function canViewAllSchedulesPage() {
-  return (has("view_all_schedules") || has("manage_schedules")) && hasRole(
+  return hasRole("system_admin") || ((has("view_all_schedules") || has("manage_schedules")) && hasRole(
     "principal",
     "vice_principal",
     "admin",
     "system_admin",
     "schedule_admin",
     "upper_management"
-  );
+  ));
 }
 
 function scheduleTeacherOptions(employees) {

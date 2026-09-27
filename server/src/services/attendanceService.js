@@ -20,16 +20,11 @@ export async function attendanceEligibility(user, classId, date) {
     return { allowed: false, reason: "إدخال الغياب متاح من 8:20 إلى 9:10 صباحًا بتوقيت مكة.", subject: null };
   }
   await getClassOrThrow(classId);
-  const override = user.permissions.includes("manage_attendance") || user.permissions.includes("attendance_override");
-  if (override) {
-    const teacher = await secondPeriodTeacher(classId, date);
-    return { allowed: true, reason: null, subject: teacher?.subject ?? null };
-  }
   const teacher = await secondPeriodTeacher(classId, date, user.uid);
   return {
     allowed: Boolean(teacher),
     subject: teacher?.subject ?? null,
-    reason: teacher ? null : "لا توجد حصة ثانية مسندة لهذا الفصل اليوم حسب الجدول."
+    reason: teacher ? null : "لا توجد حصة ثانية مسجلة في جدولك لهذا الفصل اليوم."
   };
 }
 

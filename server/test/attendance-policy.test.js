@@ -15,6 +15,14 @@ test("uses the subject from the current teacher's second-period schedule", () =>
     assert.equal(findAttendanceSchedule(schedules, "sunday", "teacher")?.subject, "رياضيات");
 });
 
+test("does not return another teacher's subject when this teacher has no period-two class", () => {
+    const schedules = [
+        { day: "sunday", periodNumber: 2, teacherUid: "other", subject: "عبير", active: true }
+    ];
+
+    assert.equal(findAttendanceSchedule(schedules, "sunday", "teacher"), null);
+});
+
 test("ignores inactive schedules and treats older records without active as active", () => {
     const schedules = [
         { day: "sunday", periodNumber: 2, teacherUid: "teacher", subject: "علوم", active: false },
