@@ -2758,6 +2758,7 @@ function setupScheduleClassSelectors(classes) {
   const grade = document.querySelector("#classScheduleGrade");
   const section = document.querySelector("#classScheduleSection");
   const subject = document.querySelector("#classScheduleSubject");
+  const periodNumber = document.querySelector("#classPeriodNumber");
   const unique = (items) => [...new Set(items)];
 
   setScheduleSelectOptions(
@@ -2773,6 +2774,18 @@ function setupScheduleClassSelectors(classes) {
     setScheduleSelectOptions(subject, subjectsForStage, (item) => item, "اختاري المادة");
   };
 
+  const refreshPeriods = () => {
+    const maxPeriods = getStageForClass(classes, grade.value) === "primary" ? 8 : 9;
+    setScheduleSelectOptions(
+      periodNumber,
+      Array.from({ length: maxPeriods }, (_, index) => index + 1),
+      (item) => `الحصة ${item}`,
+      "اختياري"
+    );
+  };
+
+  refreshPeriods();
+
   grade.addEventListener("change", () => {
     const matching = classes.filter((item) => item.grade === grade.value);
     setScheduleSelectOptions(
@@ -2783,6 +2796,7 @@ function setupScheduleClassSelectors(classes) {
       (item) => item.id
     );
     refreshSubjects();
+    refreshPeriods();
   });
 }
 
@@ -3012,7 +3026,7 @@ async function renderScheduleManage() {
         <div class="field"><label for="classScheduleDay">اليوم</label><select id="classScheduleDay" required><option value="">اختاري اليوم</option><option value="sunday">الأحد</option><option value="monday">الاثنين</option><option value="tuesday">الثلاثاء</option><option value="wednesday">الأربعاء</option><option value="thursday">الخميس</option></select></div>
         <div class="field"><label for="classScheduleGrade">الصف</label><select id="classScheduleGrade" required><option value="">اختاري الصف</option></select></div>
         <div class="field"><label for="classScheduleSection">الفصل</label><select id="classScheduleSection" required disabled><option value="">اختاري الفصل</option></select></div>
-        <div class="field"><label for="classPeriodNumber">الحصة</label><select id="classPeriodNumber"><option value="">اختياري</option>${Array.from({ length: 9 }, (_, index) => `<option value="${index + 1}">الحصة ${index + 1}</option>`).join("")}</select></div>
+        <div class="field"><label for="classPeriodNumber">الحصة</label><select id="classPeriodNumber"><option value="">اختياري</option>${Array.from({ length: 8 }, (_, index) => `<option value="${index + 1}">الحصة ${index + 1}</option>`).join("")}</select></div>
         <div class="field"><label for="classScheduleSubject">المادة</label><select id="classScheduleSubject" required><option value="">اختاري المادة</option></select></div>
         <div class="field"><label for="classStartTime">وقت البداية</label><input id="classStartTime" type="time" min="06:30" max="14:30" required></div>
         <div class="field"><label for="classEndTime">وقت النهاية</label><input id="classEndTime" type="time" min="06:30" max="14:30" required></div>
@@ -3062,7 +3076,14 @@ async function renderScheduleManage() {
   document.querySelector("#cancelClassScheduleEdit").addEventListener("click", () => resetScheduleEdit("class"));
   document.querySelector("#cancelBreakScheduleEdit").addEventListener("click", () => resetScheduleEdit("break"));
   document.querySelectorAll("[data-schedule-section]").forEach((button) => {
-    button.addEventListener("click", () => setScheduleManageSection(button.dataset.scheduleSection));
+    button.addEventListener("click", () => {
+      const section = button.dataset.scheduleSection;
+      if (section === "entry") {
+        const activeType = document.querySelector("[data-schedule-manage].active")?.dataset.scheduleManage;
+        resetScheduleEdit(activeType === "break" ? "break" : "class");
+      }
+      setScheduleManageSection(section);
+    });
   });
   document.querySelectorAll("[data-schedule-manage]").forEach((button) => {
     button.addEventListener("click", () => setScheduleManageTab(button.dataset.scheduleManage));
