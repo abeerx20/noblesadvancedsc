@@ -2111,7 +2111,7 @@ async function renderAttendancePortal() {
       studentHubLink(
         "attendance-entry",
         "إدخال الغياب",
-        "تسجيل غياب طلاب الحصة الأولى"
+        "تسجيل غياب طلاب الحصة الثانية"
       )
     );
   }
@@ -2139,8 +2139,8 @@ async function renderAttendancePortal() {
 
 
 async function renderAttendance() {
-  page("إدخال الغياب", "تتاح العملية لمعلمة الحصة الأولى أو للمستخدمة المخولة.", `
-    <aside class="attendance-warning"><strong>تنبيه</strong><span>يبدأ إدخال الغياب الساعة 9:00 صباحًا. يرجى التأكد من صحة البيانات ومراجعتها قبل الإرسال.</span></aside>
+  page("إدخال الغياب", "تتاح العملية لمعلمة الحصة الثانية أو للمستخدمة المخولة.", `
+    <aside class="attendance-warning"><strong>تنبيه</strong><span>يُتاح إدخال الغياب من 8:20 إلى 9:10 صباحًا. يرجى التأكد من صحة البيانات ومراجعتها قبل الإرسال.</span></aside>
     <section class="attendance-data-section"><h2>بيانات الغياب</h2>
       <div class="form-grid attendance-entry-grid">
         <div class="field"><label>اسم المعلمة</label><input id="attendanceTeacher" readonly></div>
@@ -2150,7 +2150,7 @@ async function renderAttendance() {
         <div class="field"><label for="attendanceGrade">الصف</label><select id="attendanceGrade" required><option value="">اختاري الصف</option></select></div>
         <div class="field"><label for="attendanceSection">الشعبة</label><select id="attendanceSection" required disabled><option value="">اختاري الشعبة</option></select></div>
         <div class="field"><label for="attendanceGender">الجنس</label><select id="attendanceGender" required disabled><option value="">اختاري الجنس</option></select></div>
-        <div class="field"><label for="attendanceSubject">المادة</label><input id="attendanceSubject" readonly placeholder="تظهر تلقائيًا من الحصة الأولى"></div>
+        <div class="field"><label for="attendanceSubject">المادة</label><input id="attendanceSubject" readonly placeholder="تظهر تلقائيًا من الحصة الثانية"></div>
       </div>
     </section>
     <label id="allPresentWrap" class="attendance-all-present hidden no-print"><input id="allPresent" type="checkbox"> <span>جميع الطلاب حاضرين</span></label>
@@ -2158,7 +2158,7 @@ async function renderAttendance() {
   const allClasses = await loadClasses();
   const teacherAssignedClassIds = new Set(
     (await fetchScheduleRows("mine"))
-      .filter((item) => item.blockType === "class" && item.classId)
+      .filter((item) => item.blockType === "class" && item.classId && Number(item.periodNumber) === 2)
       .map((item) => item.classId)
   );
   const classes = hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management")
@@ -6769,7 +6769,7 @@ function renderCertificateManager(area) {
 
 const permissionLabels = {
   view_substitution_assignments: "عرض حصص الانتظار",
-  view_students: "عرض الطلاب", manage_students: "إدارة الطلاب", enter_attendance: "إدخال الغياب", view_attendance: "متابعة الغياب", manage_attendance: "إدارة الغياب", manage_absence: "إدارة بلاغات الغياب", attendance_override: "تجاوز قيد الحصة الأولى", view_schedules: "عرض الجدول", view_all_schedules: "عرض جميع الجداول", manage_schedules: "إدارة الجداول", request_leave: "تقديم إجازة واستئذان", manage_leave_requests: "مراجعة الإجازات – المديرة", manage_leave_hr_requests: "اعتماد الإجازات – الموارد البشرية", request_training: "تقديم دورة", manage_training_requests: "اعتماد الدورات", issue_work_assignments: "إصدار تكليف", view_all_work_assignments: "عرض جميع التكاليف", request_assets: "طلب عهدة", manage_assets: "إدارة العهد", request_loans: "استعلام سلفة", manage_loans: "إدارة السلف", manage_materials: "إدارة المواد", manage_invoices: "رفع الفواتير", manage_employees: "إدارة الموظفات", manage_permissions: "إدارة الصلاحيات", manage_announcements: "إدارة الإعلانات", upload_files: "رفع المرفقات"
+  view_students: "عرض الطلاب", manage_students: "إدارة الطلاب", enter_attendance: "إدخال الغياب", view_attendance: "متابعة الغياب", manage_attendance: "إدارة الغياب", manage_absence: "إدارة بلاغات الغياب", attendance_override: "تجاوز قيد فترة إدخال الغياب", view_schedules: "عرض الجدول", view_all_schedules: "عرض جميع الجداول", manage_schedules: "إدارة الجداول", request_leave: "تقديم إجازة واستئذان", manage_leave_requests: "مراجعة الإجازات – المديرة", manage_leave_hr_requests: "اعتماد الإجازات – الموارد البشرية", request_training: "تقديم دورة", manage_training_requests: "اعتماد الدورات", issue_work_assignments: "إصدار تكليف", view_all_work_assignments: "عرض جميع التكاليف", request_assets: "طلب عهدة", manage_assets: "إدارة العهد", request_loans: "استعلام سلفة", manage_loans: "إدارة السلف", manage_materials: "إدارة المواد", manage_invoices: "رفع الفواتير", manage_employees: "إدارة الموظفات", manage_permissions: "إدارة الصلاحيات", manage_announcements: "إدارة الإعلانات", upload_files: "رفع المرفقات"
 };
 
 async function renderEmployeeManagementPage(mode) {
