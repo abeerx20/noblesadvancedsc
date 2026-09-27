@@ -2156,16 +2156,28 @@ async function renderAttendance() {
     <label id="allPresentWrap" class="attendance-all-present hidden no-print"><input id="allPresent" type="checkbox"> <span>جميع الطلاب حاضرين</span></label>
     <form id="attendanceForm" class="attendance-table-section"><div id="attendanceStudents" class="attendance-list"><div class="empty-state">اختاري الصف والشعبة والجنس لعرض الطلاب.</div></div><div class="form-actions no-print"><button id="saveAttendance" class="btn btn-small hidden" type="submit">إرسال</button></div></form>`);
   const allClasses = await loadClasses();
+  const today = localDate();
+  const todayDay = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][new Date(`${today}T12:00:00Z`).getUTCDay()];
   const teacherAssignedClassIds = new Set(
     (await fetchScheduleRows("mine"))
-      .filter((item) => item.blockType === "class" && item.classId && Number(item.periodNumber) === 2)
+      .filter((item) => item.blockType === "class" && item.classId && item.day === todayDay && Number(item.periodNumber) === 2)
       .map((item) => item.classId)
   );
-  const classes = hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management")
+  const canManageAttendance = hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management")
+    || has("manage_attendance")
+    || has("attendance_override");
+  const classes = canManageAttendance
     ? allClasses
     : allClasses.filter((item) => teacherAssignedClassIds.has(item.id));
   const grade = document.querySelector("#attendanceGrade"); const section = document.querySelector("#attendanceSection"); const gender = document.querySelector("#attendanceGender");
   fillSelect(grade, uniqueValues(classes.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
+  if (!classes.length && !canManageAttendance) {
+    const message = "لا توجد حصة ثانية مسندة لك اليوم حسب الجدول.";
+    document.querySelector("#attendanceGrade").disabled = true;
+    document.querySelector("#attendanceSection").disabled = true;
+    document.querySelector("#attendanceGender").disabled = true;
+    document.querySelector("#attendanceStudents").textContent = message;
+  }
   const selectedClass = () => classes.find((item) => item.grade === grade.value && item.section === section.value && item.gender === gender.value);
   const clearStudents = () => { document.querySelector("#attendanceStudents").innerHTML = '<div class="empty-state">اختاري الصف والشعبة والجنس لعرض الطلاب.</div>'; document.querySelector("#allPresentWrap").classList.add("hidden"); document.querySelector("#saveAttendance").classList.add("hidden"); };
   const refreshGender = () => { const values = uniqueValues(classes.filter((item) => item.grade === grade.value && item.section === section.value).map((item) => item.gender)); fillSelect(gender, values, (x) => x, (x) => labels.gender[x] ?? x, "اختاري الجنس"); gender.disabled = !values.length; clearStudents(); };
