@@ -187,7 +187,7 @@ export const scheduleSchema = z.preprocess((raw) => {
 }, z.object({
   blockType: z.enum(["class", "break"]),
   day: z.enum(["sunday", "monday", "tuesday", "wednesday", "thursday"]),
-  periodNumber: z.coerce.number().int().min(1).max(9).optional(),
+  periodNumber: z.coerce.number().int().min(1).max(8).optional(),
   periodName: clean(1, 40, "اسم الحصة أو الفترة").optional().or(z.literal("")),
   startTime: time,
   endTime: time,

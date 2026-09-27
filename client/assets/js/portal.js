@@ -2775,10 +2775,9 @@ function setupScheduleClassSelectors(classes) {
   };
 
   const refreshPeriods = () => {
-    const maxPeriods = getStageForClass(classes, grade.value) === "primary" ? 8 : 9;
     setScheduleSelectOptions(
       periodNumber,
-      Array.from({ length: maxPeriods }, (_, index) => index + 1),
+      Array.from({ length: 8 }, (_, index) => index + 1),
       (item) => `الحصة ${item}`,
       "اختياري"
     );

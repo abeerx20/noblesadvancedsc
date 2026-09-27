@@ -46,6 +46,21 @@ test("يقبل حصة دراسية بدون اسم حصة صريح ويستبد�
   }).success, true);
 });
 
+test("allows period eight and rejects period nine", () => {
+  const schedule = {
+    blockType: "class",
+    day: "sunday",
+    startTime: "08:00",
+    endTime: "08:40",
+    teacherUid: "teacher_1",
+    subject: "رياضيات",
+    classId: "class_1"
+  };
+
+  assert.equal(scheduleSchema.safeParse({ ...schedule, periodNumber: 8 }).success, true);
+  assert.equal(scheduleSchema.safeParse({ ...schedule, periodNumber: 9 }).success, false);
+});
+
 test("يقبل معرّفات الجدول التي تحتوي فواصل صالحة ضمن معرّفات Firebase", () => {
   const schedule = {
     blockType: "class",
