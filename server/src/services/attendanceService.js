@@ -4,21 +4,15 @@ import { getClassOrThrow } from "./classService.js";
 import { AppError } from "../utils/AppError.js";
 import { publicDocument, safeDocumentId } from "../utils/text.js";
 import { weekdayKey } from "../utils/time.js";
-import { ATTENDANCE_PERIOD_NUMBER, attendanceWindowIsOpen } from "../utils/attendancePolicy.js";
+import { attendanceWindowIsOpen, findAttendanceSchedule } from "../utils/attendancePolicy.js";
 
-async function secondPeriodTeacher(classId, date) {
+async function secondPeriodTeacher(classId, date, teacherUid) {
   const snapshot = await db.collection("teacherSchedule")
     .where("classId", "==", classId)
     .limit(300)
     .get();
-  const day = weekdayKey(date);
-  const secondPeriod = snapshot.docs.find((document) => {
-    const schedule = document.data();
-    return schedule.day === day
-      && Number(schedule.periodNumber) === ATTENDANCE_PERIOD_NUMBER
-      && schedule.active === true;
-  });
-  return secondPeriod?.data() ?? null;
+  const schedules = snapshot.docs.map((document) => document.data());
+  return findAttendanceSchedule(schedules, weekdayKey(date), teacherUid);
 }
 
 export async function attendanceEligibility(user, classId, date) {
@@ -31,15 +25,11 @@ export async function attendanceEligibility(user, classId, date) {
     const teacher = await secondPeriodTeacher(classId, date);
     return { allowed: true, reason: null, subject: teacher?.subject ?? null };
   }
-  const teacher = await secondPeriodTeacher(classId, date);
+  const teacher = await secondPeriodTeacher(classId, date, user.uid);
   return {
-    allowed: teacher?.teacherUid === user.uid,
+    allowed: Boolean(teacher),
     subject: teacher?.subject ?? null,
-    reason: teacher?.teacherUid === user.uid
-      ? null
-      : teacher
-        ? "إدخال الغياب متاح لمعلمة الحصة الثانية فقط."
-        : "لا توجد حصة ثانية مسندة لهذا الفصل اليوم حسب الجدول."
+    reason: teacher ? null : "لا توجد حصة ثانية مسندة لهذا الفصل اليوم حسب الجدول."
   };
 }
 

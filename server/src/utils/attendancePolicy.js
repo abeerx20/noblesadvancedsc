@@ -1,5 +1,12 @@
 export const ATTENDANCE_PERIOD_NUMBER = 2;
 
+export function findAttendanceSchedule(schedules, day, teacherUid) {
+    return schedules.find((schedule) => schedule.day === day
+        && Number(schedule.periodNumber) === ATTENDANCE_PERIOD_NUMBER
+        && schedule.active !== false
+        && (!teacherUid || schedule.teacherUid === teacherUid)) ?? null;
+}
+
 const ATTENDANCE_START_MINUTE = (8 * 60) + 20;
 const ATTENDANCE_END_MINUTE = (9 * 60) + 10;
 const riyadhClock = new Intl.DateTimeFormat("en-GB", {
