@@ -1,4 +1,5 @@
 ﻿import { api, apiFetch, downloadFile } from "./api.js";
+import { academicWeekNumber } from "./academic-calendar.js";
 import { logout } from "./firebase-client.js";
 import { getRoleTitle } from "./role-display.js";
 import { clearNotice, createCell, fillSelect, formatDate, setNotice, submitSafely } from "./ui.js?v=20260919-8";
@@ -627,14 +628,7 @@ function classLabel(item) {
 }
 function localDate() { const now = new Date(); return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
 function weekNumber(dateValue) {
-  if (!dateValue) return 1;
-  const date = new Date(`${dateValue}T12:00:00Z`);
-  if (Number.isNaN(date.getTime())) return 1;
-  const academicStart = date.getUTCMonth() >= 8
-    ? new Date(Date.UTC(date.getUTCFullYear(), 8, 1))
-    : new Date(Date.UTC(date.getUTCFullYear() - 1, 8, 1));
-  const diffDays = Math.floor((date - academicStart) / 86400000);
-  return Math.max(1, Math.floor(diffDays / 7) + 1);
+  return academicWeekNumber(dateValue);
 }
 
 function notificationDate(value) {
@@ -2186,8 +2180,22 @@ async function renderAttendance() {
   grade.addEventListener("change", refreshSection); section.addEventListener("change", refreshGender); gender.addEventListener("change", () => { if (selectedClass()) loadAttendanceStudents(); else clearStudents(); });
   document.querySelector("#attendanceTeacher").value = state.me.employee.nameAr; document.querySelector("#attendanceDate").value = localDate();
   document.querySelector("#attendanceTime").value = new Date().toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
-  const updateWeek = () => { document.querySelector("#attendanceWeek").value = weekNumber(document.querySelector("#attendanceDate").value); };
-  updateWeek(); document.querySelector("#attendanceDate").addEventListener("change", updateWeek);
+  const attendanceDate = document.querySelector("#attendanceDate");
+  const updateWeek = () => { document.querySelector("#attendanceWeek").value = weekNumber(attendanceDate.value); };
+  updateWeek(); attendanceDate.addEventListener("change", updateWeek);
+  const refreshAttendanceDate = () => {
+    if (!attendanceDate.isConnected) {
+      window.clearInterval(refreshTimer);
+      return;
+    }
+    const today = localDate();
+    if (attendanceDate.value === today) return;
+    attendanceDate.value = today;
+    document.querySelector("#attendanceTime").value = new Date().toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
+    updateWeek();
+    if (selectedClass()) void loadAttendanceStudents();
+  };
+  const refreshTimer = window.setInterval(refreshAttendanceDate, 60_000);
   document.querySelector("#allPresent").addEventListener("change", (event) => {
     const allPresent = event.currentTarget.checked;
     document.querySelectorAll(".attendance-status").forEach((radio) => {
