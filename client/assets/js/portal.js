@@ -505,11 +505,17 @@ function showError(error) {
   const notice = document.querySelector("#pageNotice");
   if (!notice) return;
 
+  const validationMessages = Array.isArray(error?.details)
+    ? error.details.map((detail) => {
+      const field = { teacherUid: "المعلمة", classId: "الفصل" }[detail.field];
+      return detail.message ? `${field ? `${field}: ` : ""}${detail.message}` : "";
+    }).filter(Boolean).join(" ")
+    : "";
   const message = error?.code === "NOT_FOUND" || /المسار المطلوب غير موجود/.test(error?.message ?? "")
     ? "هذا الرابط غير موجود أو تم حذف الموظفة سابقًا."
     : error?.message ?? "تعذر إكمال العملية.";
 
-  setNotice(notice, "error", message);
+  setNotice(notice, "error", validationMessages || message);
 }
 
 function renderMenu() {
@@ -3029,7 +3035,10 @@ async function renderScheduleManage() {
   ["#classScheduleTeacher", "#breakScheduleTeacher"].forEach((selector) => {
     fillSelect(document.querySelector(selector), teachers, (item) => item.authUid ?? item.id, (item) => item.nameAr, "اختاري المعلمة");
   });
-  fillSelect(document.querySelector("#coverageManageTeacher"), teachers, (item) => item.authUid ?? item.id, (item) => item.nameAr, "كل المعلمات");
+  const coverageManageTeacher = document.querySelector("#coverageManageTeacher");
+  if (coverageManageTeacher) {
+    fillSelect(coverageManageTeacher, teachers, (item) => item.authUid ?? item.id, (item) => item.nameAr, "كل المعلمات");
+  }
   setupScheduleClassSelectors(classes);
 
   document.querySelector("#scheduleClassForm").addEventListener("submit", (event) => saveSchedule(event, "class"));
