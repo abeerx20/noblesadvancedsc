@@ -2252,6 +2252,10 @@ input[type="month"] {
   display: none;
 }
 
+.parent-import-table[hidden] {
+  display: none !important;
+}
+
 .content-card .roster-upload-form .field input,
 .content-card .roster-upload-form .field select {
   width: 100%;

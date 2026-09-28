@@ -7249,11 +7249,20 @@ async function renderParentImport() {
       <div class="form-actions span-2 parent-import-actions"><button id="previewParentImport" class="btn" type="submit">معاينة الملف</button><button id="commitParentImport" class="btn btn-secondary hidden" type="button">حفظ الحسابات المقبولة</button></div>
     </form>
     <div id="parentImportSummary" class="field-hint parent-import-summary"></div>
-    <div id="parentImportAccepted" class="table-wrap parent-import-table"></div>
-    <div id="parentImportRejected" class="table-wrap parent-import-table"></div>
+    <div id="parentImportAccepted" class="table-wrap parent-import-table" hidden></div>
+    <div id="parentImportRejected" class="table-wrap parent-import-table" hidden></div>
   `);
 
   let preview = null;
+  function renderImportTables(accepted, rejected, acceptedColumns) {
+    const acceptedArea = document.querySelector("#parentImportAccepted");
+    const rejectedArea = document.querySelector("#parentImportRejected");
+    acceptedArea.hidden = accepted.length === 0;
+    rejectedArea.hidden = rejected.length === 0;
+    renderSimpleTable("#parentImportAccepted", acceptedColumns, accepted, (item) => [item.row, item.nameAr, item.email, item.studentCount ?? "تم الإنشاء"]);
+    renderSimpleTable("#parentImportRejected", ["الصف", "ولي الأمر", "سبب الرفض"], rejected, (item) => [item.row, item.nameAr, item.reason]);
+  }
+
   const uploadBody = () => {
     const body = new FormData();
     body.append("file", document.querySelector("#parentImportFile").files[0]);
@@ -7268,8 +7277,7 @@ async function renderParentImport() {
         preview = result.data;
         document.querySelector("#parentImportSummary").textContent = `مقبول: ${preview.accepted.length} — مرفوض: ${preview.rejected.length}`;
         document.querySelector("#commitParentImport").classList.toggle("hidden", !preview.accepted.length);
-        renderSimpleTable("#parentImportAccepted", ["الصف", "ولي الأمر", "البريد", "عدد الأبناء"], preview.accepted, (item) => [item.row, item.nameAr, item.email, item.studentCount]);
-        renderSimpleTable("#parentImportRejected", ["الصف", "ولي الأمر", "سبب الرفض"], preview.rejected, (item) => [item.row, item.nameAr, item.reason]);
+        renderImportTables(preview.accepted, preview.rejected, ["الصف", "ولي الأمر", "البريد", "عدد الأبناء"]);
         setNotice(document.querySelector("#pageNotice"), "success", result.message);
       } catch (error) { showError(error); }
     });
@@ -7283,8 +7291,7 @@ async function renderParentImport() {
         preview = result.data;
         document.querySelector("#commitParentImport").classList.add("hidden");
         document.querySelector("#parentImportSummary").textContent = `تم إنشاء: ${preview.accepted.length} — مرفوض: ${preview.rejected.length}`;
-        renderSimpleTable("#parentImportAccepted", ["الصف", "ولي الأمر", "البريد", "الحالة"], preview.accepted, (item) => [item.row, item.nameAr, item.email, "تم الإنشاء"]);
-        renderSimpleTable("#parentImportRejected", ["الصف", "ولي الأمر", "سبب الرفض"], preview.rejected, (item) => [item.row, item.nameAr, item.reason]);
+        renderImportTables(preview.accepted, preview.rejected, ["الصف", "ولي الأمر", "البريد", "الحالة"]);
       } catch (error) { showError(error); }
     });
   });
