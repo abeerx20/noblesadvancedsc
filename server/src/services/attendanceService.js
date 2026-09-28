@@ -5,14 +5,15 @@ import { AppError } from "../utils/AppError.js";
 import { publicDocument, safeDocumentId } from "../utils/text.js";
 import { weekdayKey } from "../utils/time.js";
 import { attendanceWindowIsOpen, findAttendanceSchedule } from "../utils/attendancePolicy.js";
+import { scheduleTeacherIds } from "../utils/scheduleIdentity.js";
 
-async function secondPeriodTeacher(classId, date, teacherUid) {
+async function secondPeriodTeacher(classId, date, user) {
   const snapshot = await db.collection("teacherSchedule")
     .where("classId", "==", classId)
     .limit(300)
     .get();
   const schedules = snapshot.docs.map((document) => document.data());
-  return findAttendanceSchedule(schedules, weekdayKey(date), teacherUid);
+  return findAttendanceSchedule(schedules, weekdayKey(date), scheduleTeacherIds(user));
 }
 
 export async function attendanceEligibility(user, classId, date) {
@@ -20,7 +21,7 @@ export async function attendanceEligibility(user, classId, date) {
     return { allowed: false, reason: "إدخال الغياب متاح من 8:20 إلى 9:10 صباحًا بتوقيت مكة.", subject: null };
   }
   await getClassOrThrow(classId);
-  const teacher = await secondPeriodTeacher(classId, date, user.uid);
+  const teacher = await secondPeriodTeacher(classId, date, user);
   return {
     allowed: Boolean(teacher),
     subject: teacher?.subject ?? null,
