@@ -2270,6 +2270,7 @@ async function renderAttendanceMonitor() {
 
 function renderAttendanceRecords(records) {
   const wrap = document.querySelector("#attendanceRecords");
+  const canEditAttendance = has("manage_attendance") || has("manage_absence");
   wrap.replaceChildren();
   if (!records.length) {
     const empty = document.createElement("div");
@@ -2285,12 +2286,14 @@ function renderAttendanceRecords(records) {
     const row = document.createElement("tr");
     [record.studentName, record.date, record.className, record.teacherName, attendanceStatusLabel(record.status)].forEach((value) => row.append(createCell(value)));
     const actionCell = document.createElement("td");
-    const editButton = document.createElement("button");
-    editButton.type = "button";
-    editButton.className = "btn btn-secondary btn-small";
-    editButton.textContent = "تعديل";
-    editButton.addEventListener("click", () => editAttendanceRecord(record, row));
-    actionCell.append(editButton);
+    if (canEditAttendance) {
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.className = "btn btn-secondary btn-small";
+      editButton.textContent = "تعديل";
+      editButton.addEventListener("click", () => editAttendanceRecord(record, row));
+      actionCell.append(editButton);
+    }
     if (["excused", "unexcused", "late"].includes(record.status)) {
       const whatsappButton = document.createElement("a");
       whatsappButton.className = "btn btn-secondary btn-small";
