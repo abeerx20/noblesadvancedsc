@@ -2298,16 +2298,6 @@ function renderAttendanceRecords(records) {
       editButton.addEventListener("click", () => editAttendanceRecord(record, row));
       actionCell.append(editButton);
     }
-    if (["excused", "unexcused", "late"].includes(record.status)) {
-      const whatsappButton = document.createElement("a");
-      whatsappButton.className = "btn btn-secondary btn-small";
-      whatsappButton.textContent = "واتساب";
-      whatsappButton.target = "_blank";
-      whatsappButton.rel = "noopener noreferrer";
-      const message = `تنبيه حضور من المدرسة:\nالطالب: ${record.studentName}\nالفصل: ${record.className}\nالحالة: ${attendanceStatusLabel(record.status)}\nالتاريخ: ${record.date}\n\nللاستفسار يرجى التواصل مع المدرسة.`;
-      whatsappButton.href = `https://wa.me/966560203300?text=${encodeURIComponent(message)}`;
-      actionCell.append(whatsappButton);
-    }
     row.append(actionCell);
     body.append(row);
   });
