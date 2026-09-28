@@ -5193,6 +5193,22 @@ dialog::backdrop {
   color: #e65100;
 }
 
+.parent-delete-dialog .modal-header {
+  background: var(--green-050);
+  border-bottom-color: #d8e9e1;
+}
+
+.parent-delete-dialog .modal-header h2 {
+  color: var(--green-900);
+}
+
+.parent-delete-dialog .alert-danger {
+  border: 1px solid #d8e9e1;
+  border-inline-start: 3px solid var(--green-700);
+  background: var(--green-050);
+  color: var(--green-900);
+}
+
 @media (max-width: 560px) {
   dialog {
     max-width: 95vw;

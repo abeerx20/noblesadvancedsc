@@ -7299,7 +7299,7 @@ async function renderParentImport() {
 function confirmParentDelete(parentName) {
   return new Promise((resolve) => {
     const dialog = document.createElement("dialog");
-    dialog.className = "modal-dialog modal-danger";
+    dialog.className = "modal-dialog parent-delete-dialog";
     dialog.setAttribute("role", "alertdialog");
     dialog.setAttribute("aria-labelledby", "parentDeleteTitle");
     dialog.innerHTML = `
