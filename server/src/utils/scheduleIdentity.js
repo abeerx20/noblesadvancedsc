@@ -7,3 +7,8 @@ export function scheduleTeacherIds(user) {
     }
     return new Set(ids.filter((id) => typeof id === "string" && id.length > 0));
 }
+
+export function scheduleBelongsToUser(schedule, user) {
+    const ids = scheduleTeacherIds(user);
+    return ids.has(schedule.teacherUid) || ids.has(schedule.teacherEmployeeId);
+}

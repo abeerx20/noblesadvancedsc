@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { ATTENDANCE_PERIOD_NUMBER, attendanceWindowIsOpen, findAttendanceSchedule } from "../src/utils/attendancePolicy.js";
-import { scheduleTeacherIds } from "../src/utils/scheduleIdentity.js";
+import { scheduleBelongsToUser, scheduleTeacherIds } from "../src/utils/scheduleIdentity.js";
 
 test("attendance is assigned to the second period", () => {
     assert.equal(ATTENDANCE_PERIOD_NUMBER, 2);
@@ -32,6 +32,12 @@ test("does not use an employee id linked to a different authentication uid", () 
     });
 
     assert.deepEqual([...teacherIds], ["current-auth-uid"]);
+});
+
+test("matches student-class access through the linked employee id", () => {
+    const user = { uid: "auth-uid", employee: { id: "employee-doc", authUid: "auth-uid" } };
+    assert.equal(scheduleBelongsToUser({ teacherUid: "legacy-uid", teacherEmployeeId: "employee-doc" }, user), true);
+    assert.equal(scheduleBelongsToUser({ teacherUid: "legacy-uid", teacherEmployeeId: "other-employee" }, user), false);
 });
 
 test("does not return another teacher's subject when this teacher has no period-two class", () => {

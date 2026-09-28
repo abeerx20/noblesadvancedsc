@@ -3,21 +3,26 @@ import { db } from "../config/firebase.js";
 import { getClassOrThrow } from "./classService.js";
 import { AppError } from "../utils/AppError.js";
 import { normalizeText, publicDocument } from "../utils/text.js";
+import { scheduleBelongsToUser, scheduleTeacherIds } from "../utils/scheduleIdentity.js";
 
-async function teacherClassIds(uid) {
-  const snapshot = await db.collection("teacherSchedule")
-    .where("teacherUid", "==", uid)
-    .limit(200)
-    .get();
-  return new Set(snapshot.docs
-    .filter((doc) => doc.data().active !== false)
-    .map((doc) => doc.data().classId)
+async function teacherClassIds(user) {
+  const teacherIds = [...scheduleTeacherIds(user)];
+  const snapshots = await Promise.all(teacherIds.flatMap((id) => [
+    db.collection("teacherSchedule").where("teacherUid", "==", id).limit(200).get(),
+    db.collection("teacherSchedule").where("teacherEmployeeId", "==", id).limit(200).get()
+  ]));
+  const schedules = new Map(snapshots.flatMap((snapshot) =>
+    snapshot.docs.map((document) => [document.id, document.data()])
+  ));
+  return new Set([...schedules.values()]
+    .filter((schedule) => schedule.active !== false && scheduleBelongsToUser(schedule, user))
+    .map((schedule) => schedule.classId)
     .filter(Boolean));
 }
 
 async function assertClassAccess(user, classId) {
   if (user.permissions.includes("manage_students") || user.permissions.includes("view_all_students")) return;
-  const allowed = await teacherClassIds(user.uid);
+  const allowed = await teacherClassIds(user);
   if (!allowed.has(classId)) {
     throw new AppError(403, "CLASS_ACCESS_DENIED", "لا يمكنك عرض طلاب هذا الفصل.");
   }
@@ -60,7 +65,7 @@ export async function listStudents(user, filters) {
   }
 
   if (!user.permissions.includes("manage_students") && !user.permissions.includes("view_all_students")) {
-    const allowed = await teacherClassIds(user.uid);
+    const allowed = await teacherClassIds(user);
     records = records.filter((student) => allowed.has(student.classId));
   }
 
