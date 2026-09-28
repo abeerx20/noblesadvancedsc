@@ -65,12 +65,20 @@ const translations = {
     "المرحلة الابتدائية": "Primary School",
     "تمهيدي": "Pre-Kindergarten",
     "جميع الحقوق محفوظة": "All rights reserved",
+    "© 2026 مدارس النبلاء المتقدمة - جميع الحقوق محفوظة": "© 2026 Advanced Al-Nubala Schools - All rights reserved",
     "روابط رئيسية": "Main Links",
     "روابط مهمة": "Important Links",
     "مواقعنا": "Our Locations",
     "مدارس النبلاء المتقدمة": "Advanced Al-Nubala Schools",
     "مدارس النبلاء المتقدمة الأهلية": "Advanced Al-Nubala Private Schools",
     "وزارة التعليم": "Ministry of Education",
+    [`في مدارس النبلاء المتقدمة، نؤمن بأن كل طفل يحمل طاقة كامنة، وفضولاً معرفياً متقدماً، وقدرة حقيقية على التعلم والتميز.
+هنا، ينبض التعلم بالحياة من خلال توفير خبرات تعليمية ذات مغزى، تتمحور حول الطالب وترتبط بواقعه اليومي.
+نستند إلى أحدث الأبحاث التربوية، ونعزز ذلك بتكامل هادف مع التقنية الحديثة، لنصمم بيئة تعليمية حيوية تُمكّن طلابنا من البحث، والإبداع، والقيادة بثقة وكفاءة.`]: "At Advanced Al-Nubala Schools, we believe every child has untapped potential, a deep curiosity for knowledge, and a genuine ability to learn and excel. Here, learning comes alive through meaningful educational experiences centered on students and connected to their daily lives. We draw on the latest educational research and purposeful technology integration to create a dynamic learning environment where students can explore, create, and lead with confidence and competence.",
+    [`تؤدي معلماتنا دوراً تربوياً تكاملياً يتجاوز نقل المعرفة إلى التوجيه والتيسير والمشاركة الفاعلة في العملية التعليمية، إذ يُوجَّه الطالب نحو استكشاف المفاهيم، وصياغة الأسئلة التحليلية، وتنمية مهارات التفكير النقدي المنهجي.
+ويُعد التعلم القائم على المشاريع أحد الركائز الأساسية في الممارسات الصفية، حيث يُتيح للطالب مواجهة مشكلات واقعية، والتعاون مع أقرانه في تحليلها ومعالجتها، معبّراً عن أفكاره باستخدام وسائط متعددة تشمل الكتابة، والفنون، والتصميم، والتقنيات الرقمية.`]: "Our teachers play an integrated educational role that goes beyond imparting knowledge to include guidance, facilitation, and active participation in learning. Students are encouraged to explore concepts, formulate analytical questions, and develop systematic critical-thinking skills. Project-based learning is a cornerstone of classroom practice, enabling students to tackle real-world problems, collaborate with peers to analyze and solve them, and express their ideas through diverse media, including writing, the arts, design, and digital technologies.",
+    [`نحرص على تنمية الشخصية وتحمل المسؤولية وتعزيز روح التكافل والتعاون لدى طالبنا، بما يؤهلهم للنمو كقادة يتحلون بالمسؤولية والوعي الأخلاقي.
+وانطلاقاً من التزامنا الراسخ بقيمنا وهويتنا السعودية، نغرس في طالبنا شعور الانتماء والاعتزاز بهويتهم الوطنية وثقافتهم، مع إعدادهم بمهارات وكفاءات عالمية تُمكّنهم من النجاح في عالم متغير ومتسارع.`]: "We foster character, responsibility, solidarity, and collaboration, preparing students to grow into leaders who are responsible and ethically aware. Grounded in our commitment to our values and Saudi identity, we nurture pride and belonging while equipping students with global skills and competencies to succeed in a changing, fast-paced world.",
     "في مدارس النبلاء المتقدمة، نؤمن بأن كل طفل يحمل طاقة كامنة، وفضولاً معرفيًا متقدًا، وقدرة حقيقية على التعلم والتميّز. هنا ينبض التعلم بالحياة من خلال توفير خبرات تعليمية ذات مغزى تتمحور حول الطالب وترتبط بواقعه اليومي. نستند إلى أحدث الأبحاث التربوية، ونعزز ذلك بتكامل هادف مع التقنية الحديثة، لنصمم بيئة تعليمية حيوية تُمكّن طلابنا من البحث والإبداع والقيادة بثقة وكفاءة.": "At Advanced Al-Nubala Schools, we believe every child has untapped potential, a strong curiosity for knowledge, and a genuine ability to learn and excel. Learning comes alive through meaningful, student-centered experiences connected to everyday life. We draw on the latest educational research and purposeful technology integration to create a vibrant environment that enables students to research, create and lead with confidence and competence.",
     "تؤدي معلماتنا دورًا تربويًا تكامليًا يتجاوز نقل المعرفة إلى التوجيه والتيسير والمشاركة الفاعلة في العملية التعليمية، إذ يُوجَّه الطالب نحو استكشاف المفاهيم وصياغة الأسئلة التحليلية وتنمية مهارات التفكير النقدي المنهجي. ويُعد التعلم القائم على المشاريع أحد الركائز الأساسية في الممارسات الصفية.": "Our teachers take an integrated educational role that goes beyond delivering knowledge to include guidance, facilitation and active participation in learning. Students are guided to explore concepts, ask analytical questions and develop systematic critical-thinking skills. Project-based learning is a core part of our classroom practice.",
     "نحرص على تنمية الشخصية وتحمل المسؤولية وتعزيز روح التكافل والتعاون لدى طلابنا، بما يؤهلهم للنمو كقادة يتحلون بالمسؤولية والوعي الأخلاقي. وانطلاقًا من التزامنا الراسخ بقيمنا وهويتنا السعودية، نغرس في طلابنا شعور الانتماء والاعتزاز بهويتهم الوطنية وثقافتهم مع إعدادهم بمهارات وكفاءات عالمية.": "We develop character, responsibility, solidarity and collaboration so our students can grow into responsible leaders with ethical awareness. Grounded in our Saudi identity and values, we nurture belonging and pride in national culture while preparing students with global skills and competencies.",
@@ -136,13 +144,15 @@ function setLanguage(language) {
     translateTextNodes(toEnglish);
     translateAttributes(toEnglish);
     const languageLink = document.querySelector(".language-toggle");
-    if (languageLink) languageLink.textContent = toEnglish ? "العربية" : "English";
+    const languageLabel = languageLink?.querySelector(".language-label");
+    if (languageLabel) languageLabel.textContent = toEnglish ? "العربية" : "English";
+    else if (languageLink) languageLink.textContent = toEnglish ? "العربية" : "English";
     document.title = toEnglish ? "Advanced Al-Nubala Schools" : "مدارس النبلاء المتقدمة";
     localStorage.setItem("nas-language", language);
 }
 
 function initLanguageToggle() {
-    const languageLink = [...document.querySelectorAll("a, button")].find((element) => element.textContent.trim() === "English" || element.textContent.trim() === "العربية");
+    const languageLink = document.querySelector(".language-toggle") || [...document.querySelectorAll("a, button")].find((element) => element.textContent.trim() === "English" || element.textContent.trim() === "العربية");
     if (!languageLink) return;
     languageLink.classList.add("language-toggle");
     languageLink.href = "#";

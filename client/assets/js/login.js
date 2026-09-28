@@ -1,5 +1,5 @@
 import { api } from "./api.js";
-import { configurationReady, firebaseAuth, loginWithEmail } from "./firebase-client.js";
+import { configurationReady, firebaseAuth, loginWithEmail, loginWithNationalId } from "./firebase-client.js";
 import { clearNotice, setNotice, submitSafely } from "./ui.js";
 
 const form = document.querySelector("#loginForm");
@@ -39,6 +39,7 @@ function navigateToDashboardOnce() {
 }
 
 function setSelectedTab(nextType) {
+  const previousAccountType = selectedAccountType;
   selectedAccountType = nextType;
   tabs.forEach((tab) => {
     const isActive = tab.dataset.accountType === nextType;
@@ -47,28 +48,33 @@ function setSelectedTab(nextType) {
   });
 
   const isParent = nextType === "parent";
-  if (isParent && demoMode) {
-    identifierLabel.textContent = "رقم الهوية التجريبي";
+  const rememberMeLabel = rememberMeInput.closest(".remember-me");
+  if (isParent) {
+    identifierLabel.textContent = demoMode ? "رقم الهوية التجريبي" : "رقم الهوية";
+    identifierInput.value = "";
     identifierInput.type = "text";
     identifierInput.inputMode = "numeric";
     identifierInput.pattern = "[0-9]{10}";
     identifierInput.maxLength = 10;
     identifierInput.placeholder = "أدخلي رقم الهوية";
-    passwordField.hidden = !demoMode;
-    passwordInput.required = demoMode;
+    passwordField.hidden = false;
+    passwordInput.required = true;
     passwordInput.value = "";
     passwordInput.placeholder = demoMode ? "كلمة المرور التجريبية" : "";
     rememberMeInput.checked = false;
+    rememberMeLabel.hidden = true;
     localStorage.removeItem(STORAGE_KEY);
   } else {
     identifierLabel.textContent = "البريد الإلكتروني";
+    if (previousAccountType === "parent") identifierInput.value = "";
     identifierInput.type = "text";
     identifierInput.inputMode = "text";
-    identifierInput.pattern = "";
+    identifierInput.removeAttribute("pattern");
     identifierInput.maxLength = 160;
     identifierInput.placeholder = "أدخلي البريد الإلكتروني";
     passwordField.hidden = false;
     passwordInput.required = true;
+    rememberMeLabel.hidden = false;
     loadRememberedLogin();
   }
 }
@@ -149,15 +155,15 @@ form.addEventListener("submit", async (event) => {
 
   const identifier = form.identifier.value.trim();
   const password = form.password.value;
-  if (selectedAccountType === "parent" && demoMode) {
+  if (selectedAccountType === "parent") {
     if (!/^\d{10}$/.test(identifier)) {
       setNotice(notice, "error", "رقم الهوية يجب أن يتكون من 10 أرقام فقط.");
       identifierInput.focus();
       return;
     }
-    if (demoMode && identifier === demoParentId) {
-      if (password !== demoParentPassword) {
-        setNotice(notice, "error", "كلمة المرور التجريبية غير صحيحة.");
+    if (demoMode) {
+      if (identifier !== demoParentId || password !== demoParentPassword) {
+        setNotice(notice, "error", "رقم الهوية أو كلمة المرور التجريبية غير صحيحة.");
         passwordInput.focus();
         return;
       }
@@ -182,7 +188,11 @@ form.addEventListener("submit", async (event) => {
       } else {
         localStorage.removeItem(STORAGE_KEY);
       }
-      await loginWithEmail(email, password);
+      if (selectedAccountType === "parent") {
+        await loginWithNationalId(identifier, password);
+      } else {
+        await loginWithEmail(email, password);
+      }
       sessionStorage.setItem("nas-login-redirecting", "1");
       await goToDashboardAfterLogin();
     } catch (error) {
@@ -190,6 +200,9 @@ form.addEventListener("submit", async (event) => {
       const messages = {
         FIREBASE_CONFIG_REQUIRED: "إعدادات Firebase في الخادم غير مكتملة. أضف ملف خدمة Firebase أو حدّث GOOGLE_APPLICATION_CREDENTIALS قبل تسجيل الدخول.",
         "auth/invalid-credential": "البريد الإلكتروني أو كلمة المرور غير صحيحة. تأكدي من البيانات ثم حاولي مرة أخرى.",
+        INVALID_PARENT_CREDENTIALS: "رقم الهوية أو كلمة المرور غير صحيحة.",
+        ACCOUNT_INACTIVE: "هذا الحساب غير نشط. يرجى التواصل مع المدرسة.",
+        FIREBASE_AUTH_UNAVAILABLE: "تعذر الاتصال بخدمة تسجيل الدخول. حاولي مرة أخرى لاحقًا.",
         "auth/too-many-requests": "تم تسجيل محاولات كثيرة مؤخرًا. انتظري قليلًا ثم حاولي مرة أخرى.",
         "auth/user-disabled": "هذا الحساب موقوف. تواصلي مع مسؤولة النظام.",
         INVALID_TOKEN: "تم تسجيل الدخول في المتصفح، لكن الخادم لا يصدّق الجلسة. تأكدي من إعدادات Firebase في السيرفر.",

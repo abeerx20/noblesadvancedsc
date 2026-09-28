@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classSchema, employeeSchema, scheduleQuerySchema, scheduleSchema, studentSchema } from "../src/validators/schemas.js";
+import { classSchema, employeeSchema, parentLoginSchema, scheduleQuerySchema, scheduleSchema, studentSchema } from "../src/validators/schemas.js";
 
 const base = { fullName: "محمد أحمد علي سالم", classId: "class_a", active: true };
 
@@ -99,4 +99,10 @@ test("يتحقق من اكتمال ملف الموظفة وصحة رقم اله�
 
 test("يرفض حقن صلاحيات ضمن ملف الموظفة", () => {
   assert.equal(employeeSchema.safeParse({ ...validEmployee, manage_employees: true }).success, false);
+});
+
+test("يتحقق من رقم هوية ولي الأمر وكلمة المرور", () => {
+  assert.equal(parentLoginSchema.safeParse({ nationalId: "1234567890", password: "Parent@123" }).success, true);
+  assert.equal(parentLoginSchema.safeParse({ nationalId: "12345", password: "Parent@123" }).success, false);
+  assert.equal(parentLoginSchema.safeParse({ nationalId: "1234567890", password: "" }).success, false);
 });

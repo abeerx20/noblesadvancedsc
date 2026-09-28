@@ -20,6 +20,11 @@ export const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(100)
 }).catchall(z.string().max(180).optional());
 
+export const parentLoginSchema = z.object({
+  nationalId: z.string().trim().regex(/^\d{10}$/, "رقم الهوية يجب أن يتكون من 10 أرقام."),
+  password: z.string().min(1, "كلمة المرور مطلوبة.").max(128, "كلمة المرور أطول من الحد المسموح.")
+}).strict();
+
 export const studentSchema = z.object({
   fullName: clean(4, 120, "اسم الطالب"),
   stage: z.enum(["kindergarten", "primary"], { error: "المرحلة مطلوبة." }),

@@ -19,6 +19,7 @@ import { notificationRoutes } from "./notificationRoutes.js";
 import { siteSettingsRoutes } from "./siteSettingsRoutes.js";
 import { invoiceRoutes } from "./invoiceRoutes.js";
 import { coverageRoutes } from "./coverageRoutes.js";
+import { authRoutes } from "./authRoutes.js";
 
 export const apiRouter = Router();
 
@@ -26,6 +27,7 @@ apiRouter.get("/health", (_req, res) => {
   res.json({ success: true, data: { status: "ok", service: "mynas-api" } });
 });
 apiRouter.use(profileRoutes);
+apiRouter.use(authRoutes);
 apiRouter.use("/academic-classes", classRoutes);
 apiRouter.use("/students", studentRoutes);
 apiRouter.use("/student-rosters", studentRosterRoutes);
