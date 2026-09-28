@@ -19,7 +19,7 @@ test("uses the subject from the current teacher's second-period schedule", () =>
 test("matches legacy schedule assignments by linked employee document id", () => {
     const teacherIds = scheduleTeacherIds({ uid: "auth-uid", employee: { id: "employee-doc" } });
     const schedules = [
-        { day: "monday", periodNumber: 2, teacherUid: "employee-doc", subject: "رياضيات", active: true }
+        { day: "monday", periodNumber: 2, teacherUid: "legacy-schedule-uid", teacherEmployeeId: "employee-doc", subject: "رياضيات", active: true }
     ];
 
     assert.equal(findAttendanceSchedule(schedules, "monday", teacherIds)?.subject, "رياضيات");

@@ -33,7 +33,7 @@ export async function listSchedule(user, filters) {
   let rows = snapshot.docs.map(publicDocument).filter((row) => row.active !== false);
   if (!requestedAll) {
     const teacherIds = scheduleTeacherIds(user);
-    rows = rows.filter((row) => teacherIds.has(row.teacherUid));
+    rows = rows.filter((row) => teacherIds.has(row.teacherUid) || teacherIds.has(row.teacherEmployeeId));
   } else if (filters.teacherUid) rows = rows.filter((row) => row.teacherUid === filters.teacherUid);
   if (filters.classId) rows = rows.filter((row) => row.classId === filters.classId);
   if (filters.day) rows = rows.filter((row) => row.day === filters.day);

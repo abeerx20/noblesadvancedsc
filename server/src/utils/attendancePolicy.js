@@ -7,7 +7,7 @@ export function findAttendanceSchedule(schedules, day, teacherUid) {
     return schedules.find((schedule) => schedule.day === day
         && Number(schedule.periodNumber) === ATTENDANCE_PERIOD_NUMBER
         && schedule.active !== false
-        && (!teacherUids.size || teacherUids.has(schedule.teacherUid))) ?? null;
+        && (!teacherUids.size || teacherUids.has(schedule.teacherUid) || teacherUids.has(schedule.teacherEmployeeId))) ?? null;
 }
 
 const ATTENDANCE_START_MINUTE = (8 * 60) + 20;
