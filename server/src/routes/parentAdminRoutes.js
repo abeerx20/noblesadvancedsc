@@ -24,5 +24,6 @@ parentAdminRoutes.use(authenticate, requireRole("system_admin"));
 parentAdminRoutes.get("/", asyncHandler(controller.index));
 parentAdminRoutes.post("/", validate(parentSchema), asyncHandler(controller.create));
 parentAdminRoutes.patch("/:id", validate(idParamSchema, "params"), validate(parentUpdateSchema), asyncHandler(controller.update));
+parentAdminRoutes.delete("/:id", validate(idParamSchema, "params"), asyncHandler(controller.remove));
 parentAdminRoutes.post("/import/preview", excelUpload.single("file"), asyncHandler(controller.previewImport));
 parentAdminRoutes.post("/import/commit", excelUpload.single("file"), asyncHandler(controller.commitImport));

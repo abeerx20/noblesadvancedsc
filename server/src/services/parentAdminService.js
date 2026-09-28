@@ -88,3 +88,23 @@ export async function updateParent(parentId, data, actor) {
         throw error;
     }
 }
+
+export async function deleteParent(parentId) {
+    const parentRef = db.collection("parents").doc(parentId);
+    const parentSnapshot = await parentRef.get();
+    if (!parentSnapshot.exists) throw new AppError(404, "PARENT_NOT_FOUND", "ولي الأمر غير موجود.");
+
+    const parent = parentSnapshot.data();
+    const authUid = parent.authUid ?? parentId;
+    const studentCount = Array.isArray(parent.studentIds) ? parent.studentIds.length : 0;
+    try {
+        await auth.deleteUser(authUid);
+    } catch (error) {
+        if (error.code !== "auth/user-not-found") {
+            throw new AppError(503, "PARENT_ACCOUNT_DELETE_FAILED", "تعذر حذف حساب الدخول. لم تُحذف بيانات ولي الأمر.");
+        }
+    }
+
+    await parentRef.delete();
+    return studentCount;
+}

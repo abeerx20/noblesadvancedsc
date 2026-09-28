@@ -7324,6 +7324,24 @@ async function renderParentList() {
       editButton.textContent = "تعديل";
       editButton.addEventListener("click", () => renderParentEdit(parent));
       actions.append(editButton);
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "btn btn-danger btn-small";
+      deleteButton.type = "button";
+      deleteButton.textContent = "حذف";
+      deleteButton.addEventListener("click", async () => {
+        const confirmed = window.confirm(`هل تريدين حذف حساب ولي الأمر ${parent.nameAr}؟ ستبقى سجلات الأبناء محفوظة.`);
+        if (!confirmed) return;
+        deleteButton.disabled = true;
+        try {
+          const result = await api.delete(`/parent-admin/${encodeURIComponent(parent.id)}`);
+          await renderParentList();
+          setNotice(document.querySelector("#pageNotice"), "success", result.message);
+        } catch (error) {
+          setNotice(document.querySelector("#pageNotice"), "error", error.message);
+          deleteButton.disabled = false;
+        }
+      });
+      actions.append(deleteButton);
       row.append(actions);
       body.append(row);
     });

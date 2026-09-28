@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
 import { employeeRoutes } from "../src/routes/employeeRoutes.js";
+import { parentAdminRoutes } from "../src/routes/parentAdminRoutes.js";
 import { resolveEmployeeDocument } from "../src/services/employeeService.js";
 
 process.env.NODE_ENV = "test";
@@ -33,6 +34,17 @@ test("مسار حذف موظفة موجود في التوجيه", () => {
     methods: Object.keys(layer.route.methods)
   }));
   assert(routes.some((route) => route.path === "/:id" && route.methods.includes("delete")));
+});
+
+test("مسار حذف ولي الأمر موجود ويتطلب المصادقة", async () => {
+  const routes = parentAdminRoutes.stack.filter((layer) => layer.route).map((layer) => ({
+    path: layer.route.path,
+    methods: Object.keys(layer.route.methods)
+  }));
+  assert(routes.some((route) => route.path === "/:id" && route.methods.includes("delete")));
+
+  const response = await request(app).delete("/api/v1/parent-admin/parent-1").expect(401);
+  assert.equal(response.body.error.code, "AUTH_REQUIRED");
 });
 
 test("مسار إعادة تعيين كلمة مرور الموظفة موجود في التوجيه", () => {
