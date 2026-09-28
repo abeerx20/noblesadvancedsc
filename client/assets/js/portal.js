@@ -7296,6 +7296,47 @@ async function renderParentImport() {
   });
 }
 
+function confirmParentDelete(parentName) {
+  return new Promise((resolve) => {
+    const dialog = document.createElement("dialog");
+    dialog.className = "modal-dialog modal-danger";
+    dialog.setAttribute("role", "alertdialog");
+    dialog.setAttribute("aria-labelledby", "parentDeleteTitle");
+    dialog.innerHTML = `
+      <form method="dialog" class="modal-form">
+        <div class="modal-header">
+          <h2 id="parentDeleteTitle">تأكيد حذف ولي الأمر</h2>
+          <button type="button" class="modal-close" aria-label="إغلاق النافذة">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-danger" role="alert">
+            <span aria-hidden="true">!</span>
+            <div>
+              <p class="alert-title">هذا الإجراء لا يمكن التراجع عنه.</p>
+              <p class="alert-message">هل تريدين حذف حساب ولي الأمر <strong id="parentDeleteName"></strong>؟</p>
+              <p class="alert-hint">ستبقى سجلات الأبناء محفوظة.</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary cancel-delete-btn">إلغاء</button>
+          <button type="submit" value="delete" class="btn btn-danger">نعم، احذفي الحساب</button>
+        </div>
+      </form>
+    `;
+    dialog.querySelector("#parentDeleteName").textContent = parentName ?? "";
+    document.body.append(dialog);
+    dialog.addEventListener("close", () => {
+      const confirmed = dialog.returnValue === "delete";
+      dialog.remove();
+      resolve(confirmed);
+    }, { once: true });
+    dialog.querySelector(".modal-close").addEventListener("click", () => dialog.close("cancel"));
+    dialog.querySelector(".cancel-delete-btn").addEventListener("click", () => dialog.close("cancel"));
+    dialog.showModal();
+  });
+}
+
 async function renderParentList() {
   if (!hasRole("system_admin")) throw new Error("عرض أولياء الأمور متاح لمسؤولة النظام فقط.");
   page("أولياء الأمور", "عرض أولياء الأمور وعدد الأبناء المرتبطين بكل حساب.", `<div id="parentsTable" class="table-wrap"><div class="empty-state">جارٍ تحميل البيانات...</div></div>`);
@@ -7329,7 +7370,7 @@ async function renderParentList() {
       deleteButton.type = "button";
       deleteButton.textContent = "حذف";
       deleteButton.addEventListener("click", async () => {
-        const confirmed = window.confirm(`هل تريدين حذف حساب ولي الأمر ${parent.nameAr}؟ ستبقى سجلات الأبناء محفوظة.`);
+        const confirmed = await confirmParentDelete(parent.nameAr);
         if (!confirmed) return;
         deleteButton.disabled = true;
         try {
