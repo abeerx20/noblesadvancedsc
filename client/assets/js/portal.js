@@ -2223,7 +2223,7 @@ async function loadAttendanceStudents() {
     const eligible = (await api.get(`/attendance/eligibility?classId=${encodeURIComponent(classId)}&date=${date}`)).data;
     document.querySelector("#attendanceSubject").value = eligible.subject ?? "";
     if (!eligible.allowed) return setNotice(document.querySelector("#pageNotice"), "error", eligible.reason);
-    const students = (await api.get(`/students?classId=${encodeURIComponent(classId)}&approvedOnly=true&limit=100`)).data;
+    const students = (await api.get(`/students?classId=${encodeURIComponent(classId)}&limit=100`)).data;
     const list = document.querySelector("#attendanceStudents"); list.replaceChildren();
     if (students.length) {
       const header = document.createElement("div"); header.className = "attendance-row attendance-row-header";
