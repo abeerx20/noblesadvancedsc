@@ -2179,6 +2179,14 @@ input[type="month"] {
   margin: 0;
 }
 
+.content-card.page-card-parent-import>.notice.visible {
+  border: 0;
+  border-inline-start: 3px solid var(--green-700);
+  border-radius: 0;
+  background: var(--green-050);
+  color: var(--green-900);
+}
+
 .parent-import-form {
   width: min(760px, 100%);
   grid-template-columns: minmax(0, 1fr);
@@ -2237,6 +2245,11 @@ input[type="month"] {
 .parent-import-table {
   width: min(900px, 100%);
   margin: 14px auto 0;
+}
+
+#parentImportAccepted:empty,
+#parentImportRejected:empty {
+  display: none;
 }
 
 .content-card .roster-upload-form .field input,
