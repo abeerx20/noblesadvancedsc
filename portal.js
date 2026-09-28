@@ -2735,14 +2735,15 @@ async function saveSchedule(event, blockType) {
     return setNotice(document.querySelector("#pageNotice"), "error", "اختاري الصف والفصل والجنس من الفصول النشطة.");
   }
 
+  const classPeriodNumber = Number(value("classPeriodNumber"));
   const data = isClass
     ? {
       blockType,
       day: value("classScheduleDay"),
       teacherUid: employee.authUid ?? employee.id,
       classId: academicClass.id,
-      periodNumber: Number(value("classPeriodNumber")),
-      periodName: value("classPeriodName"),
+      periodNumber: classPeriodNumber,
+      periodName: value("classScheduleSubject") || `الحصة ${Number.isFinite(classPeriodNumber) && classPeriodNumber > 0 ? classPeriodNumber : 1}`,
       subject: value("classScheduleSubject"),
       startTime: value("classStartTime"),
       endTime: value("classEndTime")
