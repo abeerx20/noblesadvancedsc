@@ -2261,7 +2261,7 @@ async function renderAttendanceMonitor() {
   document.querySelector("#saveAttendancePdf").addEventListener("click", (event) => printPortalPage(event.currentTarget));
   document.querySelector("#loadAttendanceRecords").addEventListener("click", async () => {
     try {
-      const query = new URLSearchParams();["date", "classId", "status"].forEach((key, index) => { const value = document.querySelector(["#monitorDate", "#monitorClass", "#monitorStatus"][index]).value; if (value) query.set(key, value); });
+      const query = new URLSearchParams();["date", "classId", "status"].forEach((key, index) => { const rawValue = document.querySelector(["#monitorDate", "#monitorClass", "#monitorStatus"][index]).value; const filterValue = key === "date" ? normalizeDisplayDate(rawValue) : rawValue; if (filterValue) query.set(key, filterValue); });
       const rows = (await api.get(`/attendance?${query}`)).data;
       renderAttendanceRecords(rows);
     } catch (error) { showError(error); }
