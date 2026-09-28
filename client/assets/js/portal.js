@@ -7169,7 +7169,37 @@ async function renderParentAdd() {
   }
   document.querySelector("#parentStudentSearchButton").addEventListener("click", searchStudents);
   document.querySelector("#parentStudentSearch").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); searchStudents(); } });
-  document.querySelector("#parentForm").addEventListener("submit", async (event) => { event.preventDefault(); if (!event.currentTarget.reportValidity()) return; if (!selectedStudents.size) { setNotice(document.querySelector("#pageNotice"), "error", "ابحثي وأضيفي ابنًا واحدًا على الأقل بعد التأكد من بياناته."); return; } const button = event.currentTarget.querySelector("button[type=submit]"); button.disabled = true; try { const result = await api.post("/parent-admin", { nameAr: document.querySelector("#parentName").value, nationalId: document.querySelector("#parentNationalId").value, phone: document.querySelector("#parentPhone").value, email: document.querySelector("#parentEmail").value, password: document.querySelector("#parentPassword").value, studentIds: [...selectedStudents.keys()] }); setNotice(document.querySelector("#pageNotice"), "success", result.message); event.currentTarget.reset(); selectedStudents.clear(); studentsArea.replaceChildren(); document.querySelector("#parentStudentsStatus").textContent = "تم الحفظ. ابحثي لإضافة ولي أمر آخر."; } catch (error) { setNotice(document.querySelector("#pageNotice"), "error", error.message); } finally { button.disabled = false; } });
+  const parentForm = document.querySelector("#parentForm");
+  parentForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!parentForm.reportValidity()) return;
+    if (!selectedStudents.size) {
+      setNotice(document.querySelector("#pageNotice"), "error", "ابحثي وأضيفي ابنًا واحدًا على الأقل بعد التأكد من بياناته.");
+      return;
+    }
+
+    const button = parentForm.querySelector("button[type=submit]");
+    button.disabled = true;
+    try {
+      const result = await api.post("/parent-admin", {
+        nameAr: document.querySelector("#parentName").value,
+        nationalId: document.querySelector("#parentNationalId").value,
+        phone: document.querySelector("#parentPhone").value,
+        email: document.querySelector("#parentEmail").value,
+        password: document.querySelector("#parentPassword").value,
+        studentIds: [...selectedStudents.keys()]
+      });
+      setNotice(document.querySelector("#pageNotice"), "success", result.message);
+      parentForm.reset();
+      selectedStudents.clear();
+      studentsArea.replaceChildren();
+      document.querySelector("#parentStudentsStatus").textContent = "تم الحفظ. ابحثي لإضافة ولي أمر آخر.";
+    } catch (error) {
+      setNotice(document.querySelector("#pageNotice"), "error", error.message);
+    } finally {
+      button.disabled = false;
+    }
+  });
 }
 
 async function renderParentImport() {
