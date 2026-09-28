@@ -7,6 +7,7 @@ const clean = (min, max, label) => z.string()
   .transform((value) => value.replace(/\s+/g, " "));
 
 const id = z.string().trim().min(1, "المعرّف مطلوب.").max(180, "المعرّف أطول من الحد المسموح.").regex(/^[\p{L}\p{N}_-]+$/u, "المعرّف غير صالح.");
+const scheduleIdentifier = z.string().trim().min(1, "المعرّف مطلوب.").max(180, "المعرّف أطول من الحد المسموح.").regex(/^[^/\u0000-\u001F\u007F]+$/u, "المعرّف غير صالح.");
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "التاريخ غير صالح.");
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "الوقت غير صالح.");
 const optionalUrl = z.union([
@@ -127,8 +128,8 @@ export const studentRosterStatusSchema = z.object({
 
 export const scheduleQuerySchema = z.object({
   scope: z.enum(["mine", "all"]).default("mine"),
-  teacherUid: id.optional(),
-  classId: id.optional(),
+  teacherUid: scheduleIdentifier.optional(),
+  classId: scheduleIdentifier.optional(),
   day: z.enum(["sunday", "monday", "tuesday", "wednesday", "thursday"]).optional()
 }).strict();
 
@@ -171,16 +172,28 @@ export const leaveQuerySchema = z.object({
   scope: z.enum(["mine", "all", "manager", "hr"]).default("mine")
 });
 
-export const scheduleSchema = z.object({
+export const scheduleSchema = z.preprocess((raw) => {
+  if (!raw || typeof raw !== "object") return raw;
+  const value = { ...raw };
+  if (value.blockType === "class") {
+    const trimmedPeriodName = typeof value.periodName === "string" ? value.periodName.trim() : "";
+    const subject = typeof value.subject === "string" ? value.subject.trim() : "";
+    const periodNumber = Number(value.periodNumber ?? 1);
+    if (!trimmedPeriodName) {
+      value.periodName = subject || `الحصة ${Number.isFinite(periodNumber) && periodNumber > 0 ? periodNumber : 1}`;
+    }
+  }
+  return value;
+}, z.object({
   blockType: z.enum(["class", "break"]),
   day: z.enum(["sunday", "monday", "tuesday", "wednesday", "thursday"]),
-  periodNumber: z.coerce.number().int().min(1).max(9).optional(),
-  periodName: clean(1, 40, "اسم الحصة أو الفترة").optional(),
+  periodNumber: z.coerce.number().int().min(1).max(8).optional(),
+  periodName: clean(1, 40, "اسم الحصة أو الفترة").optional().or(z.literal("")),
   startTime: time,
   endTime: time,
-  teacherUid: id,
+  teacherUid: scheduleIdentifier,
   subject: clean(1, 80, "المادة").optional(),
-  classId: id.optional(),
+  classId: scheduleIdentifier.optional(),
   location: clean(1, 80, "المكان").optional(),
   stage: z.enum(["primary", "kindergarten"]).optional()
 }).strict().superRefine((value, ctx) => {
@@ -190,7 +203,7 @@ export const scheduleSchema = z.object({
   if (value.blockType === "break" && (value.classId || value.subject || value.periodNumber || !value.stage)) {
     ctx.addIssue({ code: "custom", path: ["blockType"], message: "المناوبة لا تقبل بيانات الفصل أو المادة أو رقم الحصة." });
   }
-});
+}));
 
 export const leaveSchema = z.object({
   leaveType: z.enum(["sick", "emergency", "maternity", "nursing_hour", "marriage", "bereavement", "unpaid"]),

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classSchema, employeeSchema, scheduleQuerySchema, studentSchema } from "../src/validators/schemas.js";
+import { classSchema, employeeSchema, scheduleQuerySchema, scheduleSchema, studentSchema } from "../src/validators/schemas.js";
 
 const base = { fullName: "محمد أحمد علي سالم", classId: "class_a", active: true };
 
@@ -30,6 +30,49 @@ test("يعتمد نطاق جدول المستخدم افتراضيًا ويرف�
   assert.equal(scheduleQuerySchema.parse({}).scope, "mine");
   assert.equal(scheduleQuerySchema.safeParse({ scope: "all" }).success, true);
   assert.equal(scheduleQuerySchema.safeParse({ scope: "everyone" }).success, false);
+});
+
+test("يقبل حصة دراسية بدون اسم حصة صريح ويستبدله بالمادة", () => {
+  assert.equal(scheduleSchema.safeParse({
+    blockType: "class",
+    day: "sunday",
+    periodNumber: 1,
+    periodName: "",
+    startTime: "08:00",
+    endTime: "08:40",
+    teacherUid: "teacher_1",
+    subject: "رياضيات",
+    classId: "class_1"
+  }).success, true);
+});
+
+test("allows period eight and rejects period nine", () => {
+  const schedule = {
+    blockType: "class",
+    day: "sunday",
+    startTime: "08:00",
+    endTime: "08:40",
+    teacherUid: "teacher_1",
+    subject: "رياضيات",
+    classId: "class_1"
+  };
+
+  assert.equal(scheduleSchema.safeParse({ ...schedule, periodNumber: 8 }).success, true);
+  assert.equal(scheduleSchema.safeParse({ ...schedule, periodNumber: 9 }).success, false);
+});
+
+test("يقبل معرّفات الجدول التي تحتوي فواصل صالحة ضمن معرّفات Firebase", () => {
+  const schedule = {
+    blockType: "class",
+    day: "sunday",
+    startTime: "08:00",
+    endTime: "08:40",
+    teacherUid: "google.com:teacher.1",
+    subject: "رياضيات",
+    classId: "grade.1:101"
+  };
+  assert.equal(scheduleSchema.safeParse(schedule).success, true);
+  assert.equal(scheduleQuerySchema.safeParse({ scope: "all", teacherUid: schedule.teacherUid, classId: schedule.classId }).success, true);
 });
 
 const validEmployee = {

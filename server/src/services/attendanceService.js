@@ -4,50 +4,28 @@ import { getClassOrThrow } from "./classService.js";
 import { AppError } from "../utils/AppError.js";
 import { publicDocument, safeDocumentId } from "../utils/text.js";
 import { weekdayKey } from "../utils/time.js";
+import { attendanceWindowIsOpen, findAttendanceSchedule } from "../utils/attendancePolicy.js";
+import { scheduleTeacherIds } from "../utils/scheduleIdentity.js";
 
-async function firstPeriodTeacher(classId, date) {
+async function secondPeriodTeacher(classId, date, user) {
   const snapshot = await db.collection("teacherSchedule")
     .where("classId", "==", classId)
     .limit(300)
     .get();
-  const day = weekdayKey(date);
-  const firstPeriod = snapshot.docs.find((document) => {
-    const schedule = document.data();
-    return schedule.day === day
-      && Number(schedule.periodNumber) === 1
-      && schedule.active === true;
-  });
-  return firstPeriod?.data() ?? null;
-}
-
-function attendanceOpensAtNine() {
-  const hour = Number(new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Riyadh",
-    hour: "2-digit",
-    hour12: false
-  }).format(new Date()));
-  return hour >= 9;
+  const schedules = snapshot.docs.map((document) => document.data());
+  return findAttendanceSchedule(schedules, weekdayKey(date), scheduleTeacherIds(user));
 }
 
 export async function attendanceEligibility(user, classId, date) {
-  if (!attendanceOpensAtNine()) {
-    return { allowed: false, reason: "إدخال الغياب متاح ابتداءً من الساعة 9:00 صباحًا.", subject: null };
+  if (!attendanceWindowIsOpen()) {
+    return { allowed: false, reason: "إدخال الغياب متاح من 8:20 إلى 9:10 صباحًا بتوقيت مكة.", subject: null };
   }
   await getClassOrThrow(classId);
-  const override = user.permissions.includes("manage_attendance") || user.permissions.includes("attendance_override");
-  if (override) {
-    const teacher = await firstPeriodTeacher(classId, date);
-    return { allowed: true, reason: null, subject: teacher?.subject ?? null };
-  }
-  const teacher = await firstPeriodTeacher(classId, date);
+  const teacher = await secondPeriodTeacher(classId, date, user);
   return {
-    allowed: teacher?.teacherUid === user.uid,
+    allowed: Boolean(teacher),
     subject: teacher?.subject ?? null,
-    reason: teacher?.teacherUid === user.uid
-      ? null
-      : teacher
-        ? "إدخال الغياب متاح لمعلمة الحصة الأولى فقط."
-        : "لم تُسند الحصة الأولى لهذا الفصل في اليوم المحدد."
+    reason: teacher ? null : "لا توجد حصة ثانية مسجلة في جدولك لهذا الفصل اليوم."
   };
 }
 

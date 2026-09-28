@@ -3,6 +3,7 @@ import { db } from "../config/firebase.js";
 import { AppError } from "../utils/AppError.js";
 import { publicDocument } from "../utils/text.js";
 import { assertSchoolTime, overlaps } from "../utils/time.js";
+import { scheduleTeacherIds } from "../utils/scheduleIdentity.js";
 import { getClassOrThrow } from "./classService.js";
 import { getEmployeeByUid } from "./employeeService.js";
 
@@ -21,16 +22,19 @@ export async function listSchedule(user, filters) {
     "schedule_admin",
     "upper_management"
   ]);
-  const canViewAll = scheduleManagementRoles.has(user.employee?.role)
-    && (user.permissions.includes("view_all_schedules") || user.permissions.includes("manage_schedules"));
+  const canViewAll = user.employee?.role === "system_admin"
+    || (scheduleManagementRoles.has(user.employee?.role)
+      && (user.permissions.includes("view_all_schedules") || user.permissions.includes("manage_schedules")));
   const requestedAll = filters.scope === "all";
   if (requestedAll && !canViewAll) {
     throw new AppError(403, "FORBIDDEN", "لا توجد لديك صلاحية لعرض جداول المعلمات.");
   }
   const snapshot = await db.collection("teacherSchedule").limit(500).get();
   let rows = snapshot.docs.map(publicDocument).filter((row) => row.active !== false);
-  if (!requestedAll) rows = rows.filter((row) => row.teacherUid === user.uid);
-  else if (filters.teacherUid) rows = rows.filter((row) => row.teacherUid === filters.teacherUid);
+  if (!requestedAll) {
+    const teacherIds = scheduleTeacherIds(user);
+    rows = rows.filter((row) => teacherIds.has(row.teacherUid) || teacherIds.has(row.teacherEmployeeId));
+  } else if (filters.teacherUid) rows = rows.filter((row) => row.teacherUid === filters.teacherUid);
   if (filters.classId) rows = rows.filter((row) => row.classId === filters.classId);
   if (filters.day) rows = rows.filter((row) => row.day === filters.day);
   return rows.sort((a, b) =>

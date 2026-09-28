@@ -1,4 +1,5 @@
 ﻿import { api, apiFetch, downloadFile } from "./api.js";
+import { academicWeekNumber } from "./academic-calendar.js";
 import { logout } from "./firebase-client.js";
 import { getRoleTitle } from "./role-display.js";
 import { clearNotice, createCell, fillSelect, formatDate, setNotice, submitSafely } from "./ui.js?v=20260919-8";
@@ -95,7 +96,8 @@ const menuGroups = [
               "view_schedules",
               "view_all_schedules",
               "manage_schedules"
-            ]
+            ],
+            roleAny: ["system_admin"]
           },
         ]
       },
@@ -627,14 +629,7 @@ function classLabel(item) {
 }
 function localDate() { const now = new Date(); return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
 function weekNumber(dateValue) {
-  if (!dateValue) return 1;
-  const date = new Date(`${dateValue}T12:00:00Z`);
-  if (Number.isNaN(date.getTime())) return 1;
-  const academicStart = date.getUTCMonth() >= 8
-    ? new Date(Date.UTC(date.getUTCFullYear(), 8, 1))
-    : new Date(Date.UTC(date.getUTCFullYear() - 1, 8, 1));
-  const diffDays = Math.floor((date - academicStart) / 86400000);
-  return Math.max(1, Math.floor(diffDays / 7) + 1);
+  return academicWeekNumber(dateValue);
 }
 
 function notificationDate(value) {
@@ -2117,7 +2112,7 @@ async function renderAttendancePortal() {
       studentHubLink(
         "attendance-entry",
         "إدخال الغياب",
-        "تسجيل غياب طلاب الحصة الأولى"
+        "تسجيل غياب طلاب الحصة الثانية"
       )
     );
   }
@@ -2145,8 +2140,8 @@ async function renderAttendancePortal() {
 
 
 async function renderAttendance() {
-  page("إدخال الغياب", "تتاح العملية لمعلمة الحصة الأولى أو للمستخدمة المخولة.", `
-    <aside class="attendance-warning"><strong>تنبيه</strong><span>يبدأ إدخال الغياب الساعة 9:00 صباحًا. يرجى التأكد من صحة البيانات ومراجعتها قبل الإرسال.</span></aside>
+  page("إدخال الغياب", "تتاح العملية لمعلمة الحصة الثانية أو للمستخدمة المخولة.", `
+    <aside class="attendance-warning"><strong>تنبيه</strong><span>يُتاح إدخال الغياب من 8:20 إلى 9:10 صباحًا. يرجى التأكد من صحة البيانات ومراجعتها قبل الإرسال.</span></aside>
     <section class="attendance-data-section"><h2>بيانات الغياب</h2>
       <div class="form-grid attendance-entry-grid">
         <div class="field"><label>اسم المعلمة</label><input id="attendanceTeacher" readonly></div>
@@ -2156,22 +2151,29 @@ async function renderAttendance() {
         <div class="field"><label for="attendanceGrade">الصف</label><select id="attendanceGrade" required><option value="">اختاري الصف</option></select></div>
         <div class="field"><label for="attendanceSection">الشعبة</label><select id="attendanceSection" required disabled><option value="">اختاري الشعبة</option></select></div>
         <div class="field"><label for="attendanceGender">الجنس</label><select id="attendanceGender" required disabled><option value="">اختاري الجنس</option></select></div>
-        <div class="field"><label for="attendanceSubject">المادة</label><input id="attendanceSubject" readonly placeholder="تظهر تلقائيًا من الحصة الأولى"></div>
+        <div class="field"><label for="attendanceSubject">المادة</label><input id="attendanceSubject" readonly placeholder="تظهر تلقائيًا من الحصة الثانية"></div>
       </div>
     </section>
     <label id="allPresentWrap" class="attendance-all-present hidden no-print"><input id="allPresent" type="checkbox"> <span>جميع الطلاب حاضرين</span></label>
     <form id="attendanceForm" class="attendance-table-section"><div id="attendanceStudents" class="attendance-list"><div class="empty-state">اختاري الصف والشعبة والجنس لعرض الطلاب.</div></div><div class="form-actions no-print"><button id="saveAttendance" class="btn btn-small hidden" type="submit">إرسال</button></div></form>`);
   const allClasses = await loadClasses();
+  const today = localDate();
+  const todayDay = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][new Date(`${today}T12:00:00Z`).getUTCDay()];
   const teacherAssignedClassIds = new Set(
     (await fetchScheduleRows("mine"))
-      .filter((item) => item.blockType === "class" && item.classId)
+      .filter((item) => item.blockType === "class" && item.classId && item.day === todayDay && Number(item.periodNumber) === 2)
       .map((item) => item.classId)
   );
-  const classes = hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management")
-    ? allClasses
-    : allClasses.filter((item) => teacherAssignedClassIds.has(item.id));
+  const classes = allClasses.filter((item) => teacherAssignedClassIds.has(item.id));
   const grade = document.querySelector("#attendanceGrade"); const section = document.querySelector("#attendanceSection"); const gender = document.querySelector("#attendanceGender");
   fillSelect(grade, uniqueValues(classes.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
+  if (!classes.length) {
+    const message = "لا توجد حصة ثانية مسجلة في جدولك اليوم.";
+    document.querySelector("#attendanceGrade").disabled = true;
+    document.querySelector("#attendanceSection").disabled = true;
+    document.querySelector("#attendanceGender").disabled = true;
+    document.querySelector("#attendanceStudents").textContent = message;
+  }
   const selectedClass = () => classes.find((item) => item.grade === grade.value && item.section === section.value && item.gender === gender.value);
   const clearStudents = () => { document.querySelector("#attendanceStudents").innerHTML = '<div class="empty-state">اختاري الصف والشعبة والجنس لعرض الطلاب.</div>'; document.querySelector("#allPresentWrap").classList.add("hidden"); document.querySelector("#saveAttendance").classList.add("hidden"); };
   const refreshGender = () => { const values = uniqueValues(classes.filter((item) => item.grade === grade.value && item.section === section.value).map((item) => item.gender)); fillSelect(gender, values, (x) => x, (x) => labels.gender[x] ?? x, "اختاري الجنس"); gender.disabled = !values.length; clearStudents(); };
@@ -2186,8 +2188,22 @@ async function renderAttendance() {
   grade.addEventListener("change", refreshSection); section.addEventListener("change", refreshGender); gender.addEventListener("change", () => { if (selectedClass()) loadAttendanceStudents(); else clearStudents(); });
   document.querySelector("#attendanceTeacher").value = state.me.employee.nameAr; document.querySelector("#attendanceDate").value = localDate();
   document.querySelector("#attendanceTime").value = new Date().toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
-  const updateWeek = () => { document.querySelector("#attendanceWeek").value = weekNumber(document.querySelector("#attendanceDate").value); };
-  updateWeek(); document.querySelector("#attendanceDate").addEventListener("change", updateWeek);
+  const attendanceDate = document.querySelector("#attendanceDate");
+  const updateWeek = () => { document.querySelector("#attendanceWeek").value = weekNumber(attendanceDate.value); };
+  updateWeek(); attendanceDate.addEventListener("change", updateWeek);
+  const refreshAttendanceDate = () => {
+    if (!attendanceDate.isConnected) {
+      window.clearInterval(refreshTimer);
+      return;
+    }
+    const today = localDate();
+    if (attendanceDate.value === today) return;
+    attendanceDate.value = today;
+    document.querySelector("#attendanceTime").value = new Date().toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
+    updateWeek();
+    if (selectedClass()) void loadAttendanceStudents();
+  };
+  const refreshTimer = window.setInterval(refreshAttendanceDate, 60_000);
   document.querySelector("#allPresent").addEventListener("change", (event) => {
     const allPresent = event.currentTarget.checked;
     document.querySelectorAll(".attendance-status").forEach((radio) => {
@@ -2207,7 +2223,7 @@ async function loadAttendanceStudents() {
     const eligible = (await api.get(`/attendance/eligibility?classId=${encodeURIComponent(classId)}&date=${date}`)).data;
     document.querySelector("#attendanceSubject").value = eligible.subject ?? "";
     if (!eligible.allowed) return setNotice(document.querySelector("#pageNotice"), "error", eligible.reason);
-    const students = (await api.get(`/students?classId=${encodeURIComponent(classId)}&approvedOnly=true&limit=100`)).data;
+    const students = (await api.get(`/students?classId=${encodeURIComponent(classId)}&limit=100`)).data;
     const list = document.querySelector("#attendanceStudents"); list.replaceChildren();
     if (students.length) {
       const header = document.createElement("div"); header.className = "attendance-row attendance-row-header";
@@ -2245,15 +2261,20 @@ async function renderAttendanceMonitor() {
   document.querySelector("#saveAttendancePdf").addEventListener("click", (event) => printPortalPage(event.currentTarget));
   document.querySelector("#loadAttendanceRecords").addEventListener("click", async () => {
     try {
-      const query = new URLSearchParams();["date", "classId", "status"].forEach((key, index) => { const value = document.querySelector(["#monitorDate", "#monitorClass", "#monitorStatus"][index]).value; if (value) query.set(key, value); });
+      const query = new URLSearchParams();["date", "classId", "status"].forEach((key, index) => { const rawValue = document.querySelector(["#monitorDate", "#monitorClass", "#monitorStatus"][index]).value; const filterValue = key === "date" ? normalizeDisplayDate(rawValue) : rawValue; if (filterValue) query.set(key, filterValue); });
       const rows = (await api.get(`/attendance?${query}`)).data;
       renderAttendanceRecords(rows);
     } catch (error) { showError(error); }
   });
 }
 
+function attendanceStatusLabel(status) {
+  return labels.attendance[status] ?? String(status ?? "غير محدد");
+}
+
 function renderAttendanceRecords(records) {
   const wrap = document.querySelector("#attendanceRecords");
+  const canEditAttendance = has("manage_attendance") || has("manage_absence");
   wrap.replaceChildren();
   if (!records.length) {
     const empty = document.createElement("div");
@@ -2269,21 +2290,13 @@ function renderAttendanceRecords(records) {
     const row = document.createElement("tr");
     [record.studentName, record.date, record.className, record.teacherName, attendanceStatusLabel(record.status)].forEach((value) => row.append(createCell(value)));
     const actionCell = document.createElement("td");
-    const editButton = document.createElement("button");
-    editButton.type = "button";
-    editButton.className = "btn btn-secondary btn-small";
-    editButton.textContent = "تعديل";
-    editButton.addEventListener("click", () => editAttendanceRecord(record, row));
-    actionCell.append(editButton);
-    if (["excused", "unexcused", "late"].includes(record.status)) {
-      const whatsappButton = document.createElement("a");
-      whatsappButton.className = "btn btn-secondary btn-small";
-      whatsappButton.textContent = "واتساب";
-      whatsappButton.target = "_blank";
-      whatsappButton.rel = "noopener noreferrer";
-      const message = `تنبيه حضور من المدرسة:\nالطالب: ${record.studentName}\nالفصل: ${record.className}\nالحالة: ${attendanceStatusLabel(record.status)}\nالتاريخ: ${record.date}\n\nللاستفسار يرجى التواصل مع المدرسة.`;
-      whatsappButton.href = `https://wa.me/966560203300?text=${encodeURIComponent(message)}`;
-      actionCell.append(whatsappButton);
+    if (canEditAttendance) {
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.className = "btn btn-secondary btn-small";
+      editButton.textContent = "تعديل";
+      editButton.addEventListener("click", () => editAttendanceRecord(record, row));
+      actionCell.append(editButton);
     }
     row.append(actionCell);
     body.append(row);
@@ -2692,25 +2705,25 @@ async function renderSchedule() {
 }
 
 function canManageSchedulePage() {
-  return has("manage_schedules") && hasRole(
+  return hasRole("system_admin") || (has("manage_schedules") && hasRole(
     "principal",
     "vice_principal",
     "admin",
     "system_admin",
     "schedule_admin",
     "upper_management"
-  );
+  ));
 }
 
 function canViewAllSchedulesPage() {
-  return (has("view_all_schedules") || has("manage_schedules")) && hasRole(
+  return hasRole("system_admin") || ((has("view_all_schedules") || has("manage_schedules")) && hasRole(
     "principal",
     "vice_principal",
     "admin",
     "system_admin",
     "schedule_admin",
     "upper_management"
-  );
+  ));
 }
 
 function scheduleTeacherOptions(employees) {
@@ -2730,7 +2743,7 @@ function setScheduleSelectOptions(select, values, label, placeholder, valueResol
 
 const stageSubjectMap = {
   primary: ["لغتي", "رياضيات", "علوم", "اللغة الانجليزية", "الدراسات الاسلامية", "التربية البدنية", "المهارات الحياتيه", "التربية الفنية", "القرآن الكريم", "مبرمج صغير"],
-  kindergarten: ["حلقة وقرآن", "نقرأ ونكتب", "اللغة الانجليزية", "مبرمج صغير", "قرآن", "مناطق تعلم ولعب", "قراءة جهرية ولقاء الأخير", "نعد ونحسب"]
+  kindergarten: ["حلقة وقرآن", "نقرأ ونكتب", "اللغة الانجليزية", "مبرمج صغير", "قرآن", "مناطق تعلم", "اللعب", "قراءة جهرية ولقاء الأخير", "نعد ونحسب"]
 };
 
 function getStageForClass(classes, grade) {
@@ -2742,6 +2755,7 @@ function setupScheduleClassSelectors(classes) {
   const grade = document.querySelector("#classScheduleGrade");
   const section = document.querySelector("#classScheduleSection");
   const subject = document.querySelector("#classScheduleSubject");
+  const periodNumber = document.querySelector("#classPeriodNumber");
   const unique = (items) => [...new Set(items)];
 
   setScheduleSelectOptions(
@@ -2757,6 +2771,17 @@ function setupScheduleClassSelectors(classes) {
     setScheduleSelectOptions(subject, subjectsForStage, (item) => item, "اختاري المادة");
   };
 
+  const refreshPeriods = () => {
+    setScheduleSelectOptions(
+      periodNumber,
+      Array.from({ length: 8 }, (_, index) => index + 1),
+      (item) => `الحصة ${item}`,
+      "اختياري"
+    );
+  };
+
+  refreshPeriods();
+
   grade.addEventListener("change", () => {
     const matching = classes.filter((item) => item.grade === grade.value);
     setScheduleSelectOptions(
@@ -2767,6 +2792,7 @@ function setupScheduleClassSelectors(classes) {
       (item) => item.id
     );
     refreshSubjects();
+    refreshPeriods();
   });
 }
 
@@ -2996,7 +3022,7 @@ async function renderScheduleManage() {
         <div class="field"><label for="classScheduleDay">اليوم</label><select id="classScheduleDay" required><option value="">اختاري اليوم</option><option value="sunday">الأحد</option><option value="monday">الاثنين</option><option value="tuesday">الثلاثاء</option><option value="wednesday">الأربعاء</option><option value="thursday">الخميس</option></select></div>
         <div class="field"><label for="classScheduleGrade">الصف</label><select id="classScheduleGrade" required><option value="">اختاري الصف</option></select></div>
         <div class="field"><label for="classScheduleSection">الفصل</label><select id="classScheduleSection" required disabled><option value="">اختاري الفصل</option></select></div>
-        <div class="field"><label for="classPeriodNumber">الحصة</label><select id="classPeriodNumber"><option value="">اختياري</option>${Array.from({ length: 9 }, (_, index) => `<option value="${index + 1}">الحصة ${index + 1}</option>`).join("")}</select></div>
+        <div class="field"><label for="classPeriodNumber">الحصة</label><select id="classPeriodNumber"><option value="">اختياري</option>${Array.from({ length: 8 }, (_, index) => `<option value="${index + 1}">الحصة ${index + 1}</option>`).join("")}</select></div>
         <div class="field"><label for="classScheduleSubject">المادة</label><select id="classScheduleSubject" required><option value="">اختاري المادة</option></select></div>
         <div class="field"><label for="classStartTime">وقت البداية</label><input id="classStartTime" type="time" min="06:30" max="14:30" required></div>
         <div class="field"><label for="classEndTime">وقت النهاية</label><input id="classEndTime" type="time" min="06:30" max="14:30" required></div>
@@ -3046,7 +3072,14 @@ async function renderScheduleManage() {
   document.querySelector("#cancelClassScheduleEdit").addEventListener("click", () => resetScheduleEdit("class"));
   document.querySelector("#cancelBreakScheduleEdit").addEventListener("click", () => resetScheduleEdit("break"));
   document.querySelectorAll("[data-schedule-section]").forEach((button) => {
-    button.addEventListener("click", () => setScheduleManageSection(button.dataset.scheduleSection));
+    button.addEventListener("click", () => {
+      const section = button.dataset.scheduleSection;
+      if (section === "entry") {
+        const activeType = document.querySelector("[data-schedule-manage].active")?.dataset.scheduleManage;
+        resetScheduleEdit(activeType === "break" ? "break" : "class");
+      }
+      setScheduleManageSection(section);
+    });
   });
   document.querySelectorAll("[data-schedule-manage]").forEach((button) => {
     button.addEventListener("click", () => setScheduleManageTab(button.dataset.scheduleManage));
@@ -6761,7 +6794,7 @@ function renderCertificateManager(area) {
 
 const permissionLabels = {
   view_substitution_assignments: "عرض حصص الانتظار",
-  view_students: "عرض الطلاب", manage_students: "إدارة الطلاب", enter_attendance: "إدخال الغياب", view_attendance: "متابعة الغياب", manage_attendance: "إدارة الغياب", manage_absence: "إدارة بلاغات الغياب", attendance_override: "تجاوز قيد الحصة الأولى", view_schedules: "عرض الجدول", view_all_schedules: "عرض جميع الجداول", manage_schedules: "إدارة الجداول", request_leave: "تقديم إجازة واستئذان", manage_leave_requests: "مراجعة الإجازات – المديرة", manage_leave_hr_requests: "اعتماد الإجازات – الموارد البشرية", request_training: "تقديم دورة", manage_training_requests: "اعتماد الدورات", issue_work_assignments: "إصدار تكليف", view_all_work_assignments: "عرض جميع التكاليف", request_assets: "طلب عهدة", manage_assets: "إدارة العهد", request_loans: "استعلام سلفة", manage_loans: "إدارة السلف", manage_materials: "إدارة المواد", manage_invoices: "رفع الفواتير", manage_employees: "إدارة الموظفات", manage_permissions: "إدارة الصلاحيات", manage_announcements: "إدارة الإعلانات", upload_files: "رفع المرفقات"
+  view_students: "عرض الطلاب", manage_students: "إدارة الطلاب", enter_attendance: "إدخال الغياب", view_attendance: "متابعة الغياب", manage_attendance: "إدارة الغياب", manage_absence: "إدارة بلاغات الغياب", attendance_override: "تجاوز قيد فترة إدخال الغياب", view_schedules: "عرض الجدول", view_all_schedules: "عرض جميع الجداول", manage_schedules: "إدارة الجداول", request_leave: "تقديم إجازة واستئذان", manage_leave_requests: "مراجعة الإجازات – المديرة", manage_leave_hr_requests: "اعتماد الإجازات – الموارد البشرية", request_training: "تقديم دورة", manage_training_requests: "اعتماد الدورات", issue_work_assignments: "إصدار تكليف", view_all_work_assignments: "عرض جميع التكاليف", request_assets: "طلب عهدة", manage_assets: "إدارة العهد", request_loans: "استعلام سلفة", manage_loans: "إدارة السلف", manage_materials: "إدارة المواد", manage_invoices: "رفع الفواتير", manage_employees: "إدارة الموظفات", manage_permissions: "إدارة الصلاحيات", manage_announcements: "إدارة الإعلانات", upload_files: "رفع المرفقات"
 };
 
 async function renderEmployeeManagementPage(mode) {
