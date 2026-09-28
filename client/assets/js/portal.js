@@ -7240,9 +7240,8 @@ async function renderParentImport() {
   if (!hasRole("system_admin")) throw new Error("استيراد أولياء الأمور متاح لمسؤولة النظام فقط.");
   page("استيراد أولياء الأمور", "ارفعي ملف Excel لإنشاء عدة حسابات وربط الأبناء دفعة واحدة.", `
     <div class="notice visible parent-import-notice">
-      <strong>الأعمدة المطلوبة في الصف الأول</strong>
+      <strong>الأعمدة المطلوبة</strong>
       <p>اسم ولي الأمر، رقم الهوية، البريد الإلكتروني، رقم الجوال، كلمة المرور، وأرقام هويات الأبناء.</p>
-      <p>أدخلي أرقام هويات الأبناء مفصولة بفاصلة عربية أو إنجليزية.</p>
     </div>
     <form id="parentImportForm" class="form-grid parent-import-form">
       <div class="field span-2 parent-import-file-field"><label for="parentImportFile">ملف أولياء الأمور بصيغة Excel</label><input id="parentImportFile" type="file" accept=".xlsx" required></div>
