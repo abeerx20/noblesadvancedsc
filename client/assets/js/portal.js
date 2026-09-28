@@ -2268,6 +2268,10 @@ async function renderAttendanceMonitor() {
   });
 }
 
+function attendanceStatusLabel(status) {
+  return labels.attendance[status] ?? String(status ?? "غير محدد");
+}
+
 function renderAttendanceRecords(records) {
   const wrap = document.querySelector("#attendanceRecords");
   const canEditAttendance = has("manage_attendance") || has("manage_absence");
