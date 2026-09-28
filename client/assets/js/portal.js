@@ -7239,17 +7239,18 @@ async function renderParentAdd() {
 async function renderParentImport() {
   if (!hasRole("system_admin")) throw new Error("استيراد أولياء الأمور متاح لمسؤولة النظام فقط.");
   page("استيراد أولياء الأمور", "ارفعي ملف Excel لإنشاء عدة حسابات وربط الأبناء دفعة واحدة.", `
-    <div class="notice visible">
-      يجب أن يحتوي الصف الأول على الأعمدة التالية: اسم ولي الأمر، رقم هوية ولي الأمر، البريد الإلكتروني، رقم الجوال، كلمة المرور، أرقام هويات الأبناء.
-      افصلي أرقام هويات الأبناء بفاصلة عربية أو إنجليزية.
+    <div class="notice visible parent-import-notice">
+      <strong>الأعمدة المطلوبة في الصف الأول</strong>
+      <p>اسم ولي الأمر، رقم الهوية، البريد الإلكتروني، رقم الجوال، كلمة المرور، وأرقام هويات الأبناء.</p>
+      <p>أدخلي أرقام هويات الأبناء مفصولة بفاصلة عربية أو إنجليزية.</p>
     </div>
-    <form id="parentImportForm" class="form-grid">
-      <div class="field span-2"><label for="parentImportFile">ملف أولياء الأمور بصيغة Excel</label><input id="parentImportFile" type="file" accept=".xlsx" required></div>
-      <div class="form-actions span-2"><button id="previewParentImport" class="btn" type="submit">معاينة الملف</button><button id="commitParentImport" class="btn btn-secondary hidden" type="button">حفظ الحسابات المقبولة</button></div>
+    <form id="parentImportForm" class="form-grid parent-import-form">
+      <div class="field span-2 parent-import-file-field"><label for="parentImportFile">ملف أولياء الأمور بصيغة Excel</label><input id="parentImportFile" type="file" accept=".xlsx" required></div>
+      <div class="form-actions span-2 parent-import-actions"><button id="previewParentImport" class="btn" type="submit">معاينة الملف</button><button id="commitParentImport" class="btn btn-secondary hidden" type="button">حفظ الحسابات المقبولة</button></div>
     </form>
-    <div id="parentImportSummary" class="field-hint"></div>
-    <div id="parentImportAccepted" class="table-wrap"></div>
-    <div id="parentImportRejected" class="table-wrap"></div>
+    <div id="parentImportSummary" class="field-hint parent-import-summary"></div>
+    <div id="parentImportAccepted" class="table-wrap parent-import-table"></div>
+    <div id="parentImportRejected" class="table-wrap parent-import-table"></div>
   `);
 
   let preview = null;

@@ -2155,6 +2155,90 @@ input[type="month"] {
   margin-inline: auto;
 }
 
+.content-card>.notice.visible.parent-import-notice {
+  width: min(900px, 100%);
+  margin: 0 auto 22px;
+  border: 1px solid #d8e9e1;
+  border-inline-start: 4px solid var(--green-700);
+  border-radius: 10px;
+  padding: 14px 18px;
+  background: var(--green-050);
+  color: var(--green-900);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.parent-import-notice strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--green-900);
+  font-weight: 600;
+}
+
+.parent-import-notice p {
+  margin: 0;
+}
+
+.parent-import-form {
+  width: min(760px, 100%);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  margin-inline: auto;
+}
+
+.parent-import-form .span-2 {
+  grid-column: 1;
+}
+
+.parent-import-file-field {
+  gap: 8px;
+}
+
+.content-card .parent-import-file-field input[type="file"] {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #d5e3de;
+  border-radius: 9px;
+  padding: 7px 9px;
+  background: #fff;
+  color: var(--green-900);
+  font-size: 12px;
+}
+
+.parent-import-file-field input[type="file"]::file-selector-button {
+  margin-inline-end: 10px;
+  border: 1px solid #bfd7cc;
+  border-radius: 7px;
+  padding: 7px 12px;
+  background: #f3f8f5;
+  color: var(--green-900);
+  cursor: pointer;
+}
+
+.parent-import-file-field input[type="file"]::file-selector-button:hover {
+  border-color: var(--green-700);
+  background: var(--green-100);
+}
+
+.parent-import-actions {
+  justify-content: flex-start;
+  gap: 9px;
+  margin-top: 2px;
+}
+
+.parent-import-actions .btn {
+  min-width: 132px;
+  min-height: 40px;
+  border-radius: 9px;
+  font-size: 12px;
+}
+
+.parent-import-summary,
+.parent-import-table {
+  width: min(900px, 100%);
+  margin: 14px auto 0;
+}
+
 .content-card .roster-upload-form .field input,
 .content-card .roster-upload-form .field select {
   width: 100%;
