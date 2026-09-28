@@ -7145,7 +7145,41 @@ function renderParentManagement() {
 
 async function renderParentAdd() {
   if (!hasRole("system_admin")) throw new Error("إضافة ولي أمر متاحة لمسؤولة النظام فقط.");
-  page("إضافة ولي أمر", "سجلي بيانات ولي الأمر ثم ابحثي عن أبنائه المسجلين.", `<form id="parentForm" class="form-grid"><div class="field"><label for="parentName">اسم ولي الأمر</label><input id="parentName" required minlength="3" maxlength="120"></div><div class="field"><label for="parentNationalId">رقم الهوية</label><input id="parentNationalId" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required></div><div class="field"><label for="parentPhone">رقم الجوال</label><input id="parentPhone" inputmode="tel" required></div><div class="field"><label for="parentEmail">البريد الإلكتروني</label><input id="parentEmail" type="email" required dir="ltr"></div><div class="field"><label for="parentPassword">كلمة المرور</label><input id="parentPassword" type="password" minlength="6" maxlength="128" required dir="ltr"></div><fieldset class="field span-2 parent-children-field"><legend>أبناء ولي الأمر</legend><p class="field-hint">لا تظهر أسماء الطلاب تلقائيًا. ابحثي عن كل ابن بالاسم أو الرقم، ثم أضيفيه بعد التأكد من بياناته.</p><div class="parent-student-search"><input id="parentStudentSearch" placeholder="اسم الطالب أو رقم الطالب" autocomplete="off"><button id="parentStudentSearchButton" class="btn btn-secondary" type="button">بحث</button></div><p id="parentStudentsStatus" class="field-hint">لم تتم إضافة أي أبناء بعد.</p><div id="parentStudents" class="parent-student-list"></div></fieldset><div class="form-actions span-2"><button class="btn" type="submit">حفظ ولي الأمر</button></div></form>`);
+  page("إضافة ولي أمر", "سجلي بيانات ولي الأمر ثم ابحثي عن أبنائه المسجلين.", `
+    <form id="parentForm" class="form-grid">
+      <div class="field"><label for="parentName">اسم ولي الأمر</label><input id="parentName" required minlength="3" maxlength="120"></div>
+      <div class="field"><label for="parentNationalId">رقم الهوية</label><input id="parentNationalId" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required></div>
+      <div class="field"><label for="parentPhone">رقم الجوال</label><input id="parentPhone" inputmode="tel" required></div>
+      <div class="field"><label for="parentEmail">البريد الإلكتروني</label><input id="parentEmail" type="email" required dir="ltr"></div>
+      <div class="field">
+        <label for="parentPassword">كلمة المرور</label>
+        <div class="portal-password-wrap">
+          <input id="parentPassword" type="password" minlength="6" maxlength="128" required dir="ltr">
+          <button id="parentPasswordToggle" class="portal-password-toggle" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false">👁</button>
+        </div>
+      </div>
+      <fieldset class="field span-2 parent-children-field">
+        <legend>أبناء ولي الأمر</legend>
+        <p class="field-hint">لا تظهر أسماء الطلاب تلقائيًا. ابحثي عن كل ابن بالاسم أو الرقم، ثم أضيفيه بعد التأكد من بياناته.</p>
+        <div class="parent-student-search">
+          <input id="parentStudentSearch" placeholder="اسم الطالب أو رقم الطالب" autocomplete="off">
+          <button id="parentStudentSearchButton" class="btn btn-secondary" type="button">بحث</button>
+        </div>
+        <p id="parentStudentsStatus" class="field-hint">لم تتم إضافة أي أبناء بعد.</p>
+        <div id="parentStudents" class="parent-student-list"></div>
+      </fieldset>
+      <div class="form-actions span-2"><button class="btn" type="submit">حفظ ولي الأمر</button></div>
+    </form>
+  `);
+  const parentPasswordInput = document.querySelector("#parentPassword");
+  const parentPasswordToggle = document.querySelector("#parentPasswordToggle");
+  parentPasswordToggle.addEventListener("click", () => {
+    const visible = parentPasswordInput.type === "text";
+    parentPasswordInput.type = visible ? "password" : "text";
+    parentPasswordToggle.textContent = visible ? "👁" : "🙈";
+    parentPasswordToggle.setAttribute("aria-label", visible ? "إظهار كلمة المرور" : "إخفاء كلمة المرور");
+    parentPasswordToggle.setAttribute("aria-pressed", String(!visible));
+  });
   const studentsArea = document.querySelector("#parentStudents");
   const selectedStudents = new Map();
   async function searchStudents() {
