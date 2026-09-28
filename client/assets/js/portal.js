@@ -7293,7 +7293,78 @@ async function renderParentList() {
   if (!hasRole("system_admin")) throw new Error("عرض أولياء الأمور متاح لمسؤولة النظام فقط.");
   page("أولياء الأمور", "عرض أولياء الأمور وعدد الأبناء المرتبطين بكل حساب.", `<div id="parentsTable" class="table-wrap"><div class="empty-state">جارٍ تحميل البيانات...</div></div>`);
   const area = document.querySelector("#parentsTable");
-  try { const parents = (await api.get("/parent-admin?limit=500")).data; area.innerHTML = parents.length ? `<table><thead><tr><th>ولي الأمر</th><th>البريد</th><th>الجوال</th><th>عدد الأبناء</th></tr></thead><tbody>${parents.map((parent) => `<tr><td>${parent.nameAr}</td><td dir="ltr">${parent.email}</td><td dir="ltr">${parent.phone}</td><td>${parent.studentCount}</td></tr>`).join("")}</tbody></table>` : '<div class="empty-state">لا يوجد أولياء أمور مسجلون.</div>'; } catch (error) { area.innerHTML = `<div class="notice notice-error visible">${error.message}</div>`; }
+  try {
+    const parents = (await api.get("/parent-admin?limit=500")).data;
+    if (!parents.length) {
+      area.innerHTML = '<div class="empty-state">لا يوجد أولياء أمور مسجلون.</div>';
+      return;
+    }
+
+    const table = document.createElement("table");
+    table.innerHTML = "<thead><tr><th>ولي الأمر</th><th>رقم الهوية</th><th>البريد</th><th>الجوال</th><th>عدد الأبناء</th><th>الإجراءات</th></tr></thead><tbody></tbody>";
+    const body = table.querySelector("tbody");
+    parents.forEach((parent) => {
+      const row = document.createElement("tr");
+      [parent.nameAr, parent.nationalId, parent.email, parent.phone, parent.studentCount].forEach((value) => {
+        const cell = document.createElement("td");
+        cell.textContent = String(value ?? "—");
+        row.append(cell);
+      });
+      const actions = document.createElement("td");
+      const editButton = document.createElement("button");
+      editButton.className = "btn btn-secondary";
+      editButton.type = "button";
+      editButton.textContent = "تعديل";
+      editButton.addEventListener("click", () => renderParentEdit(parent));
+      actions.append(editButton);
+      row.append(actions);
+      body.append(row);
+    });
+    area.replaceChildren(table);
+  } catch (error) {
+    area.innerHTML = `<div class="notice notice-error visible">${error.message}</div>`;
+  }
+}
+
+function renderParentEdit(parent) {
+  page("تعديل بيانات ولي الأمر", "عدّلي بيانات ولي الأمر. لن تتغير كلمة المرور أو الأبناء المرتبطون.", `
+    <form id="parentEditForm" class="form-grid">
+      <div class="field"><label for="editParentName">اسم ولي الأمر</label><input id="editParentName" required minlength="3" maxlength="120"></div>
+      <div class="field"><label for="editParentNationalId">رقم الهوية</label><input id="editParentNationalId" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required></div>
+      <div class="field"><label for="editParentPhone">رقم الجوال</label><input id="editParentPhone" inputmode="tel" required></div>
+      <div class="field"><label for="editParentEmail">البريد الإلكتروني</label><input id="editParentEmail" type="email" required dir="ltr"></div>
+      <div class="form-actions span-2">
+        <button class="btn" type="submit">حفظ التعديلات</button>
+        <button id="cancelParentEdit" class="btn btn-secondary" type="button">إلغاء</button>
+      </div>
+    </form>
+  `);
+
+  const form = document.querySelector("#parentEditForm");
+  form.querySelector("#editParentName").value = parent.nameAr ?? "";
+  form.querySelector("#editParentNationalId").value = parent.nationalId ?? "";
+  form.querySelector("#editParentPhone").value = parent.phone ?? "";
+  form.querySelector("#editParentEmail").value = parent.email ?? "";
+  document.querySelector("#cancelParentEdit").addEventListener("click", renderParentList);
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+    const button = form.querySelector("button[type=submit]");
+    button.disabled = true;
+    try {
+      const result = await api.patch(`/parent-admin/${encodeURIComponent(parent.id)}`, {
+        nameAr: form.querySelector("#editParentName").value,
+        nationalId: form.querySelector("#editParentNationalId").value,
+        phone: form.querySelector("#editParentPhone").value,
+        email: form.querySelector("#editParentEmail").value
+      });
+      await renderParentList();
+      setNotice(document.querySelector("#pageNotice"), "success", result.message);
+    } catch (error) {
+      setNotice(document.querySelector("#pageNotice"), "error", error.message);
+      button.disabled = false;
+    }
+  });
 }
 
 async function renderSiteSettings() {

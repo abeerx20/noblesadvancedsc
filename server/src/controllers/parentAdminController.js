@@ -1,4 +1,4 @@
-import { createParent, listParents } from "../services/parentAdminService.js";
+import { createParent, listParents, updateParent } from "../services/parentAdminService.js";
 import { commitParentWorkbook, previewParentWorkbook } from "../services/parentAdminExcelService.js";
 import { writeAudit } from "../services/auditService.js";
 import { AppError } from "../utils/AppError.js";
@@ -28,4 +28,10 @@ export async function commitImport(req, res) {
     const result = await commitParentWorkbook(importFile(req), req.user);
     await writeAudit({ req, action: "bulk_create", entityType: "parent", summary: { accepted: result.accepted.length, rejected: result.rejected.length } });
     res.status(201).json({ success: true, data: result, message: `تم إنشاء ${result.accepted.length} حساب ولي أمر، ورفض ${result.rejected.length} صف.` });
+}
+
+export async function update(req, res) {
+    await updateParent(req.params.id, req.body, req.user);
+    await writeAudit({ req, action: "update", entityType: "parent", entityId: req.params.id, summary: { fields: ["nameAr", "nationalId", "email", "phone"] } });
+    res.json({ success: true, message: "تم تحديث بيانات ولي الأمر بنجاح." });
 }

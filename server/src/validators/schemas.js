@@ -430,6 +430,13 @@ export const parentSchema = z.object({
   status: z.enum(["active", "inactive"]).default("active")
 }).strict();
 
+export const parentUpdateSchema = z.object({
+  nameAr: clean(3, 120, "اسم ولي الأمر"),
+  nationalId: z.string().trim().regex(/^\d{10}$/, "رقم الهوية يجب أن يتكون من 10 أرقام."),
+  email: z.email("البريد الإلكتروني غير صالح.").transform((value) => value.toLowerCase()),
+  phone: z.string().trim().regex(/^(?:9665\d{8}|05\d{8})$/, "رقم الجوال غير صالح.")
+}).strict();
+
 export const parentReportFeedbackSchema = z.object({
   comment: clean(1, 2000, "تعليق ولي الأمر"),
   acknowledged: z.literal(true)

@@ -44,6 +44,47 @@ export async function listParents() {
     const snapshot = await db.collection("parents").limit(500).get();
     return snapshot.docs.map((doc) => {
         const parent = publicDocument(doc);
-        return { id: parent.id, nameAr: parent.nameAr, email: parent.email, phone: parent.phone, studentIds: parent.studentIds ?? [], studentCount: Array.isArray(parent.studentIds) ? parent.studentIds.length : 0, status: parent.status };
+        return { id: parent.id, nameAr: parent.nameAr, nationalId: parent.nationalId, email: parent.email, phone: parent.phone, studentIds: parent.studentIds ?? [], studentCount: Array.isArray(parent.studentIds) ? parent.studentIds.length : 0, status: parent.status };
     });
+}
+
+export async function updateParent(parentId, data, actor) {
+    const parentRef = db.collection("parents").doc(parentId);
+    const parentSnapshot = await parentRef.get();
+    if (!parentSnapshot.exists) throw new AppError(404, "PARENT_NOT_FOUND", "ولي الأمر غير موجود.");
+
+    const current = parentSnapshot.data();
+    const [emailMatches, nationalIdMatches] = await Promise.all([
+        db.collection("parents").where("email", "==", data.email).limit(2).get(),
+        db.collection("parents").where("nationalId", "==", data.nationalId).limit(2).get()
+    ]);
+    if (emailMatches.docs.some((doc) => doc.id !== parentId)) {
+        throw new AppError(409, "DUPLICATE_PARENT_EMAIL", "البريد الإلكتروني مستخدم لحساب ولي أمر آخر.");
+    }
+    if (nationalIdMatches.docs.some((doc) => doc.id !== parentId)) {
+        throw new AppError(409, "DUPLICATE_PARENT_NATIONAL_ID", "رقم الهوية مستخدم لحساب ولي أمر آخر.");
+    }
+
+    const authUid = current.authUid ?? parentId;
+    const authUser = await auth.getUser(authUid);
+    const phoneNumber = data.phone.startsWith("05") ? `+966${data.phone.slice(1)}` : `+${data.phone}`;
+    await auth.updateUser(authUid, { displayName: data.nameAr, email: data.email, phoneNumber });
+
+    try {
+        await parentRef.update({
+            nameAr: data.nameAr,
+            nationalId: data.nationalId,
+            email: data.email,
+            phone: data.phone,
+            updatedBy: actor.uid,
+            updatedAt: FieldValue.serverTimestamp()
+        });
+    } catch (error) {
+        await auth.updateUser(authUid, {
+            displayName: authUser.displayName,
+            email: authUser.email,
+            phoneNumber: authUser.phoneNumber
+        }).catch(() => { });
+        throw error;
+    }
 }
