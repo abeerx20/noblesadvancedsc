@@ -2323,7 +2323,7 @@ async function editAttendanceRecord(record, row) {
     const editorCell = document.createElement("td");
     editorCell.colSpan = 7;
     const form = document.createElement("form");
-    form.className = "form-grid";
+    form.className = "attendance-edit-form";
     const field = document.createElement("label");
     field.className = "field";
     field.textContent = record.studentName;
