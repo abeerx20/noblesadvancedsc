@@ -2539,6 +2539,29 @@ tbody tr:hover {
   overflow-x: auto;
 }
 
+.attendance-list.attendance-list-empty {
+  display: flex;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.attendance-schedule-notice {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 12px auto;
+  border: 1px solid #d8e9e1;
+  border-inline-start: 3px solid var(--green-700);
+  border-radius: 9px;
+  padding: 10px 14px;
+  background: var(--green-050);
+  color: var(--green-900);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
 .attendance-row {
   display: grid;
   grid-template-columns: 56px minmax(260px, 1fr) 110px 110px;

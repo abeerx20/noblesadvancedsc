@@ -2172,7 +2172,9 @@ async function renderAttendance() {
     document.querySelector("#attendanceGrade").disabled = true;
     document.querySelector("#attendanceSection").disabled = true;
     document.querySelector("#attendanceGender").disabled = true;
-    document.querySelector("#attendanceStudents").textContent = message;
+    const studentsArea = document.querySelector("#attendanceStudents");
+    studentsArea.classList.add("attendance-list-empty");
+    studentsArea.innerHTML = `<div class="attendance-schedule-notice" role="status">${message}</div>`;
   }
   const selectedClass = () => classes.find((item) => item.grade === grade.value && item.section === section.value && item.gender === gender.value);
   const clearStudents = () => { document.querySelector("#attendanceStudents").innerHTML = '<div class="empty-state">اختاري الصف والشعبة والجنس لعرض الطلاب.</div>'; document.querySelector("#allPresentWrap").classList.add("hidden"); document.querySelector("#saveAttendance").classList.add("hidden"); };
