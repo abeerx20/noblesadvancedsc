@@ -80,6 +80,7 @@ export async function listAttendance(filters) {
     .flatMap((record) => (record.entries ?? []).map((entry) => ({
       id: record.id,
       date: record.date,
+      submittedAt: record.submittedAt ?? record.createdAt ?? null,
       classId: record.classId,
       className: record.className,
       teacherName: record.teacherName,

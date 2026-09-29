@@ -2276,6 +2276,14 @@ function attendanceStatusLabel(status) {
   return labels.attendance[status] ?? String(status ?? "غير محدد");
 }
 
+function attendanceSubmissionTime(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "—"
+    : new Intl.DateTimeFormat("ar-SA", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Riyadh" }).format(date);
+}
+
 function renderAttendanceRecords(records) {
   const wrap = document.querySelector("#attendanceRecords");
   const canEditAttendance = has("manage_attendance") || has("manage_absence");
@@ -2288,11 +2296,11 @@ function renderAttendanceRecords(records) {
     return;
   }
   const table = document.createElement("table");
-  table.innerHTML = "<thead><tr><th>اسم الطالب</th><th>التاريخ</th><th>الفصل</th><th>المعلمة</th><th>الحالة</th><th>الإجراء</th></tr></thead>";
+  table.innerHTML = "<thead><tr><th>اسم الطالب</th><th>التاريخ</th><th>وقت الإدخال</th><th>الفصل</th><th>المعلمة</th><th>الحالة</th><th>الإجراء</th></tr></thead>";
   const body = document.createElement("tbody");
   records.forEach((record) => {
     const row = document.createElement("tr");
-    [record.studentName, record.date, record.className, record.teacherName, attendanceStatusLabel(record.status)].forEach((value) => row.append(createCell(value)));
+    [record.studentName, record.date, attendanceSubmissionTime(record.submittedAt), record.className, record.teacherName, attendanceStatusLabel(record.status)].forEach((value) => row.append(createCell(value)));
     const actionCell = document.createElement("td");
     if (canEditAttendance) {
       const editButton = document.createElement("button");
@@ -2313,7 +2321,7 @@ async function editAttendanceRecord(record, row) {
   try {
     const editorRow = document.createElement("tr");
     const editorCell = document.createElement("td");
-    editorCell.colSpan = 6;
+    editorCell.colSpan = 7;
     const form = document.createElement("form");
     form.className = "form-grid";
     const field = document.createElement("label");
