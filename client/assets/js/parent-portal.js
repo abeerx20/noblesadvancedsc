@@ -26,6 +26,10 @@ const demoData = {
 function setPage(title, description, body) {
     content.innerHTML = `<section class="content-card page-card"><nav class="portal-breadcrumb" aria-label="مسار الصفحة"><span>مستندات</span><span aria-hidden="true">/</span><strong>${title}</strong></nav><div class="page-heading"><div><h1>${title}</h1><p>${description}</p></div><button id="pageBackButton" class="btn btn-secondary btn-small no-print" type="button">رجوع</button></div><div id="pageNotice" class="notice" role="alert" aria-live="polite"></div>${body}</section>`;
     document.querySelector("#pageBackButton")?.addEventListener("click", () => {
+        if (window.history.length > 1) {
+            window.history.back();
+            return;
+        }
         location.assign("index.html");
     });
 }
