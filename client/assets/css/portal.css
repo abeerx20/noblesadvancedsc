@@ -2713,6 +2713,34 @@ tbody tr:hover {
   border-radius: 8px;
 }
 
+.attendance-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.attendance-edit-cancel {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d5e3de;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--green-900);
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.attendance-edit-cancel:hover {
+  border-color: var(--green-700);
+  background: var(--green-050);
+}
+
 @media (max-width: 560px) {
   .attendance-edit-form {
     grid-template-columns: 1fr;

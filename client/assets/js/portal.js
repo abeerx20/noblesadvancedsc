@@ -2319,7 +2319,15 @@ function renderAttendanceRecords(records) {
 
 async function editAttendanceRecord(record, row) {
   try {
+    const currentEditor = document.querySelector(".attendance-editor-row");
+    if (currentEditor?.previousElementSibling === row) {
+      currentEditor.querySelector("select")?.focus();
+      return;
+    }
+    currentEditor?.remove();
+
     const editorRow = document.createElement("tr");
+    editorRow.className = "attendance-editor-row";
     const editorCell = document.createElement("td");
     editorCell.colSpan = 7;
     const form = document.createElement("form");
@@ -2331,12 +2339,21 @@ async function editAttendanceRecord(record, row) {
     select.dataset.studentId = record.studentId;
     [["present", "حاضر"], ["excused", "غائب بعذر"], ["unexcused", "غائب دون عذر"], ["late", "متأخر"]].forEach(([value, label]) => select.append(new Option(label, value, value === record.status)));
     field.append(select);
-    form.append(field);
+    const actions = document.createElement("div");
+    actions.className = "attendance-edit-actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "attendance-edit-cancel";
+    cancel.setAttribute("aria-label", "إلغاء التعديل");
+    cancel.title = "إلغاء التعديل";
+    cancel.textContent = "×";
+    cancel.addEventListener("click", () => editorRow.remove());
     const save = document.createElement("button");
     save.type = "submit";
     save.className = "btn btn-small";
     save.textContent = "حفظ التعديل";
-    form.append(save);
+    actions.append(cancel, save);
+    form.append(field, actions);
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       await submitSafely(save, async () => {
