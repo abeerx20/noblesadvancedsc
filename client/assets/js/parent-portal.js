@@ -109,7 +109,7 @@ function renderStudyPlan() {
 
 function renderSidebar() {
     const nav = document.querySelector("#parentSidebarMenu");
-    nav.innerHTML = `<a class="side-home" href="#children"><span class="side-home-icon" aria-hidden="true"></span><span>الرئيسية</span></a><section class="menu-group"><button class="menu-group-button" type="button" aria-expanded="false"><span class="menu-group-icon" aria-hidden="true"></span><span class="menu-group-title">مستندات</span><span class="menu-group-arrow" aria-hidden="true"></span></button><div class="menu-items"><span class="menu-subtitle">مستندات ولي الأمر</span><a class="menu-link" href="#reports">التقارير</a><a class="menu-link" href="#plans">الخطط الدراسية</a><a class="menu-link" href="#calendar">التقويم الدراسي</a></div></section>`;
+    nav.innerHTML = `<a class="side-home" href="#children"><span class="side-home-icon" aria-hidden="true"></span><span>الرئيسية</span></a><section class="menu-group"><button class="menu-group-button" type="button" aria-expanded="false"><span class="menu-group-icon" aria-hidden="true"></span><span class="menu-group-title">مستندات</span><span class="menu-group-arrow" aria-hidden="true"></span></button><div class="menu-items"><span class="menu-subtitle">مستندات ولي الأمر</span><a class="menu-link" href="#reports">التقارير</a><a class="menu-link" href="#attendance">الحضور والغياب</a><a class="menu-link" href="#plans">الخطط الدراسية</a><a class="menu-link" href="#calendar">التقويم الدراسي</a></div></section>`;
     const group = nav.querySelector(".menu-group");
     const button = group.querySelector(".menu-group-button");
     button.addEventListener("click", () => { group.classList.toggle("open"); button.setAttribute("aria-expanded", String(group.classList.contains("open"))); });
