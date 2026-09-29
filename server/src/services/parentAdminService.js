@@ -108,3 +108,20 @@ export async function deleteParent(parentId) {
     await parentRef.delete();
     return studentCount;
 }
+
+export async function resetParentPassword(parentId, password, actor) {
+    const parentRef = db.collection("parents").doc(parentId);
+    const parentSnapshot = await parentRef.get();
+    if (!parentSnapshot.exists) throw new AppError(404, "PARENT_NOT_FOUND", "ولي الأمر غير موجود.");
+
+    const parent = parentSnapshot.data();
+    const authUid = parent.authUid ?? parentId;
+    try {
+        await auth.updateUser(authUid, { password: password.trim() });
+        await auth.revokeRefreshTokens(authUid);
+    } catch {
+        throw new AppError(503, "PARENT_PASSWORD_RESET_FAILED", "تعذر تحديث كلمة المرور. حاولي مرة أخرى.");
+    }
+
+    await parentRef.update({ updatedBy: actor.uid, updatedAt: FieldValue.serverTimestamp() });
+}

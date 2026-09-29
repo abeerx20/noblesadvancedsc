@@ -1,4 +1,4 @@
-import { createParent, deleteParent, listParents, updateParent } from "../services/parentAdminService.js";
+import { createParent, deleteParent, listParents, resetParentPassword, updateParent } from "../services/parentAdminService.js";
 import { commitParentWorkbook, previewParentWorkbook } from "../services/parentAdminExcelService.js";
 import { writeAudit } from "../services/auditService.js";
 import { AppError } from "../utils/AppError.js";
@@ -40,4 +40,10 @@ export async function remove(req, res) {
     const studentCount = await deleteParent(req.params.id);
     await writeAudit({ req, action: "delete", entityType: "parent", entityId: req.params.id, summary: { studentCount } });
     res.json({ success: true, message: "تم حذف حساب ولي الأمر، مع الاحتفاظ بسجلات الأبناء." });
+}
+
+export async function resetPassword(req, res) {
+    await resetParentPassword(req.params.id, req.body.password, req.user);
+    await writeAudit({ req, action: "reset_password", entityType: "parent", entityId: req.params.id });
+    res.json({ success: true, message: "تم تعيين كلمة المرور الجديدة وإخراج الجلسات السابقة." });
 }

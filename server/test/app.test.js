@@ -47,6 +47,17 @@ test("مسار حذف ولي الأمر موجود ويتطلب المصادقة
   assert.equal(response.body.error.code, "AUTH_REQUIRED");
 });
 
+test("مسار إعادة تعيين كلمة مرور ولي الأمر موجود ويتطلب المصادقة", async () => {
+  const routes = parentAdminRoutes.stack.filter((layer) => layer.route).map((layer) => ({
+    path: layer.route.path,
+    methods: Object.keys(layer.route.methods)
+  }));
+  assert(routes.some((route) => route.path === "/:id/password" && route.methods.includes("patch")));
+
+  const response = await request(app).patch("/api/v1/parent-admin/parent-1/password").send({ password: "Parent@123" }).expect(401);
+  assert.equal(response.body.error.code, "AUTH_REQUIRED");
+});
+
 test("مسار إعادة تعيين كلمة مرور الموظفة موجود في التوجيه", () => {
   const routes = employeeRoutes.stack.filter((layer) => layer.route).map((layer) => ({
     path: layer.route.path,

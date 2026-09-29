@@ -7394,6 +7394,24 @@ async function renderParentList() {
       editButton.textContent = "تعديل";
       editButton.addEventListener("click", () => renderParentEdit(parent));
       actions.append(editButton);
+      const resetPasswordButton = document.createElement("button");
+      resetPasswordButton.className = "btn btn-secondary btn-small";
+      resetPasswordButton.type = "button";
+      resetPasswordButton.textContent = "إعادة تعيين كلمة المرور";
+      resetPasswordButton.addEventListener("click", async () => {
+        const password = await requestParentPasswordReset(parent.nameAr);
+        if (!password) return;
+        resetPasswordButton.disabled = true;
+        try {
+          const result = await api.patch(`/parent-admin/${encodeURIComponent(parent.id)}/password`, { password });
+          setNotice(document.querySelector("#pageNotice"), "success", result.message);
+        } catch (error) {
+          setNotice(document.querySelector("#pageNotice"), "error", error.message);
+        } finally {
+          resetPasswordButton.disabled = false;
+        }
+      });
+      actions.append(resetPasswordButton);
       const deleteButton = document.createElement("button");
       deleteButton.className = "btn btn-danger btn-small";
       deleteButton.type = "button";
@@ -7419,6 +7437,64 @@ async function renderParentList() {
   } catch (error) {
     area.innerHTML = `<div class="notice notice-error visible">${error.message}</div>`;
   }
+}
+
+function requestParentPasswordReset(parentName) {
+  return new Promise((resolve) => {
+    const dialog = document.createElement("dialog");
+    dialog.className = "modal-dialog";
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-labelledby", "parentPasswordResetTitle");
+    dialog.innerHTML = `
+      <form class="modal-form">
+        <div class="modal-header">
+          <h2 id="parentPasswordResetTitle">إعادة تعيين كلمة المرور</h2>
+          <button type="button" class="modal-close" aria-label="إغلاق النافذة">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="alert-message">تعيين كلمة مرور جديدة لحساب ولي الأمر <strong id="parentPasswordResetName"></strong>.</p>
+          <div class="form-group">
+            <label for="parentNewPassword" class="form-label">كلمة المرور الجديدة</label>
+            <input id="parentNewPassword" class="form-control" type="password" minlength="6" maxlength="128" autocomplete="new-password" required>
+          </div>
+          <div class="form-group">
+            <label for="parentConfirmPassword" class="form-label">تأكيد كلمة المرور</label>
+            <input id="parentConfirmPassword" class="form-control" type="password" minlength="6" maxlength="128" autocomplete="new-password" required>
+          </div>
+          <div id="parentPasswordMismatch" class="notice notice-error" role="alert">كلمتا المرور غير متطابقتين.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary cancel-password-reset">إلغاء</button>
+          <button type="submit" class="btn btn-primary">حفظ كلمة المرور الجديدة</button>
+        </div>
+      </form>
+    `;
+    dialog.querySelector("#parentPasswordResetName").textContent = parentName ?? "";
+    document.body.append(dialog);
+    let newPassword = "";
+    dialog.addEventListener("close", () => {
+      const result = dialog.returnValue === "reset" ? newPassword : null;
+      dialog.remove();
+      resolve(result);
+    }, { once: true });
+    dialog.querySelector(".modal-close").addEventListener("click", () => dialog.close("cancel"));
+    dialog.querySelector(".cancel-password-reset").addEventListener("click", () => dialog.close("cancel"));
+    dialog.querySelector("form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const passwordInput = dialog.querySelector("#parentNewPassword");
+      const confirmationInput = dialog.querySelector("#parentConfirmPassword");
+      if (!event.currentTarget.reportValidity()) return;
+      if (passwordInput.value !== confirmationInput.value) {
+        dialog.querySelector("#parentPasswordMismatch").classList.add("visible");
+        confirmationInput.focus();
+        return;
+      }
+      newPassword = passwordInput.value;
+      dialog.close("reset");
+    });
+    dialog.showModal();
+    dialog.querySelector("#parentNewPassword").focus();
+  });
 }
 
 function renderParentEdit(parent) {
