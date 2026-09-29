@@ -2142,6 +2142,7 @@ async function renderAttendancePortal() {
 async function renderAttendance() {
   page("إدخال الغياب", "تتاح العملية لمعلمة الحصة الثانية أو للمستخدمة المخولة.", `
     <aside class="attendance-warning"><strong>تنبيه</strong><span>يُتاح إدخال الغياب من 8:20 إلى 9:10 صباحًا. يرجى التأكد من صحة البيانات ومراجعتها قبل الإرسال.</span></aside>
+    <div id="attendanceScheduleNotice" class="attendance-schedule-notice hidden" role="status"></div>
     <section class="attendance-data-section"><h2>بيانات الغياب</h2>
       <div class="form-grid attendance-entry-grid">
         <div class="field"><label>اسم المعلمة</label><input id="attendanceTeacher" readonly></div>
@@ -2172,9 +2173,10 @@ async function renderAttendance() {
     document.querySelector("#attendanceGrade").disabled = true;
     document.querySelector("#attendanceSection").disabled = true;
     document.querySelector("#attendanceGender").disabled = true;
-    const studentsArea = document.querySelector("#attendanceStudents");
-    studentsArea.classList.add("attendance-list-empty");
-    studentsArea.innerHTML = `<div class="attendance-schedule-notice" role="status">${message}</div>`;
+    const scheduleNotice = document.querySelector("#attendanceScheduleNotice");
+    scheduleNotice.textContent = message;
+    scheduleNotice.classList.remove("hidden");
+    document.querySelector("#attendanceForm").classList.add("hidden");
   }
   const selectedClass = () => classes.find((item) => item.grade === grade.value && item.section === section.value && item.gender === gender.value);
   const clearStudents = () => { document.querySelector("#attendanceStudents").innerHTML = '<div class="empty-state">اختاري الصف والشعبة والجنس لعرض الطلاب.</div>'; document.querySelector("#allPresentWrap").classList.add("hidden"); document.querySelector("#saveAttendance").classList.add("hidden"); };
