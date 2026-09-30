@@ -776,7 +776,6 @@ async function renderDashboard() {
     { route: "attendance", title: "إدخال الغياب", description: "متابعة الحضور والغياب", roles: ["teacher", "it_teacher", "principal", "vice_principal", "admin", "system_admin", "upper_management"], any: ["enter_attendance", "attendance_override", "view_attendance", "manage_attendance", "manage_absence"] },
     { route: "schedule", title: "الجدول الدراسي", description: "مراجعة الصفوف والحصص والمنشورات", roles: ["teacher", "it_teacher", "principal", "vice_principal", "admin", "system_admin", "upper_management", "schedule_admin"], any: ["view_schedules", "view_all_schedules", "manage_schedules"] },
     { route: "leave", title: "طلب إجازة", description: "إرسال طلب ومتابعة حالته", any: ["request_leave", "manage_leave_requests", "manage_leave_hr_requests"] },
-    { route: "training", title: "التدريب", description: "متابعة الدورات والطلبات", any: ["request_training", "manage_training_requests"] },
     { route: "support", title: "الدعم الفني", description: "تقديم طلبات الدعم", any: ["request_support", "manage_support"] },
     { route: "reports", title: "التقارير", description: "مراجعة التقارير والمهام", any: ["view_reports"] }
   ];
