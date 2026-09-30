@@ -218,7 +218,7 @@ function reportPage(title, rows, children, selectedChild = null) {
                     ? `<p class="field-hint">تم الإقرار بالاطلاع${row.parentFeedback.comment ? `: ${escapeHtml(row.parentFeedback.comment)}` : ""}</p>`
                     : row.id ? `<form class="skill-parent-feedback" data-report-id="${escapeHtml(row.id)}"><label><input type="checkbox" required> تم الاطلاع على التقرير</label><label for="parentReportComment${index}">تعليق ولي الأمر <span aria-hidden="true">(مطلوب)</span></label><textarea id="parentReportComment${index}" required aria-required="true" minlength="1" maxlength="2000" placeholder="اكتب تعليق ولي الأمر"></textarea><button class="btn btn-small" type="submit">إرسال الإقرار والتعليق</button></form>` : ""}
             `;
-            return `<tbody><tr><td>${escapeHtml(row.studentName)}</td><td>${escapeHtml(row.subject)}</td><td><button class="btn btn-secondary btn-small" type="button" data-parent-report-toggle="${detailsId}" aria-expanded="false">عرض التقرير</button></td></tr><tr id="${detailsId}" hidden><td colspan="3"><div class="skill-parent-report">${reportDetails}</div></td></tr></tbody>`;
+            return `<tbody><tr><td>${escapeHtml(row.studentName)}</td><td>${escapeHtml(row.subject)}</td><td><button class="btn btn-secondary btn-small" type="button" data-parent-report-toggle="${detailsId}" aria-label="عرض تقرير ${escapeHtml(row.subject)}" title="عرض التقرير" aria-expanded="false">عرض التقرير</button></td></tr><tr id="${detailsId}" hidden><td colspan="3"><div class="skill-parent-report">${reportDetails}</div></td></tr></tbody>`;
         }).join("");
         return `<div class="table-wrap"><table><thead><tr><th>اسم الطالب</th><th>اسم المادة</th><th>التقرير</th></tr></thead>${reportRowsHtml}</table></div>`;
     };
@@ -229,9 +229,23 @@ function reportPage(title, rows, children, selectedChild = null) {
     const bindReportToggles = () => document.querySelectorAll("[data-parent-report-toggle]").forEach((button) => button.addEventListener("click", () => {
         const details = document.getElementById(button.dataset.parentReportToggle);
         if (!details) return;
-        details.hidden = !details.hidden;
-        button.setAttribute("aria-expanded", String(!details.hidden));
-        button.textContent = details.hidden ? "عرض التقرير" : "إخفاء التقرير";
+        const shouldOpen = details.hidden;
+        if (shouldOpen) {
+            document.querySelectorAll("[data-parent-report-toggle]").forEach((otherButton) => {
+                if (otherButton === button) return;
+                const otherDetails = document.getElementById(otherButton.dataset.parentReportToggle);
+                if (otherDetails) otherDetails.hidden = true;
+                otherButton.setAttribute("aria-expanded", "false");
+                otherButton.setAttribute("aria-label", `عرض تقرير ${otherButton.closest("tr")?.cells[1]?.textContent ?? ""}`);
+                otherButton.title = "عرض التقرير";
+                otherButton.textContent = "عرض التقرير";
+            });
+        }
+        details.hidden = !shouldOpen;
+        button.setAttribute("aria-expanded", String(shouldOpen));
+        button.setAttribute("aria-label", shouldOpen ? "إغلاق التقرير" : `عرض تقرير ${button.closest("tr")?.cells[1]?.textContent ?? ""}`);
+        button.title = shouldOpen ? "إغلاق التقرير" : "عرض التقرير";
+        button.textContent = shouldOpen ? "×" : "عرض التقرير";
     }));
     const bindForms = () => document.querySelectorAll(".skill-parent-feedback").forEach((form) => form.addEventListener("submit", async (event) => { event.preventDefault(); const textarea = form.querySelector("textarea"); if (!textarea.value.trim()) { textarea.setCustomValidity("تعليق ولي الأمر مطلوب."); textarea.reportValidity(); textarea.focus(); textarea.setCustomValidity(""); return; } if (!form.reportValidity()) return; const button = form.querySelector("button"); button.disabled = true; try { const result = await api.patch(`/parent/reports/${form.dataset.reportId}/feedback`, { comment: textarea.value.trim(), acknowledged: true }); setNotice(document.querySelector("#pageNotice"), "success", result.message); form.replaceChildren(); form.innerHTML = "تم إرسال الإقرار والتعليق."; } catch (error) { setNotice(document.querySelector("#pageNotice"), "error", error.message); button.disabled = false; } }));
     bindReportToggles();
