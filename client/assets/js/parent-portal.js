@@ -11,11 +11,6 @@ const demoData = {
     children: [{ fullName: "ليان خالد العتيبي", grade: "Grade3", stage: "primary" }, { fullName: "سلمان خالد العتيبي", grade: "KG3", stage: "kindergarten" }, { fullName: "نورة خالد العتيبي", grade: "Grade1", stage: "primary" }],
     attendance: [{ studentName: "ليان خالد العتيبي", date: "2026-09-03", className: "ثالث ابتدائي / أ", status: "present" }, { studentName: "سلمان خالد العتيبي", date: "2026-09-03", className: "روضة ثالثة / ب", status: "late" }, { studentName: "نورة خالد العتيبي", date: "2026-09-03", className: "أول ابتدائي / أ", status: "excused" }],
     announcements: [{ title: "العودة إلى المدرسة", body: "نرحب بطلابنا ونذكّر بأهمية الحضور المبكر." }],
-    studyPlans: [
-        { studentName: "ليان خالد العتيبي", subjects: ["اللغة العربية", "الرياضيات", "العلوم", "الدراسات الاجتماعية", "اللغة الإنجليزية"] },
-        { studentName: "سلمان خالد العتيبي", subjects: ["المهارات الأساسية", "التربية الإسلامية", "اللغة الإنجليزية", "الفنون", "التربية البدنية"] },
-        { studentName: "نورة خالد العتيبي", subjects: ["اللغة العربية", "الرياضيات", "العلوم", "اللغة الإنجليزية", "التربية الإسلامية"] }
-    ],
     reports: [
         { studentName: "ليان خالد العتيبي", subject: "اللغة العربية", score: "94", status: "ممتاز" },
         { studentName: "سلمان خالد العتيبي", subject: "المهارات الأساسية", score: "88", status: "متقدم" },
@@ -23,15 +18,91 @@ const demoData = {
     ]
 };
 
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>\"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}
+
 function setPage(title, description, body) {
     content.innerHTML = `<section class="content-card page-card"><nav class="portal-breadcrumb" aria-label="مسار الصفحة"><span>مستندات</span><span aria-hidden="true">/</span><strong>${title}</strong></nav><div class="page-heading"><div><h1>${title}</h1><p>${description}</p></div><button id="pageBackButton" class="btn btn-secondary btn-small no-print" type="button">رجوع</button></div><div id="pageNotice" class="notice" role="alert" aria-live="polite"></div>${body}</section>`;
     document.querySelector("#pageBackButton")?.addEventListener("click", () => {
-        if (window.history.length > 1) {
-            window.history.back();
-            return;
-        }
-        location.assign("index.html");
+        location.hash = "children";
     });
+}
+
+function renderParentDashboard(parent, children) {
+    const parentName = parent?.nameAr || "ولي الأمر";
+    const parentId = parent?.nationalId || "—";
+    const cards = [
+        { href: "#reports", label: "التقارير", text: "متابعة تقارير الأبناء" },
+        { href: "#attendance", label: "الحضور والغياب", text: "رؤية الحضور اليومي" },
+        { href: "#plans", label: "الخطط الدراسية", text: "عرض الخطة الدراسية" },
+        { href: "#calendar", label: "التقويم الدراسي", text: "مواعيد الفصول والإجازات" },
+        { href: "#support", label: "الدعم الفني", text: "إرسال طلب دعم" }
+    ].map((item) => `
+        <a href="${item.href}" style="display:block;border:1px solid #dfe8e4;border-radius:12px;padding:16px 18px;text-decoration:none;background:#fff;color:#0f3a34;box-shadow:0 8px 18px rgba(6,66,54,.04);transition:transform .15s ease, box-shadow .15s ease;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:#edf7f4;color:#0d766a;font-weight:400;">→</span>
+                <span style="font-size:12px;color:#0d766a;background:#edf7f4;padding:6px 10px;border-radius:999px;">الوصول</span>
+            </div>
+            <strong style="display:block;font-size:14px;font-weight:400;margin-bottom:5px;">${item.label}</strong>
+            <span style="font-size:11px;color:#4b5d5a;line-height:1.6;">${item.text}</span>
+        </a>
+    `).join("");
+
+    setPage("بوابة ولي الأمر", "بيانات ولي الأمر ووصول سريع إلى الخدمات.", `
+        <section class="dashboard-welcome" aria-labelledby="parentWelcomeTitle">
+            <div>
+                <span class="dashboard-eyebrow">مرحبًا بك</span>
+                <h2 id="parentWelcomeTitle">أهلاً وسهلاً في بوابة ولي الأمر</h2>
+                <p>يمكنك متابعة أبنائك، تقاريرهم، حضورهم، والخدمات المدرسية من مكان واحد.</p>
+            </div>
+            <span class="account-status"><span aria-hidden="true"></span>الحساب نشط</span>
+        </section>
+
+        <section class="employee-overview" aria-labelledby="parentOverviewTitle">
+            <div class="section-heading">
+                <div>
+                    <span>الملف الشخصي</span>
+                    <h2 id="parentOverviewTitle">بيانات ولي الأمر</h2>
+                </div>
+                <span class="data-privacy">معلومات مرتبطة بحسابك فقط</span>
+            </div>
+            <dl class="employee-data-grid">
+                <div class="employee-data-primary">
+                    <dt>اسم ولي الأمر</dt>
+                    <dd>${escapeHtml(parentName)}</dd>
+                </div>
+                <div>
+                    <dt>رقم الهوية</dt>
+                    <dd>${escapeHtml(parentId)}</dd>
+                </div>
+                <div>
+                    <dt>عدد الأبناء</dt>
+                    <dd>${children.length}</dd>
+                </div>
+                <div>
+                    <dt>حالة الحساب</dt>
+                    <dd>نشط</dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="quick-section" aria-labelledby="parentQuickTitle" style="margin-top:18px;">
+            <div class="section-heading">
+                <div>
+                    <span>اختصاراتك</span>
+                    <h2 id="parentQuickTitle">الوصول السريع</h2>
+                </div>
+            </div>
+            <div class="quick-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;">${cards}</div>
+        </section>
+    `);
 }
 
 function table(headings, rows, values) {
@@ -39,6 +110,39 @@ function table(headings, rows, values) {
     const head = headings.map((heading) => `<th>${heading}</th>`).join("");
     const body = rows.map((row) => `<tr>${values(row).map((value) => createCell(value).outerHTML).join("")}</tr>`).join("");
     return `<div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function parentAttendancePage(rows, children) {
+    setPage("الحضور والغياب", "اختاري الابن والتاريخ لمراجعة سجل الحضور.", `
+        <form id="parentAttendanceSearchForm" class="parent-attendance-search">
+            <div class="field"><label for="attendanceStudentFilter">الابن</label><select id="attendanceStudentFilter" required><option value="">اختاري الابن</option></select></div>
+            <div class="field"><label for="attendanceDateFilter">التاريخ</label><input id="attendanceDateFilter" type="date" required></div>
+            <button class="btn" type="submit">بحث</button>
+        </form>
+        <div id="parentAttendanceResults" class="parent-attendance-results" hidden></div>
+    `);
+
+    const studentFilter = document.querySelector("#attendanceStudentFilter");
+    const dateFilter = document.querySelector("#attendanceDateFilter");
+    const results = document.querySelector("#parentAttendanceResults");
+    children.forEach((child) => studentFilter.add(new Option(child.fullName, child.id ?? child.fullName)));
+
+    const renderRows = (event) => {
+        event?.preventDefault();
+        const selectedStudent = studentFilter.value;
+        const selectedDate = dateFilter.value;
+        const filteredRows = rows.filter((row) => {
+            const rowStudent = row.studentId ?? row.studentName;
+            return rowStudent === selectedStudent
+                && (!selectedDate || row.date === selectedDate);
+        });
+        results.innerHTML = filteredRows.length
+            ? table(["الطالب", "التاريخ", "الفصل", "الحالة"], filteredRows, (row) => [row.studentName, row.date, row.className, attendanceLabels[row.status] ?? row.status])
+            : `<div class="empty-state">لا توجد سجلات حضور وغياب مطابقة للاختيار.</div>`;
+        results.hidden = false;
+    };
+
+    document.querySelector("#parentAttendanceSearchForm").addEventListener("submit", renderRows);
 }
 
 function studentScopedPage(title, description, rows, headings, values, children) {
@@ -51,18 +155,65 @@ function studentScopedPage(title, description, rows, headings, values, children)
     });
 }
 
-function reportPage(title, rows, children) {
-    const options = children.map((child) => `<option value="${child.fullName}">${child.fullName}</option>`).join("");
-    const renderReports = (selected = "all") => rows.filter((row) => selected === "all" || row.studentName === selected).map((row) => `<article class="skill-parent-report"><div class="skill-parent-header"><strong>${row.studentName}</strong><span>${row.subject} | الدرجة: ${row.score} | ${row.status}</span></div>${row.id ? `<form class="skill-parent-feedback" data-report-id="${row.id}"><label><input type="checkbox" required> تم الاطلاع على التقرير</label><textarea required minlength="1" maxlength="2000" placeholder="اكتب تعليق ولي الأمر"></textarea><button class="btn btn-small" type="submit">إرسال الإقرار والتعليق</button></form>` : ""}</article>`).join("") || `<div class="empty-state">لا توجد تقارير لهذه الفترة.</div>`;
-    setPage(title, "راجعي التقرير ثم اكتبي التعليق وأكدي الاطلاع لإرساله.", `<div class="field" style="max-width: 360px"><label for="studentFilter">الطالب</label><select id="studentFilter"><option value="all">كل الأبناء</option>${options}</select></div><div id="reportResults" class="skill-parent-stack">${renderReports()}</div>`);
+function renderParentReportsHub(children) {
+    setPage("التقارير", "اختاري الابن لعرض روابط تقاريره بحسب مرحلته.", `
+        <div class="field" style="max-width: 360px">
+            <label for="reportStudentFilter">الابن</label>
+            <select id="reportStudentFilter" required><option value="">اختاري الابن</option></select>
+        </div>
+        <nav id="parentReportLinks" class="student-services-list" aria-label="روابط التقارير"></nav>
+        <div id="parentReportHint" class="empty-state">اختاري الابن أولًا لعرض روابط تقاريره.</div>
+    `);
+
+    const studentFilter = document.querySelector("#reportStudentFilter");
+    const links = document.querySelector("#parentReportLinks");
+    const hint = document.querySelector("#parentReportHint");
+    children.forEach((child) => studentFilter.add(new Option(child.fullName, child.id ?? child.fullName)));
+
+    studentFilter.addEventListener("change", () => {
+        const child = children.find((item) => (item.id ?? item.fullName) === studentFilter.value);
+        links.replaceChildren();
+        if (!child) {
+            hint.textContent = children.length ? "اختاري الابن أولًا لعرض روابط تقاريره." : "لا يوجد أبناء مرتبطون بهذا الحساب.";
+            hint.classList.remove("hidden");
+            return;
+        }
+
+        const isKindergarten = /kindergarten|روض|kg/i.test(`${child.stage ?? ""} ${child.grade ?? ""}`);
+        const reportKind = isKindergarten ? "المرحلة" : "الفترة";
+        ["الأولى", "الثانية", "الثالثة"].forEach((ordinal, index) => {
+            const link = document.createElement("a");
+            link.className = "student-service-link";
+            link.href = `#reports-period-${index + 1}?student=${encodeURIComponent(child.id ?? child.fullName)}`;
+            const label = document.createElement("span");
+            label.textContent = `تقرير ${reportKind} ${ordinal}`;
+            const arrow = document.createElement("span");
+            arrow.setAttribute("aria-hidden", "true");
+            arrow.textContent = "→";
+            link.append(label, arrow);
+            links.append(link);
+        });
+        hint.classList.add("hidden");
+    });
+}
+
+function reportPage(title, rows, children, selectedChild = null) {
+    const reportRows = selectedChild
+        ? rows.filter((row) => row.studentId ? row.studentId === selectedChild.id : row.studentName === selectedChild.fullName)
+        : rows;
+    const options = children.map((child) => `<option value="${escapeHtml(child.fullName)}">${escapeHtml(child.fullName)}</option>`).join("");
+    const renderReports = (selected = "all") => reportRows.filter((row) => selected === "all" || row.studentName === selected).map((row) => `<article class="skill-parent-report"><div class="skill-parent-header"><strong>${escapeHtml(row.studentName)}</strong><span>${escapeHtml(row.subject)} | الدرجة: ${escapeHtml(row.score)} | ${escapeHtml(row.status)}</span></div>${row.id ? `<form class="skill-parent-feedback" data-report-id="${escapeHtml(row.id)}"><label><input type="checkbox" required> تم الاطلاع على التقرير</label><textarea required minlength="1" maxlength="2000" placeholder="اكتب تعليق ولي الأمر"></textarea><button class="btn btn-small" type="submit">إرسال الإقرار والتعليق</button></form>` : ""}</article>`).join("") || `<div class="empty-state">لا توجد تقارير لهذه الفترة.</div>`;
+    const studentFilter = selectedChild
+        ? `<p class="field-hint">التقرير خاص بالابن: ${escapeHtml(selectedChild.fullName)}</p>`
+        : `<div class="field" style="max-width: 360px"><label for="studentFilter">الطالب</label><select id="studentFilter"><option value="all">كل الأبناء</option>${options}</select></div>`;
+    setPage(title, "راجعي التقرير ثم اكتبي التعليق وأكدي الاطلاع لإرساله.", `${studentFilter}<div id="reportResults" class="skill-parent-stack">${renderReports(selectedChild?.fullName ?? "all")}</div>`);
     const bindForms = () => document.querySelectorAll(".skill-parent-feedback").forEach((form) => form.addEventListener("submit", async (event) => { event.preventDefault(); if (!event.currentTarget.reportValidity()) return; const button = event.currentTarget.querySelector("button"); button.disabled = true; try { const result = await api.patch(`/parent/reports/${form.dataset.reportId}/feedback`, { comment: form.querySelector("textarea").value.trim(), acknowledged: true }); setNotice(document.querySelector("#pageNotice"), "success", result.message); form.replaceChildren(); form.innerHTML = "تم إرسال الإقرار والتعليق."; } catch (error) { setNotice(document.querySelector("#pageNotice"), "error", error.message); button.disabled = false; } }));
     bindForms();
-    document.querySelector("#studentFilter").addEventListener("change", (event) => { document.querySelector("#reportResults").innerHTML = renderReports(event.target.value); bindForms(); });
+    document.querySelector("#studentFilter")?.addEventListener("change", (event) => { document.querySelector("#reportResults").innerHTML = renderReports(event.target.value); bindForms(); });
 }
 
 const documentPages = {
-    reports: ["التقارير", "تقارير الطلاب حسب الفترة الدراسية.", `<nav class="student-services-list" aria-label="فترات تقارير الطلاب"><a class="student-service-link" href="#reports-period-1"><span>تقارير الطلاب - الفترة الأولى</span><span aria-hidden="true">→</span></a><a class="student-service-link" href="#reports-period-2"><span>تقارير الطلاب - الفترة الثانية</span><span aria-hidden="true">→</span></a><a class="student-service-link" href="#reports-period-3"><span>تقارير الطلاب - الفترة الثالثة</span><span aria-hidden="true">→</span></a><a class="student-service-link" href="#attendance"><span>الغياب والحضور</span><span aria-hidden="true">→</span></a></nav>`],
-    plans: ["الخطط الدراسية", "الخطط الدراسية المعتمدة لأبنائك.", `<nav class="student-services-list" aria-label="روابط الخطط الدراسية"><a class="student-service-link" href="#current-plan"><span>الخطة الدراسية للعام الحالي</span><span aria-hidden="true">→</span></a></nav>`],
+    plans: ["الخطط الدراسية", "الخطط الدراسية المعتمدة لأبنائك.", `<nav class="student-services-list" aria-label="روابط الخطط الدراسية"><div class="student-service-link" aria-disabled="true"><span>الخطة الدراسية للعام الحالي</span><span aria-hidden="true">→</span></div></nav>`],
     calendar: ["التقويم الدراسي", "مواعيد الفصول والاختبارات والإجازات.", `<nav class="student-services-list" aria-label="روابط التقويم الدراسي"><a class="student-service-link" href="#calendar"><span>التقويم الدراسي 2026</span><span aria-hidden="true">→</span></a><a class="student-service-link" href="#calendar"><span>مواعيد الاختبارات والإجازات</span><span aria-hidden="true">→</span></a></nav>`]
 };
 
@@ -101,11 +252,6 @@ function renderAcademicCalendar() {
     setPage("التقويم الدراسي", "18 أسبوعًا دراسيًا تبدأ في 17/03/1448هـ الموافق 30/08/2026م.", `<section class="calendar-board" dir="rtl"><div class="calendar-board-title"><strong>توزيع الأسابيع الدراسية</strong><span>الفصل الدراسي الأول | 1448هـ - 2026م</span></div><div class="calendar-week-grid">${weeks}</div></section>`);
 }
 
-function renderStudyPlan() {
-    const rows = demoData.studyPlans.map((plan) => [plan.studentName, plan.subjects.join("، "), "الفصل الدراسي الأول 1448هـ"]);
-    setPage("الخطة الدراسية للعام الحالي", "المواد الدراسية المعتمدة لأبنائك في الفصل الدراسي الأول.", table(["الطالب", "المواد الدراسية", "الفترة"], rows, (row) => row));
-}
-
 function renderSidebar() {
     const nav = document.querySelector("#parentSidebarMenu");
     nav.innerHTML = `<a class="side-home" href="#children"><span class="side-home-icon" aria-hidden="true"></span><span>الرئيسية</span></a><section class="menu-group"><button class="menu-group-button" type="button" aria-expanded="false"><span class="menu-group-icon" aria-hidden="true"></span><span class="menu-group-title">مستندات</span><span class="menu-group-arrow" aria-hidden="true"></span></button><div class="menu-items"><span class="menu-subtitle">مستندات ولي الأمر</span><a class="menu-link" href="#reports">التقارير</a><a class="menu-link" href="#attendance">الحضور والغياب</a><a class="menu-link" href="#plans">الخطط الدراسية</a><a class="menu-link" href="#calendar">التقويم الدراسي</a></div></section>`;
@@ -120,22 +266,32 @@ async function route() {
             const me = (await api.get("/me")).data;
             if (me.userType !== "parent") throw new Error("هذه الصفحة مخصصة لولي الأمر.");
         }
-        const routeName = location.hash.replace(/^#/, "") || "children";
+        const [routeName = "children", routeQuery = ""] = location.hash.replace(/^#/, "").split("?");
+        const routeParams = new URLSearchParams(routeQuery);
         if (routeName === "attendance") {
             const rows = demoMode ? demoData.attendance : (await api.get("/parent/attendance")).data;
-            setPage("الحضور والغياب", "متابعة حالة الحضور اليومية.", table(["الطالب", "التاريخ", "الفصل", "الحالة"], rows, (row) => [row.studentName, row.date, row.className, attendanceLabels[row.status] ?? row.status]));
+            const children = demoMode ? demoData.children : (await api.get("/parent/children")).data;
+            parentAttendancePage(rows, children);
         } else if (routeName === "announcements") {
             const rows = demoMode ? demoData.announcements : (await api.get("/announcements")).data;
             setPage("الإعلانات", "آخر أخبار وتنبيهات المدرسة.", table(["العنوان", "الإعلان"], rows, (row) => [row.title, row.body]));
         } else if (["reports-period-1", "reports-period-2", "reports-period-3"].includes(routeName)) {
             const period = routeName.slice(-1);
             const rows = demoMode ? demoData.reports : (await api.get(`/parent/reports?period=${period}`)).data;
-            const periodLabel = { 1: "الأولى", 2: "الثانية", 3: "الثالثة" }[period];
             const children = demoMode ? demoData.children : (await api.get("/parent/children")).data;
-            reportPage(`تقارير الطلاب - الفترة ${periodLabel}`, rows, children);
+            const selectedChildKey = routeParams.get("student");
+            const selectedChild = children.find((child) => String(child.id ?? child.fullName) === selectedChildKey);
+            const periodLabel = { 1: "الأولى", 2: "الثانية", 3: "الثالثة" }[period];
+            const isKindergarten = selectedChild && /kindergarten|روض|kg/i.test(`${selectedChild.stage ?? ""} ${selectedChild.grade ?? ""}`);
+            const reportKind = isKindergarten ? "المرحلة" : "الفترة";
+            reportPage(selectedChild ? `تقرير ${reportKind} ${periodLabel}` : `تقارير الطلاب - الفترة ${periodLabel}`, rows, children, selectedChild);
         } else if (["reports", "plans", "current-plan", "calendar"].includes(routeName)) {
             if (routeName === "calendar") renderAcademicCalendar();
-            else if (routeName === "current-plan") renderStudyPlan();
+            else if (routeName === "current-plan") content.replaceChildren();
+            else if (routeName === "reports") {
+                const children = demoMode ? demoData.children : (await api.get("/parent/children")).data;
+                renderParentReportsHub(children);
+            }
             else {
                 const [title, description, body] = documentPages[routeName];
                 setPage(title, description, body);
@@ -145,7 +301,8 @@ async function route() {
             document.querySelector("#supportForm").addEventListener("submit", (event) => { event.preventDefault(); if (!event.currentTarget.reportValidity()) return; setNotice(document.querySelector("#pageNotice"), "success", demoMode ? "تم استلام الطلب التجريبي بنجاح." : "تم إرسال الطلب بنجاح."); event.currentTarget.reset(); });
         } else {
             const rows = demoMode ? demoData.children : (await api.get("/parent/children")).data;
-            setPage("بوابة ولي الأمر", "بيانات الأبناء والخدمات المرتبطة بهم.", table(["اسم الطالب", "الصف", "المرحلة"], rows, (row) => [row.fullName, gradeLabels[row.grade] ?? row.grade, row.stage === "primary" ? "الابتدائي" : "رياض الأطفال"]));
+            const me = demoMode ? { parent: { nameAr: "ولي الأمر", nationalId: "1234567890" } } : (await api.get("/me")).data;
+            renderParentDashboard(me?.parent || { nameAr: "ولي الأمر", nationalId: "—" }, rows);
         }
         document.querySelectorAll(".menu-link").forEach((link) => link.classList.toggle("active", link.getAttribute("href") === `#${routeName}` || (routeName.startsWith("reports-period-") && link.getAttribute("href") === "#reports")));
         document.querySelector(".side-home")?.classList.toggle("active", routeName === "children");

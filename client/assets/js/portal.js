@@ -367,6 +367,12 @@ function setupDateInputs(root) {
     input.dataset.dateInputReady = "true";
     input.dataset.dateInputType = input.type;
     input.dataset.dateIsoValue = input.value;
+    if (input.type === "date" && window.matchMedia("(max-width: 700px), (pointer: coarse)").matches) {
+      input.setAttribute("lang", "en-GB");
+      input.setAttribute("dir", "ltr");
+      input.style.textAlign = "right";
+      return;
+    }
     input.setAttribute("placeholder", "YYYY/MM/DD");
     input.setAttribute("lang", "en-GB");
     input.setAttribute("dir", "ltr");
@@ -464,11 +470,6 @@ function page(title, description, body) {
 
     if (routeName === "coverage") {
       window.location.hash = "schedule";
-      return;
-    }
-
-    if (window.history.length > 1) {
-      window.history.back();
       return;
     }
 
@@ -6866,26 +6867,15 @@ async function renderEmployeeManagementPage(mode) {
         passwordValue.style.direction = "ltr";
 
         const passwordActions = document.createElement("div");
-        passwordActions.style.display = "inline-flex";
-        passwordActions.style.alignItems = "center";
-        passwordActions.style.gap = "4px";
-        passwordActions.style.flexWrap = "nowrap";
-        passwordActions.style.justifyContent = "flex-start";
-        passwordActions.style.direction = "rtl";
-        passwordActions.style.verticalAlign = "middle";
+        passwordActions.className = "employee-password-actions";
 
         const passwordToggle = document.createElement("button");
         passwordToggle.type = "button";
-        passwordToggle.className = "btn btn-secondary btn-small";
+        passwordToggle.className = "btn btn-secondary btn-small employee-inline-action";
         passwordToggle.textContent = "👁";
         passwordToggle.title = "إظهار كلمة المرور";
         passwordToggle.setAttribute("aria-label", "إظهار كلمة المرور");
         passwordToggle.disabled = !employee.password;
-        passwordToggle.style.margin = "0";
-        passwordToggle.style.padding = "4px 8px";
-        passwordToggle.style.fontSize = "12px";
-        passwordToggle.style.lineHeight = "1.2";
-        passwordToggle.style.minWidth = "0";
         passwordToggle.addEventListener("click", () => {
           const isVisible = passwordToggle.dataset.visible === "1";
           if (!employee.password) {
@@ -6901,15 +6891,10 @@ async function renderEmployeeManagementPage(mode) {
 
         const resetButton = document.createElement("button");
         resetButton.type = "button";
-        resetButton.className = "btn btn-secondary btn-small";
+        resetButton.className = "btn btn-secondary btn-small employee-inline-action";
         resetButton.textContent = "🔑";
         resetButton.title = employee.password ? "إعادة تعيين كلمة المرور" : "تعيين كلمة المرور";
         resetButton.setAttribute("aria-label", employee.password ? "إعادة تعيين كلمة المرور" : "تعيين كلمة المرور");
-        resetButton.style.margin = "0";
-        resetButton.style.padding = "4px 8px";
-        resetButton.style.fontSize = "12px";
-        resetButton.style.lineHeight = "1.2";
-        resetButton.style.minWidth = "0";
         if (hasRole("resource_user")) resetButton.hidden = true;
         resetButton.addEventListener("click", async () => {
           const newPassword = window.prompt("اكتبي كلمة المرور الجديدة للموظفة:", "");
@@ -6946,9 +6931,10 @@ async function renderEmployeeManagementPage(mode) {
         passwordCell.append(passwordValue, document.createTextNode(" "), passwordActions);
 
         const actionCell = document.createElement("td");
+        actionCell.className = "employee-table-actions";
         const deleteButton = document.createElement("button");
         deleteButton.type = "button";
-        deleteButton.className = "btn btn-danger btn-small";
+        deleteButton.className = "btn btn-danger btn-small employee-inline-action";
         deleteButton.textContent = "حذف";
         deleteButton.addEventListener("click", async () => {
           if (!await confirmAction(`حذف حساب الموظفة «${employee.nameAr}»؟`, "تأكيد الحذف", "حذف")) return;
@@ -7162,6 +7148,26 @@ async function renderEmployeePermissions() {
   await renderEmployeeManagementPage("permissions");
 }
 
+function parentStudentDuplicateKey(student) {
+  const name = String(student.fullName ?? "").normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleLowerCase("ar");
+  const stage = String(student.stage ?? "").trim();
+  const grade = String(student.grade ?? "").trim();
+  if (!name || !stage || !grade) return "";
+  return `${name}|${stage}|${grade}|${String(student.gender ?? "").trim()}`;
+}
+
+function removeUnassignedDuplicateStudents(students) {
+  const assignedKeys = new Set(students
+    .filter((student) => String(student.classId ?? "").trim())
+    .map(parentStudentDuplicateKey)
+    .filter(Boolean));
+  return students.filter((student) => {
+    if (String(student.classId ?? "").trim()) return true;
+    const key = parentStudentDuplicateKey(student);
+    return !key || !assignedKeys.has(key);
+  });
+}
+
 function renderParentManagement() {
   if (!hasRole("system_admin")) throw new Error("إدارة أولياء الأمور متاحة لمسؤولة النظام فقط.");
   const links = [
@@ -7218,9 +7224,12 @@ async function renderParentAdd() {
     try {
       const [studentsResult, classesResult] = await Promise.all([api.get(`/students?limit=50&search=${encodeURIComponent(search)}`), api.get("/academic-classes?limit=200")]);
       const classes = new Map((classesResult.data ?? []).map((item) => [item.id, item]));
-      const students = studentsResult.data ?? [];
+      const searchMatches = studentsResult.data ?? [];
+      const students = removeUnassignedDuplicateStudents(searchMatches);
       studentsArea.replaceChildren();
-      document.querySelector("#parentStudentsStatus").textContent = students.length ? "تأكدي من بيانات الطالب ثم اضغطي إضافة." : "لا توجد نتائج مطابقة.";
+      document.querySelector("#parentStudentsStatus").textContent = students.length
+        ? "تأكدي من بيانات الطالب ثم اضغطي إضافة. تم إخفاء السجلات المكررة غير المرتبطة بشعبة."
+        : searchMatches.length ? "لا توجد نتائج قابلة للإضافة بعد استبعاد السجلات المكررة غير المرتبطة بشعبة." : "لا توجد نتائج مطابقة.";
       students.forEach((student) => {
         const academicClass = classes.get(student.classId);
         const label = document.createElement("label"); label.className = "parent-student-choice";
@@ -7378,6 +7387,7 @@ async function renderParentList() {
     }
 
     const table = document.createElement("table");
+    table.className = "parent-admin-table";
     table.innerHTML = "<thead><tr><th>ولي الأمر</th><th>رقم الهوية</th><th>البريد</th><th>الجوال</th><th>عدد الأبناء</th><th>الإجراءات</th></tr></thead><tbody></tbody>";
     const body = table.querySelector("tbody");
     parents.forEach((parent) => {
@@ -7388,16 +7398,21 @@ async function renderParentList() {
         row.append(cell);
       });
       const actions = document.createElement("td");
+      actions.className = "parent-admin-actions-cell";
+      const actionGroup = document.createElement("div");
+      actionGroup.className = "parent-admin-actions";
       const editButton = document.createElement("button");
-      editButton.className = "btn btn-secondary";
+      editButton.className = "btn btn-secondary btn-small parent-admin-action";
       editButton.type = "button";
       editButton.textContent = "تعديل";
       editButton.addEventListener("click", () => renderParentEdit(parent));
-      actions.append(editButton);
+      actionGroup.append(editButton);
       const resetPasswordButton = document.createElement("button");
-      resetPasswordButton.className = "btn btn-secondary btn-small";
+      resetPasswordButton.className = "btn btn-secondary btn-small parent-admin-action";
       resetPasswordButton.type = "button";
-      resetPasswordButton.textContent = "إعادة تعيين كلمة المرور";
+      resetPasswordButton.textContent = "تعيين كلمة المرور";
+      resetPasswordButton.title = "إعادة تعيين كلمة المرور";
+      resetPasswordButton.setAttribute("aria-label", "إعادة تعيين كلمة المرور");
       resetPasswordButton.addEventListener("click", async () => {
         const password = await requestParentPasswordReset(parent.nameAr);
         if (!password) return;
@@ -7411,9 +7426,9 @@ async function renderParentList() {
           resetPasswordButton.disabled = false;
         }
       });
-      actions.append(resetPasswordButton);
+      actionGroup.append(resetPasswordButton);
       const deleteButton = document.createElement("button");
-      deleteButton.className = "btn btn-danger btn-small";
+      deleteButton.className = "btn btn-danger btn-small parent-admin-action";
       deleteButton.type = "button";
       deleteButton.textContent = "حذف";
       deleteButton.addEventListener("click", async () => {
@@ -7429,7 +7444,8 @@ async function renderParentList() {
           deleteButton.disabled = false;
         }
       });
-      actions.append(deleteButton);
+      actionGroup.append(deleteButton);
+      actions.append(actionGroup);
       row.append(actions);
       body.append(row);
     });
@@ -7455,11 +7471,17 @@ function requestParentPasswordReset(parentName) {
           <p class="alert-message">تعيين كلمة مرور جديدة لحساب ولي الأمر <strong id="parentPasswordResetName"></strong>.</p>
           <div class="form-group">
             <label for="parentNewPassword" class="form-label">كلمة المرور الجديدة</label>
-            <input id="parentNewPassword" class="form-control" type="password" minlength="6" maxlength="128" autocomplete="new-password" required>
+            <div class="portal-password-wrap">
+              <input id="parentNewPassword" class="form-control" type="password" minlength="6" maxlength="128" autocomplete="new-password" dir="ltr" required>
+              <button id="parentNewPasswordToggle" class="portal-password-toggle" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false" title="إظهار كلمة المرور">👁</button>
+            </div>
           </div>
           <div class="form-group">
             <label for="parentConfirmPassword" class="form-label">تأكيد كلمة المرور</label>
-            <input id="parentConfirmPassword" class="form-control" type="password" minlength="6" maxlength="128" autocomplete="new-password" required>
+            <div class="portal-password-wrap">
+              <input id="parentConfirmPassword" class="form-control" type="password" minlength="6" maxlength="128" autocomplete="new-password" dir="ltr" required>
+              <button id="parentConfirmPasswordToggle" class="portal-password-toggle" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false" title="إظهار كلمة المرور">👁</button>
+            </div>
           </div>
           <div id="parentPasswordMismatch" class="notice notice-error" role="alert">كلمتا المرور غير متطابقتين.</div>
         </div>
@@ -7479,6 +7501,18 @@ function requestParentPasswordReset(parentName) {
     }, { once: true });
     dialog.querySelector(".modal-close").addEventListener("click", () => dialog.close("cancel"));
     dialog.querySelector(".cancel-password-reset").addEventListener("click", () => dialog.close("cancel"));
+    const bindPasswordToggle = (input, toggle) => {
+      toggle.addEventListener("click", () => {
+        const visible = input.type === "text";
+        input.type = visible ? "password" : "text";
+        toggle.textContent = visible ? "👁" : "🙈";
+        toggle.setAttribute("aria-label", visible ? "إظهار كلمة المرور" : "إخفاء كلمة المرور");
+        toggle.setAttribute("title", visible ? "إظهار كلمة المرور" : "إخفاء كلمة المرور");
+        toggle.setAttribute("aria-pressed", String(!visible));
+      });
+    };
+    bindPasswordToggle(dialog.querySelector("#parentNewPassword"), dialog.querySelector("#parentNewPasswordToggle"));
+    bindPasswordToggle(dialog.querySelector("#parentConfirmPassword"), dialog.querySelector("#parentConfirmPasswordToggle"));
     dialog.querySelector("form").addEventListener("submit", (event) => {
       event.preventDefault();
       const passwordInput = dialog.querySelector("#parentNewPassword");
@@ -7498,12 +7532,21 @@ function requestParentPasswordReset(parentName) {
 }
 
 function renderParentEdit(parent) {
-  page("تعديل بيانات ولي الأمر", "عدّلي بيانات ولي الأمر. لن تتغير كلمة المرور أو الأبناء المرتبطون.", `
+  page("تعديل بيانات ولي الأمر", "عدّلي بيانات ولي الأمر أو أضيفي أبناء جدد دون حذف الأبناء المرتبطين.", `
     <form id="parentEditForm" class="form-grid">
       <div class="field"><label for="editParentName">اسم ولي الأمر</label><input id="editParentName" required minlength="3" maxlength="120"></div>
       <div class="field"><label for="editParentNationalId">رقم الهوية</label><input id="editParentNationalId" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required></div>
       <div class="field"><label for="editParentPhone">رقم الجوال</label><input id="editParentPhone" inputmode="tel" required></div>
       <div class="field"><label for="editParentEmail">البريد الإلكتروني</label><input id="editParentEmail" type="email" required dir="ltr"></div>
+      <fieldset class="field span-2 parent-children-field">
+        <legend>إضافة أبناء</legend>
+        <p id="editParentStudentsStatus" class="field-hint"></p>
+        <div class="parent-student-search">
+          <input id="editParentStudentSearch" placeholder="اسم الطالب أو رقم الطالب" autocomplete="off">
+          <button id="editParentStudentSearchButton" class="btn btn-secondary" type="button">بحث</button>
+        </div>
+        <div id="editParentStudents" class="parent-student-list"></div>
+      </fieldset>
       <div class="form-actions span-2">
         <button class="btn" type="submit">حفظ التعديلات</button>
         <button id="cancelParentEdit" class="btn btn-secondary" type="button">إلغاء</button>
@@ -7516,6 +7559,78 @@ function renderParentEdit(parent) {
   form.querySelector("#editParentNationalId").value = parent.nationalId ?? "";
   form.querySelector("#editParentPhone").value = parent.phone ?? "";
   form.querySelector("#editParentEmail").value = parent.email ?? "";
+  const linkedStudentIds = new Set(parent.studentIds ?? []);
+  const selectedStudents = new Map();
+  const studentsArea = form.querySelector("#editParentStudents");
+  const studentsStatus = form.querySelector("#editParentStudentsStatus");
+  const updateStudentsStatus = (message = "") => {
+    const linkedCount = parent.studentCount ?? linkedStudentIds.size;
+    studentsStatus.textContent = message || `الأبناء المرتبطون حاليًا: ${linkedCount}. الأبناء الجدد المحددون: ${selectedStudents.size}.`;
+  };
+  updateStudentsStatus();
+
+  async function searchStudents() {
+    const search = form.querySelector("#editParentStudentSearch").value.trim();
+    if (search.length < 2) {
+      setNotice(document.querySelector("#pageNotice"), "error", "اكتبي اسم الطالب أو رقمه للبحث.");
+      return;
+    }
+    updateStudentsStatus("جارٍ البحث عن الطلاب...");
+    try {
+      const [studentsResult, classesResult] = await Promise.all([
+        api.get(`/students?limit=50&search=${encodeURIComponent(search)}`),
+        api.get("/academic-classes?limit=200")
+      ]);
+      const classes = new Map((classesResult.data ?? []).map((item) => [item.id, item]));
+      const searchMatches = studentsResult.data ?? [];
+      const uniqueStudents = removeUnassignedDuplicateStudents(searchMatches);
+      const availableStudents = uniqueStudents.filter((student) => !linkedStudentIds.has(student.id));
+      studentsArea.replaceChildren();
+      if (!availableStudents.length) {
+        const message = !searchMatches.length
+          ? "لا توجد نتائج مطابقة."
+          : uniqueStudents.length
+            ? "كل نتائج البحث مرتبطة بهذا الحساب بالفعل."
+            : "لا توجد نتائج قابلة للربط بعد استبعاد السجلات المكررة غير المرتبطة بشعبة.";
+        updateStudentsStatus(message);
+        return;
+      }
+      updateStudentsStatus("تأكدي من بيانات الطالب ثم اختاري الأبناء المراد إضافتهم. تم إخفاء السجلات المكررة غير المرتبطة بشعبة.");
+      availableStudents.forEach((student) => {
+        const academicClass = classes.get(student.classId);
+        const label = document.createElement("label");
+        label.className = "parent-student-choice";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = student.id;
+        checkbox.checked = selectedStudents.has(student.id);
+        const details = document.createElement("span");
+        const name = document.createElement("strong");
+        name.textContent = student.fullName;
+        const classDetails = document.createElement("small");
+        classDetails.textContent = `${student.grade ?? "—"} / ${academicClass?.section ?? "الشعبة غير محددة"}`;
+        details.append(name, classDetails);
+        label.append(checkbox, details);
+        checkbox.addEventListener("change", () => {
+          if (checkbox.checked) selectedStudents.set(student.id, student);
+          else selectedStudents.delete(student.id);
+          updateStudentsStatus();
+        });
+        studentsArea.append(label);
+      });
+    } catch (error) {
+      updateStudentsStatus("تعذر تنفيذ البحث.");
+      setNotice(document.querySelector("#pageNotice"), "error", error.message);
+    }
+  }
+
+  form.querySelector("#editParentStudentSearchButton").addEventListener("click", searchStudents);
+  form.querySelector("#editParentStudentSearch").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      searchStudents();
+    }
+  });
   document.querySelector("#cancelParentEdit").addEventListener("click", renderParentList);
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -7527,7 +7642,8 @@ function renderParentEdit(parent) {
         nameAr: form.querySelector("#editParentName").value,
         nationalId: form.querySelector("#editParentNationalId").value,
         phone: form.querySelector("#editParentPhone").value,
-        email: form.querySelector("#editParentEmail").value
+        email: form.querySelector("#editParentEmail").value,
+        studentIds: [...selectedStudents.keys()]
       });
       await renderParentList();
       setNotice(document.querySelector("#pageNotice"), "success", result.message);

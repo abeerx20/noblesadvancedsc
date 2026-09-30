@@ -2,7 +2,7 @@ import { applicationDefault, cert, getApps, initializeApp } from "firebase-admin
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { env } from "./env.js";
 
@@ -20,6 +20,19 @@ function createCredential() {
     const resolvedPath = path.resolve(configuredPath);
     if (!existsSync(resolvedPath)) {
       throw new Error(`Firebase service account file not found: ${resolvedPath}. Add the file or update GOOGLE_APPLICATION_CREDENTIALS.`);
+    }
+
+    try {
+      const serviceAccount = JSON.parse(readFileSync(resolvedPath, "utf8"));
+      if (serviceAccount.type === "service_account" && serviceAccount.client_email && serviceAccount.private_key) {
+        return cert({
+          projectId: env.FIREBASE_PROJECT_ID,
+          clientEmail: serviceAccount.client_email,
+          privateKey: serviceAccount.private_key.replace(/\\n/g, "\n")
+        });
+      }
+    } catch {
+      return applicationDefault();
     }
   }
 

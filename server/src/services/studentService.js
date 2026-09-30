@@ -4,6 +4,7 @@ import { getClassOrThrow } from "./classService.js";
 import { AppError } from "../utils/AppError.js";
 import { normalizeText, publicDocument } from "../utils/text.js";
 import { scheduleBelongsToUser, scheduleTeacherIds } from "../utils/scheduleIdentity.js";
+import { matchesUnassignedStudent } from "./studentIdentity.js";
 
 async function teacherClassIds(user) {
   const teacherIds = [...scheduleTeacherIds(user)];
@@ -89,13 +90,32 @@ export async function createStudent(user, data) {
   const academicClass = await getClassOrThrow(data.classId);
   validateStudentAgainstClass(data, academicClass);
 
-  if (data.nationalId) {
-    const duplicateId = await db.collection("students").where("nationalId", "==", data.nationalId).limit(1).get();
-    if (!duplicateId.empty) throw new AppError(409, "DUPLICATE_NATIONAL_ID", "رقم الهوية مسجل لطالب آخر.");
-  }
   const sameClass = await db.collection("students").where("classId", "==", data.classId).limit(200).get();
   const duplicateName = sameClass.docs.some((doc) => normalizeText(doc.data().fullName) === data.fullName && doc.data().active !== false);
   if (duplicateName) throw new AppError(409, "DUPLICATE_STUDENT", "الطالب مسجل مسبقًا في الفصل نفسه.");
+
+  let unassignedDuplicate = null;
+  if (data.nationalId) {
+    const duplicateId = await db.collection("students").where("nationalId", "==", data.nationalId).limit(1).get();
+    if (!duplicateId.empty) {
+      const document = duplicateId.docs[0];
+      const existing = { id: document.id, ...document.data() };
+      if (!matchesUnassignedStudent(data, existing)) {
+        throw new AppError(409, "DUPLICATE_NATIONAL_ID", "رقم الهوية مسجل لطالب آخر.");
+      }
+      unassignedDuplicate = document;
+    }
+  }
+
+  if (!unassignedDuplicate) {
+    const sameName = await db.collection("students").where("fullName", "==", data.fullName).limit(100).get();
+    unassignedDuplicate = sameName.docs.find((doc) => matchesUnassignedStudent(data, { id: doc.id, ...doc.data() })) ?? null;
+  }
+
+  if (unassignedDuplicate) {
+    await unassignedDuplicate.ref.update({ ...data, updatedBy: user.uid, updatedAt: FieldValue.serverTimestamp() });
+    return unassignedDuplicate.id;
+  }
 
   const ref = await db.collection("students").add({
     ...data,
@@ -112,6 +132,17 @@ export async function updateStudent(user, studentId, data) {
   if (!current.exists) throw new AppError(404, "STUDENT_NOT_FOUND", "الطالب غير موجود.");
   const academicClass = await getClassOrThrow(data.classId);
   validateStudentAgainstClass(data, academicClass);
+  if (data.nationalId) {
+    const duplicateId = await db.collection("students").where("nationalId", "==", data.nationalId).limit(2).get();
+    if (duplicateId.docs.some((doc) => doc.id !== studentId)) {
+      throw new AppError(409, "DUPLICATE_NATIONAL_ID", "رقم الهوية مسجل لطالب آخر.");
+    }
+  }
+  const sameClass = await db.collection("students").where("classId", "==", data.classId).limit(200).get();
+  const duplicateName = sameClass.docs.some((doc) => doc.id !== studentId
+    && doc.data().active !== false
+    && normalizeText(doc.data().fullName) === data.fullName);
+  if (duplicateName) throw new AppError(409, "DUPLICATE_STUDENT", "الطالب مسجل مسبقًا في الفصل نفسه.");
   await ref.update({ ...data, updatedBy: user.uid, updatedAt: FieldValue.serverTimestamp() });
 }
 

@@ -12,7 +12,7 @@ services:
       - key: PORT
         value: 10000
       - key: FIREBASE_PROJECT_ID
-        sync: false
+        value: school-absence-system-af171
       - key: FIREBASE_CLIENT_EMAIL
         sync: false
       - key: FIREBASE_PRIVATE_KEY

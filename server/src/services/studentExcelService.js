@@ -6,6 +6,7 @@ import { AppError } from "../utils/AppError.js";
 import { normalizeText } from "../utils/text.js";
 import { studentSchema } from "../validators/schemas.js";
 import { listStudents } from "./studentService.js";
+import { matchesUnassignedStudent } from "./studentIdentity.js";
 
 const headerAliases = {
   fullName: ["full_name", "fullname", "اسم الطالب", "الاسم الرباعي", "الاسم"],
@@ -98,21 +99,61 @@ export async function importStudents(user, buffer, fixedClassId) {
   if (errors.length) throw new AppError(422, "IMPORT_VALIDATION_FAILED", "لم يتم الاستيراد لوجود أخطاء في الملف.", errors.slice(0, 30));
   if (!records.length) throw new AppError(422, "NO_STUDENTS", "لم يتم العثور على بيانات طلاب صالحة للاستيراد.");
 
-  const existingSnapshot = await db.collection("students").where("active", "==", true).limit(2000).get();
-  const existingKeys = new Set(existingSnapshot.docs.map((doc) => `${doc.data().classId}|${normalizeText(doc.data().fullName)}`));
+  const existingSnapshot = await db.collection("students").limit(2000).get();
+  const existingStudents = existingSnapshot.docs
+    .map((doc) => ({ id: doc.id, ref: doc.ref, ...doc.data() }))
+    .filter((student) => student.active !== false);
+  const existingKeys = new Set(existingStudents
+    .filter((student) => student.classId)
+    .map((student) => `${student.classId}|${normalizeText(student.fullName)}`));
+  const orphanUpdates = new Map();
+  const recordsToCreate = [];
   const batchKeys = new Set();
+  const batchNationalIds = new Set();
   for (const record of records) {
     const key = `${record.classId}|${record.fullName}`;
     if (existingKeys.has(key) || batchKeys.has(key)) throw new AppError(409, "DUPLICATE_IMPORT_STUDENT", `الطالب ${record.fullName} مسجل مسبقًا في الفصل نفسه.`);
+
+    const nationalId = String(record.nationalId ?? "").replace(/\D/g, "");
+    if (nationalId) {
+      const existingById = existingStudents.filter((student) => String(student.nationalId ?? "").replace(/\D/g, "") === nationalId);
+      const batchHasNationalId = batchNationalIds.has(nationalId);
+      if (batchHasNationalId || (existingById.length && (existingById.length !== 1 || !matchesUnassignedStudent(record, existingById[0])))) {
+        throw new AppError(409, "DUPLICATE_NATIONAL_ID", `رقم هوية الطالب ${record.fullName} مرتبط بملف آخر.`);
+      }
+      batchNationalIds.add(nationalId);
+    }
+
+    const orphan = existingStudents.find((student) => matchesUnassignedStudent(record, student));
+    if (orphan) {
+      if (orphanUpdates.has(orphan.id)) {
+        throw new AppError(409, "DUPLICATE_IMPORT_STUDENT", `يوجد أكثر من صف مطابق لسجل الطالب ${record.fullName} بلا شعبة.`);
+      }
+      orphanUpdates.set(orphan.id, record);
+    } else {
+      recordsToCreate.push(record);
+    }
     batchKeys.add(key);
   }
 
-  for (let offset = 0; offset < records.length; offset += 400) {
+  const operations = [
+    ...recordsToCreate.map((record) => ({ type: "create", record })),
+    ...[...orphanUpdates].map(([studentId, record]) => ({ type: "update", studentId, record }))
+  ];
+  for (let offset = 0; offset < operations.length; offset += 400) {
     const batch = db.batch();
-    records.slice(offset, offset + 400).forEach((record) => {
+    operations.slice(offset, offset + 400).forEach((operation) => {
+      if (operation.type === "update") {
+        batch.update(db.collection("students").doc(operation.studentId), {
+          ...operation.record,
+          updatedBy: user.uid,
+          updatedAt: FieldValue.serverTimestamp()
+        });
+        return;
+      }
       const ref = db.collection("students").doc();
       batch.create(ref, {
-        ...record,
+        ...operation.record,
         createdBy: user.uid,
         importType: fixedClassId ? "class" : "school",
         createdAt: FieldValue.serverTimestamp(),

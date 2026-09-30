@@ -200,6 +200,8 @@ form.addEventListener("submit", async (event) => {
       const messages = {
         FIREBASE_CONFIG_REQUIRED: "إعدادات Firebase في الخادم غير مكتملة. أضف ملف خدمة Firebase أو حدّث GOOGLE_APPLICATION_CREDENTIALS قبل تسجيل الدخول.",
         "auth/invalid-credential": "البريد الإلكتروني أو كلمة المرور غير صحيحة. تأكدي من البيانات ثم حاولي مرة أخرى.",
+        "auth/invalid-custom-token": "تعذر اعتماد جلسة ولي الأمر. تحققي من تطابق مشروع Firebase في إعدادات الخادم والواجهة.",
+        "auth/custom-token-mismatch": "مشروع Firebase في الخادم لا يطابق مشروع الواجهة. راجعي FIREBASE_PROJECT_ID ثم أعيدي النشر.",
         INVALID_PARENT_CREDENTIALS: "رقم الهوية أو كلمة المرور غير صحيحة.",
         ACCOUNT_INACTIVE: "هذا الحساب غير نشط. يرجى التواصل مع المدرسة.",
         FIREBASE_AUTH_UNAVAILABLE: "تعذر الاتصال بخدمة تسجيل الدخول. حاولي مرة أخرى لاحقًا.",

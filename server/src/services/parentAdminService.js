@@ -44,7 +44,8 @@ export async function listParents() {
     const snapshot = await db.collection("parents").limit(500).get();
     return snapshot.docs.map((doc) => {
         const parent = publicDocument(doc);
-        return { id: parent.id, nameAr: parent.nameAr, nationalId: parent.nationalId, email: parent.email, phone: parent.phone, studentIds: parent.studentIds ?? [], studentCount: Array.isArray(parent.studentIds) ? parent.studentIds.length : 0, status: parent.status };
+        const studentIds = Array.isArray(parent.studentIds) ? parent.studentIds : [];
+        return { id: parent.id, nameAr: parent.nameAr, nationalId: parent.nationalId, email: parent.email, phone: parent.phone, studentIds, studentCount: studentIds.length, status: parent.status };
     });
 }
 
@@ -54,6 +55,16 @@ export async function updateParent(parentId, data, actor) {
     if (!parentSnapshot.exists) throw new AppError(404, "PARENT_NOT_FOUND", "ولي الأمر غير موجود.");
 
     const current = parentSnapshot.data();
+    const currentStudentIds = Array.isArray(current.studentIds) ? [...new Set(current.studentIds)] : [];
+    const addedStudentIds = [...new Set(data.studentIds ?? [])].filter((studentId) => !currentStudentIds.includes(studentId));
+    if (currentStudentIds.length + addedStudentIds.length > 20) {
+        throw new AppError(422, "PARENT_STUDENT_LIMIT", "لا يمكن ربط أكثر من 20 ابنًا بحساب ولي الأمر.");
+    }
+    const newStudents = await Promise.all(addedStudentIds.map((studentId) => db.collection("students").doc(studentId).get()));
+    if (newStudents.some((snapshot) => !snapshot.exists || snapshot.data().active === false)) {
+        throw new AppError(422, "INVALID_PARENT_STUDENTS", "يوجد طالب غير موجود أو غير نشط.");
+    }
+
     const [emailMatches, nationalIdMatches] = await Promise.all([
         db.collection("parents").where("email", "==", data.email).limit(2).get(),
         db.collection("parents").where("nationalId", "==", data.nationalId).limit(2).get()
@@ -76,6 +87,7 @@ export async function updateParent(parentId, data, actor) {
             nationalId: data.nationalId,
             email: data.email,
             phone: data.phone,
+            ...(addedStudentIds.length ? { studentIds: [...currentStudentIds, ...addedStudentIds] } : {}),
             updatedBy: actor.uid,
             updatedAt: FieldValue.serverTimestamp()
         });
@@ -87,6 +99,7 @@ export async function updateParent(parentId, data, actor) {
         }).catch(() => { });
         throw error;
     }
+    return addedStudentIds.length;
 }
 
 export async function deleteParent(parentId) {

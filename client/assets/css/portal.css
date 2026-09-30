@@ -1567,6 +1567,45 @@ input[type="month"] {
   font-size: 14px;
 }
 
+#parentReportLinks {
+  width: min(440px, 100%);
+  gap: 0;
+  margin-top: 22px;
+  border-top: 0;
+}
+
+#parentReportLinks .student-service-link {
+  min-height: 48px;
+  border: 0;
+  border-bottom: 1px solid #e2e9e6;
+  border-radius: 0;
+  padding: 10px 12px;
+  background: transparent;
+  font-weight: 400;
+}
+
+#parentReportLinks .student-service-link:hover,
+#parentReportLinks .student-service-link:focus-visible {
+  background: #f3f5f4;
+  color: #33413d;
+  outline: none;
+}
+
+#parentReportLinks .student-service-link>span:last-child {
+  display: inline;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  color: #52605b;
+}
+
+#parentReportHint {
+  width: min(440px, 100%);
+  margin: 16px 0 0 auto;
+  text-align: right;
+}
+
 .parent-children-field {
   border: 0;
   padding: 0;
@@ -1597,6 +1636,35 @@ input[type="month"] {
 
 .parent-student-search input {
   flex: 1;
+}
+
+.parent-attendance-search {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+  width: min(900px, 100%);
+  margin: 10px 0 18px auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.parent-attendance-search .field {
+  margin: 0;
+}
+
+.parent-attendance-search .field label {
+  color: var(--green-900);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.parent-attendance-search .btn {
+  min-width: 100px;
+  min-height: 42px;
+  margin: 0;
+  border-radius: 8px;
 }
 
 .parent-student-choice {
@@ -2291,6 +2359,16 @@ input[type="month"] {
   border-collapse: collapse;
 }
 
+.table-wrap>table.parent-admin-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.parent-admin-table td {
+  overflow-wrap: anywhere;
+}
+
 table th,
 table td {
   text-align: right;
@@ -2307,6 +2385,31 @@ table td {
 .table-wrap>table td:last-child .action-buttons {
   justify-content: flex-start;
   flex-wrap: nowrap;
+}
+
+.table-wrap>table.parent-admin-table td.parent-admin-actions-cell {
+  width: 220px;
+  text-align: center;
+}
+
+.parent-admin-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 5px;
+  direction: rtl;
+}
+
+.parent-admin-actions .parent-admin-action {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  min-height: 32px;
+  margin: 0;
+  padding: 4px 6px;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .table-wrap>table td.roster-actions {
@@ -2999,6 +3102,20 @@ tbody tr:hover {
 }
 
 @media (max-width: 680px) {
+  .table-wrap>table.parent-admin-table {
+    min-width: 640px;
+  }
+
+  .parent-attendance-search {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .parent-attendance-search .btn {
+    width: 100%;
+  }
+
   .portal-header {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
@@ -4825,6 +4942,48 @@ tbody tr:hover {
   border-radius: 10px;
   font-size: 12px;
   white-space: nowrap;
+}
+
+.employee-password-actions,
+.employee-table-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  direction: rtl;
+}
+
+.employee-inline-action {
+  margin: 0;
+  min-width: 0;
+  min-height: 32px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.employee-inline-action.btn-danger {
+  background: linear-gradient(180deg, #fff5f5 0%, #fff0f0 100%);
+  border-color: #f1c4c4;
+  color: #b42318;
+}
+
+.employee-inline-action.btn-danger:hover {
+  background: linear-gradient(180deg, #ffeaea 0%, #ffdede 100%);
+  border-color: #d86a6a;
+}
+
+.employee-inline-action.btn-secondary {
+  background: linear-gradient(180deg, #f3faf7 0%, #edf7f2 100%);
+  border-color: #cfe8dc;
+  color: var(--green-900);
+}
+
+.employee-inline-action.btn-secondary:hover {
+  background: linear-gradient(180deg, #eaf7f2 0%, #dff3ea 100%);
+  border-color: #9cc7b1;
 }
 
 .icon-button {

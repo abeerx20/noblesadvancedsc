@@ -4,6 +4,7 @@ import { db } from "../config/firebase.js";
 import { getClassOrThrow } from "./classService.js";
 import { AppError } from "../utils/AppError.js";
 import { normalizeText, publicDocument } from "../utils/text.js";
+import { matchesUnassignedStudent } from "./studentIdentity.js";
 
 const rosterCollection = db.collection("studentEnrollments");
 const studentCollection = db.collection("students");
@@ -115,6 +116,14 @@ async function findOrCreateStudent(user, data, academicClass) {
         && student.gender === data.gender
         && studentDuplicateKeys(student).fullName === keys.fullName;
     }) ?? null;
+  }
+  if (!existing) {
+    const sameName = await studentCollection.where("fullName", "==", normalizeText(data.fullName)).limit(100).get();
+    existing = sameName.docs.find((document) => matchesUnassignedStudent({
+      ...data,
+      stage: academicClass.stage,
+      grade: academicClass.grade
+    }, { id: document.id, ...document.data() })) ?? null;
   }
   if (existing) {
     const stored = existing.data();

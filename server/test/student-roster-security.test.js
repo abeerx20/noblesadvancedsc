@@ -10,6 +10,7 @@ const {
   studentDuplicateKeys,
   validateStudentGenderForClass
 } = await import("../src/services/studentRosterService.js");
+const { matchesUnassignedStudent } = await import("../src/services/studentIdentity.js");
 const { requirePermission, requireRole } = await import("../src/middleware/authorize.js");
 const { updateAccess } = await import("../src/services/employeeService.js");
 
@@ -71,6 +72,15 @@ test("يكشف تكرار الاسم أو الهوية أو جوال ولي ال
     { fullName: "طالب آخر", nationalId: "", guardianPhone: "966500000000" },
     existing
   ), "guardianPhone");
+});
+
+test("يتعرف على ملف طالب مطابق بلا شعبة لإعادة استخدامه بدل إنشاء نسخة", () => {
+  const candidate = { fullName: "أرام يوسف النعمان", stage: "kindergarten", grade: "KG2", gender: "female", nationalId: "1234567890" };
+  const unassigned = { fullName: "ارام  يوسف النعمان", stage: "kindergarten", grade: "KG2", gender: "female", active: true };
+  assert.equal(matchesUnassignedStudent(candidate, unassigned), true);
+  assert.equal(matchesUnassignedStudent(candidate, { ...unassigned, classId: "kg2-section-1" }), false);
+  assert.equal(matchesUnassignedStudent(candidate, { ...unassigned, grade: "KG1" }), false);
+  assert.equal(matchesUnassignedStudent(candidate, { ...unassigned, nationalId: "1111111111" }), false);
 });
 
 test("حارس الصلاحيات يعتمد صلاحيات الخادم ويرفض غير المخول", () => {

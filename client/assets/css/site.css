@@ -690,6 +690,15 @@ img {
     align-items: stretch;
 }
 
+@media (max-width: 768px) {
+    .philosophy-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+        padding-inline: 12px;
+        margin-bottom: 48px;
+    }
+}
+
 .quick-card {
     background: #fff;
     border: 1px solid var(--line);

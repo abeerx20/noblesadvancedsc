@@ -91,6 +91,7 @@ const translations = {
 
 const originalText = new WeakMap();
 const originalElements = new WeakMap();
+const originalAttributes = new WeakMap();
 const reverseTranslations = Object.fromEntries(Object.entries(translations).map(([arabic, english]) => [english, arabic]));
 const normalizedTranslations = Object.fromEntries(Object.entries(translations).map(([arabic, english]) => [arabic.replace(/\s+/g, " ").trim(), english]));
 const normalizedReverseTranslations = Object.fromEntries(Object.entries(normalizedTranslations).map(([arabic, english]) => [english, arabic]));
@@ -128,9 +129,13 @@ function translateAttributes(toEnglish) {
     document.querySelectorAll("[alt], [aria-label], [title], [placeholder]").forEach((element) => {
         ["alt", "aria-label", "title", "placeholder"].forEach((attribute) => {
             if (!element.hasAttribute(attribute)) return;
-            const key = `${attribute}Original`;
-            if (!element.dataset[key]) element.dataset[key] = element.getAttribute(attribute);
-            element.setAttribute(attribute, translateValue(element.dataset[key], toEnglish));
+            let originals = originalAttributes.get(element);
+            if (!originals) {
+                originals = {};
+                originalAttributes.set(element, originals);
+            }
+            if (!Object.prototype.hasOwnProperty.call(originals, attribute)) originals[attribute] = element.getAttribute(attribute);
+            element.setAttribute(attribute, translateValue(originals[attribute], toEnglish));
         });
     });
 }

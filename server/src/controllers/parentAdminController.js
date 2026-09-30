@@ -31,9 +31,14 @@ export async function commitImport(req, res) {
 }
 
 export async function update(req, res) {
-    await updateParent(req.params.id, req.body, req.user);
-    await writeAudit({ req, action: "update", entityType: "parent", entityId: req.params.id, summary: { fields: ["nameAr", "nationalId", "email", "phone"] } });
-    res.json({ success: true, message: "تم تحديث بيانات ولي الأمر بنجاح." });
+    const addedStudentCount = await updateParent(req.params.id, req.body, req.user);
+    const fields = ["nameAr", "nationalId", "email", "phone"];
+    if (addedStudentCount) fields.push("studentIds");
+    await writeAudit({ req, action: "update", entityType: "parent", entityId: req.params.id, summary: { fields, addedStudentCount } });
+    const message = addedStudentCount
+        ? `تم تحديث بيانات ولي الأمر وربط ${addedStudentCount} من الأبناء الجدد.`
+        : "تم تحديث بيانات ولي الأمر بنجاح.";
+    res.json({ success: true, message });
 }
 
 export async function remove(req, res) {

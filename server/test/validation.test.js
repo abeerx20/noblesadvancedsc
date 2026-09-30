@@ -110,6 +110,7 @@ test("يتحقق من رقم هوية ولي الأمر وكلمة المرور"
 test("يتحقق من بيانات تعديل ولي الأمر دون قبول حقول إضافية", () => {
   const parent = { nameAr: "ولي الأمر", nationalId: "1234567890", email: "parent@example.com", phone: "0500000000" };
   assert.equal(parentUpdateSchema.safeParse(parent).success, true);
+  assert.equal(parentUpdateSchema.safeParse({ ...parent, studentIds: ["student-1", "student-2"] }).success, true);
   assert.equal(parentUpdateSchema.safeParse({ ...parent, nationalId: "12345" }).success, false);
   assert.equal(parentUpdateSchema.safeParse({ ...parent, isAdmin: true }).success, false);
 });
