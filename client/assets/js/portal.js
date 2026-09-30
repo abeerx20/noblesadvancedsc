@@ -212,15 +212,21 @@ function isTeachingRole() {
 }
 
 function canSee(item) {
-  const roleAllowed =
-    !item.roles ||
-    item.roles.includes(state.me?.employee?.role);
+  const role = state.me?.employee?.role;
+  const roleAllowed = !item.roles || item.roles.includes(role) || item.roles.includes("*") || item.roleAny?.includes(role);
 
   const permissionAllowed =
     !item.any ||
     item.any.some(has) ||
-    item.roleAny?.includes(state.me?.employee?.role);
+    item.roleAny?.includes(role);
 
+  return roleAllowed && permissionAllowed;
+}
+
+function canSeeQuickAccess(item) {
+  const role = state.me?.employee?.role;
+  const roleAllowed = !item.roles || item.roles.includes(role) || item.roleAny?.includes(role);
+  const permissionAllowed = !item.any || item.any.some(has) || item.roleAny?.includes(role);
   return roleAllowed && permissionAllowed;
 }
 
@@ -763,26 +769,47 @@ async function renderDashboard() {
   document.querySelector("#dashNumber").textContent = String(employee.employeeNumber ?? employee.employeeId ?? employee.number ?? "—");
   document.querySelector("#dashRole").textContent = resolveRoleLabel(employee.role);
   document.querySelector("#dashEmail").textContent = state.me.email ?? "—";
-  const isMgmt = hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management");
-  const quick = [];
-  if (isMgmt && (has("manage_students") || has("view_attendance") || has("manage_attendance") || has("manage_absence"))) {
-    quick.push(["student-list", "قوائم الطلاب", "عرض الطلاب والفصول والأسماء", ["manage_students", "view_attendance", "manage_attendance", "manage_absence"]]);
-  }
-  if (isMgmt && (has("manage_students") || has("manage_schedules"))) {
-    quick.push(["classes", "إدارة الفصول", "إضافة وتعديل الصفوف والشعب", ["manage_students", "manage_schedules"]]);
-  }
-  if (has("request_leave") || isMgmt) {
-    quick.push(["leave", "طلب إجازة", "إرسال طلب ومتابعة حالته", ["request_leave"]]);
-  }
+
+  const quickEntries = [
+    { route: "student-list", title: "قوائم الطلاب", description: "عرض الطلاب والفصول والأسماء", roles: ["teacher", "it_teacher", "principal", "vice_principal", "admin", "system_admin", "upper_management"], any: ["view_students", "manage_students"] },
+    { route: "classes", title: "إدارة الفصول", description: "إضافة وتعديل الصفوف والشعب", roles: ["teacher", "it_teacher", "principal", "vice_principal", "admin", "system_admin", "upper_management", "schedule_admin"], any: ["manage_students", "manage_schedules"] },
+    { route: "attendance", title: "إدخال الغياب", description: "متابعة الحضور والغياب", roles: ["teacher", "it_teacher", "principal", "vice_principal", "admin", "system_admin", "upper_management"], any: ["enter_attendance", "attendance_override", "view_attendance", "manage_attendance", "manage_absence"] },
+    { route: "schedule", title: "الجدول الدراسي", description: "مراجعة الصفوف والحصص والمنشورات", roles: ["teacher", "it_teacher", "principal", "vice_principal", "admin", "system_admin", "upper_management", "schedule_admin"], any: ["view_schedules", "view_all_schedules", "manage_schedules"] },
+    { route: "leave", title: "طلب إجازة", description: "إرسال طلب ومتابعة حالته", any: ["request_leave", "manage_leave_requests", "manage_leave_hr_requests"] },
+    { route: "training", title: "التدريب", description: "متابعة الدورات والطلبات", any: ["request_training", "manage_training_requests"] },
+    { route: "support", title: "الدعم الفني", description: "تقديم طلبات الدعم", any: ["request_support", "manage_support"] },
+    { route: "reports", title: "التقارير", description: "مراجعة التقارير والمهام", any: ["view_reports"] }
+  ];
+
   const grid = document.querySelector("#quickLinks");
-  quick.filter((item) => item[3].some(has) || item[3].some((perm) => hasRole("principal", "vice_principal", "admin", "system_admin", "upper_management") && (perm === "manage_students" || perm === "manage_absence" || perm === "manage_attendance" || perm === "view_attendance"))).forEach(([route, title, description]) => {
-    const link = document.createElement("a"); link.className = "quick-link"; link.href = `#${route}`; link.dataset.route = route;
-    const icon = document.createElement("span"); icon.className = "quick-link-icon"; icon.setAttribute("aria-hidden", "true");
-    const body = document.createElement("span"); body.className = "quick-link-body";
-    const strong = document.createElement("strong"); strong.textContent = title;
-    const descriptionText = document.createElement("span"); descriptionText.textContent = description;
-    const arrow = document.createElement("span"); arrow.className = "quick-link-arrow"; arrow.textContent = "→"; arrow.setAttribute("aria-hidden", "true");
-    body.append(strong, descriptionText); link.append(icon, body, arrow); grid.append(link);
+  const seen = new Set();
+  quickEntries.filter((item) => canSeeQuickAccess(item)).forEach((item) => {
+    if (seen.has(item.route)) return;
+    seen.add(item.route);
+
+    const link = document.createElement("a");
+    link.className = "quick-link";
+    link.href = `#${item.route}`;
+    link.dataset.route = item.route;
+
+    const icon = document.createElement("span");
+    icon.className = "quick-link-icon";
+    icon.setAttribute("aria-hidden", "true");
+
+    const body = document.createElement("span");
+    body.className = "quick-link-body";
+    const strong = document.createElement("strong");
+    strong.textContent = item.title;
+    const descriptionText = document.createElement("span");
+    descriptionText.textContent = item.description;
+    const arrow = document.createElement("span");
+    arrow.className = "quick-link-arrow";
+    arrow.textContent = "→";
+    arrow.setAttribute("aria-hidden", "true");
+
+    body.append(strong, descriptionText);
+    link.append(icon, body, arrow);
+    grid.append(link);
   });
 }
 
