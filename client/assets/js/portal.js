@@ -989,7 +989,7 @@ async function renderSkillEntryPage() {
     const selectedClass = classes.find((item) => item.id === classSelect.value);
     if (!selectedClass) return;
     try {
-      const students = (await api.get(`/students?classId=${encodeURIComponent(selectedClass.id)}&approvedOnly=true&limit=200`)).data;
+      const students = (await api.get(`/students?classId=${encodeURIComponent(selectedClass.id)}&approvedOnly=false&limit=200`)).data;
       fillSelect(studentSelect, students, (x) => x.id, (x) => x.fullName, "اختاري الطالب");
       studentSelect.disabled = !students.length;
       if (!students.length) {
