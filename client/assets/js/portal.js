@@ -108,7 +108,8 @@ const menuGroups = [
             route: "reports",
             label: "التقارير",
             roles: ["teacher", "it_teacher", "parent"],
-            any: ["view_reports"]
+            any: ["view_reports"],
+            roleAny: ["system_admin"]
           }
         ]
       }
@@ -871,6 +872,10 @@ function appendSkillRow(container, values = { name: "", period: "الفترة ا
 
 function renderReportsHub() {
   const links = [];
+
+  if (hasRole("system_admin")) {
+    links.push(studentHubLink("skill-approval", "تقارير المدير", "مراجعة تقييمات المعلمات واعتمادها أو إعادتها للتعديل"));
+  }
 
   if (has("view_reports") && hasRole("teacher", "it_teacher")) {
     links.push(studentHubLink("skill-add", "إضافة مهارة", "إضافة مهارات المعلمة حسب الصف والشعبة والفترة"));
