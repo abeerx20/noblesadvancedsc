@@ -39,7 +39,7 @@ export async function listOwnReports(user, period) {
   const names = new Map((await listOwnChildren(user)).map((child) => [child.id, child.fullName]));
   return snapshot.docs.filter((doc) => Number(doc.data().period) === period).map((doc) => {
     const report = publicDocument(doc);
-    return { id: report.id, studentId: report.studentId, studentName: names.get(report.studentId) ?? "—", subject: report.subject ?? "—", score: report.score ?? "—", status: report.status ?? "—", parentFeedback: report.parentFeedback ?? null };
+    return { id: report.id, studentId: report.studentId, studentName: names.get(report.studentId) ?? "—", subject: report.subject ?? "—", score: report.score ?? "—", status: report.status ?? "—", className: report.className ?? "—", teacherName: report.teacherName ?? "—", skills: Array.isArray(report.skills) ? report.skills : [], parentFeedback: report.parentFeedback ?? null };
   });
 }
 

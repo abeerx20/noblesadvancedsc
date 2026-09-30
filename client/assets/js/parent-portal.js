@@ -202,14 +202,41 @@ function reportPage(title, rows, children, selectedChild = null) {
         ? rows.filter((row) => row.studentId ? row.studentId === selectedChild.id : row.studentName === selectedChild.fullName)
         : rows;
     const options = children.map((child) => `<option value="${escapeHtml(child.fullName)}">${escapeHtml(child.fullName)}</option>`).join("");
-    const renderReports = (selected = "all") => reportRows.filter((row) => selected === "all" || row.studentName === selected).map((row) => `<article class="skill-parent-report"><div class="skill-parent-header"><strong>${escapeHtml(row.studentName)}</strong><span>${escapeHtml(row.subject)} | الدرجة: ${escapeHtml(row.score)} | ${escapeHtml(row.status)}</span></div>${row.id ? `<form class="skill-parent-feedback" data-report-id="${escapeHtml(row.id)}"><label><input type="checkbox" required> تم الاطلاع على التقرير</label><textarea required minlength="1" maxlength="2000" placeholder="اكتب تعليق ولي الأمر"></textarea><button class="btn btn-small" type="submit">إرسال الإقرار والتعليق</button></form>` : ""}</article>`).join("") || `<div class="empty-state">لا توجد تقارير لهذه الفترة.</div>`;
+    const renderReports = (selected = "all") => {
+        const filteredReports = reportRows.filter((row) => selected === "all" || row.studentName === selected);
+        if (!filteredReports.length) return `<div class="empty-state">لا توجد تقارير لهذه الفترة.</div>`;
+        const reportRowsHtml = filteredReports.map((row, index) => {
+            const detailsId = `parentReportDetails${index}`;
+            const skills = (Array.isArray(row.skills) ? row.skills : []).map((skill) => `
+                <tr><td>${escapeHtml(skill.name)}</td><td>${escapeHtml(skill.level)}</td><td>${escapeHtml(skill.note || "—")}</td></tr>
+            `).join("");
+            const reportDetails = `
+                <div><strong>الحالة:</strong> ${escapeHtml(row.status)} <span> | </span><strong>الدرجة:</strong> ${escapeHtml(row.score)}</div>
+                <div><strong>الفصل:</strong> ${escapeHtml(row.className || "—")} <span> | </span><strong>المعلمة:</strong> ${escapeHtml(row.teacherName || "—")}</div>
+                ${skills ? `<div class="table-wrap"><table><thead><tr><th>المهارة</th><th>التقييم</th><th>ملاحظات</th></tr></thead><tbody>${skills}</tbody></table></div>` : `<p class="empty-state">لا توجد تفاصيل مهارات مسجلة لهذا التقرير.</p>`}
+                ${row.parentFeedback?.acknowledged
+                    ? `<p class="field-hint">تم الإقرار بالاطلاع${row.parentFeedback.comment ? `: ${escapeHtml(row.parentFeedback.comment)}` : ""}</p>`
+                    : row.id ? `<form class="skill-parent-feedback" data-report-id="${escapeHtml(row.id)}"><label><input type="checkbox" required> تم الاطلاع على التقرير</label><textarea required minlength="1" maxlength="2000" placeholder="اكتب تعليق ولي الأمر"></textarea><button class="btn btn-small" type="submit">إرسال الإقرار والتعليق</button></form>` : ""}
+            `;
+            return `<tbody><tr><td>${escapeHtml(row.studentName)}</td><td>${escapeHtml(row.subject)}</td><td><button class="btn btn-secondary btn-small" type="button" data-parent-report-toggle="${detailsId}" aria-expanded="false">عرض التقرير</button></td></tr><tr id="${detailsId}" hidden><td colspan="3"><div class="skill-parent-report">${reportDetails}</div></td></tr></tbody>`;
+        }).join("");
+        return `<div class="table-wrap"><table><thead><tr><th>اسم الطالب</th><th>اسم المادة</th><th>التقرير</th></tr></thead>${reportRowsHtml}</table></div>`;
+    };
     const studentFilter = selectedChild
         ? `<p class="field-hint">التقرير خاص بالابن: ${escapeHtml(selectedChild.fullName)}</p>`
         : `<div class="field" style="max-width: 360px"><label for="studentFilter">الطالب</label><select id="studentFilter"><option value="all">كل الأبناء</option>${options}</select></div>`;
     setPage(title, "راجعي التقرير ثم اكتبي التعليق وأكدي الاطلاع لإرساله.", `${studentFilter}<div id="reportResults" class="skill-parent-stack">${renderReports(selectedChild?.fullName ?? "all")}</div>`);
+    const bindReportToggles = () => document.querySelectorAll("[data-parent-report-toggle]").forEach((button) => button.addEventListener("click", () => {
+        const details = document.getElementById(button.dataset.parentReportToggle);
+        if (!details) return;
+        details.hidden = !details.hidden;
+        button.setAttribute("aria-expanded", String(!details.hidden));
+        button.textContent = details.hidden ? "عرض التقرير" : "إخفاء التقرير";
+    }));
     const bindForms = () => document.querySelectorAll(".skill-parent-feedback").forEach((form) => form.addEventListener("submit", async (event) => { event.preventDefault(); if (!event.currentTarget.reportValidity()) return; const button = event.currentTarget.querySelector("button"); button.disabled = true; try { const result = await api.patch(`/parent/reports/${form.dataset.reportId}/feedback`, { comment: form.querySelector("textarea").value.trim(), acknowledged: true }); setNotice(document.querySelector("#pageNotice"), "success", result.message); form.replaceChildren(); form.innerHTML = "تم إرسال الإقرار والتعليق."; } catch (error) { setNotice(document.querySelector("#pageNotice"), "error", error.message); button.disabled = false; } }));
+    bindReportToggles();
     bindForms();
-    document.querySelector("#studentFilter")?.addEventListener("change", (event) => { document.querySelector("#reportResults").innerHTML = renderReports(event.target.value); bindForms(); });
+    document.querySelector("#studentFilter")?.addEventListener("change", (event) => { document.querySelector("#reportResults").innerHTML = renderReports(event.target.value); bindReportToggles(); bindForms(); });
 }
 
 const documentPages = {
