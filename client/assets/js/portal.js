@@ -971,8 +971,19 @@ async function renderSkillEntryPage() {
   const studentSelect = document.querySelector("#skillEntryStudent");
   const tableWrap = document.querySelector("#skillEntryTable");
 
-  const skillSubjects = ["لغتي", "رياضيات", "علوم", "إسلامي"];
-  fillSelect(subjectSelect, skillSubjects, (x) => x, (x) => x, "اختاري المادة");
+  const teacherScheduleRows = await fetchScheduleRows("mine", state.me?.uid || "");
+  const skillSubjects = [...new Set(
+    teacherScheduleRows
+      .map((item) => String(item.subject ?? "").trim())
+      .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b));
+
+  if (skillSubjects.length) {
+    fillSelect(subjectSelect, skillSubjects, (x) => x, (x) => x, "اختاري المادة");
+  } else {
+    subjectSelect.disabled = true;
+    fillSelect(subjectSelect, ["لا توجد مواد مسندة"], (x) => x, (x) => x, "لا توجد مواد مسندة");
+  }
 
   fillSelect(gradeSelect, [...new Set(classes.map((item) => item.grade))], (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
 
