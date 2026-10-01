@@ -49,6 +49,16 @@ export async function createScheduleBlock(user, data) {
   const teacher = await getEmployeeByUid(data.teacherUid);
 
   const sameDay = await db.collection("teacherSchedule").where("day", "==", data.day).limit(300).get();
+  const duplicate = sameDay.docs.map(publicDocument).find((record) =>
+    record.active !== false
+    && record.teacherUid === data.teacherUid
+    && record.classId === data.classId
+    && String(record.subject ?? "").trim() === String(data.subject ?? "").trim()
+  );
+  if (duplicate) {
+    throw new AppError(409, "SCHEDULE_DUPLICATE", "تمت إضافة هذه المادة مسبقًا.");
+  }
+
   const conflict = sameDay.docs.map(publicDocument).filter((record) => record.active !== false).find((record) => {
     const sameTeacher = record.teacherUid === data.teacherUid;
     const sameClass = data.classId && record.classId === data.classId;

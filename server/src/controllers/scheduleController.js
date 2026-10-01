@@ -13,7 +13,7 @@ export async function index(req, res) {
 export async function create(req, res) {
   const id = await createScheduleBlock(req.user, req.body);
   await writeAudit({ req, action: "create", entityType: "schedule", entityId: id, summary: { day: req.body.day, teacherUid: req.body.teacherUid } });
-  res.status(201).json({ success: true, data: { id }, message: "تمت إضافة سجل الجدول بنجاح." });
+  res.status(201).json({ success: true, data: { id }, message: "تمت إضافة الحصة بنجاح." });
 }
 
 export async function update(req, res) {

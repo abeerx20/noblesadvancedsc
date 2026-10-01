@@ -517,6 +517,8 @@ function safeErrorMessage(error, fallback = "حدث خطأ. حاولي مرة أ
     ACCOUNT_INACTIVE: "الحساب غير نشط. تواصلي مع مسؤولة النظام.",
     FORBIDDEN: "لا تملكين صلاحية تنفيذ هذه العملية.",
     NOT_FOUND: "العنصر المطلوب غير موجود أو تم حذفه.",
+    SCHEDULE_DUPLICATE: "تمت إضافة هذه المادة مسبقًا.",
+    SCHEDULE_CONFLICT: "يوجد تعارض مع حصة مضافة مسبقًا.",
     VALIDATION_ERROR: "راجعي البيانات المدخلة وحاولي مرة أخرى."
   };
   return messages[error?.code] ?? fallback;
