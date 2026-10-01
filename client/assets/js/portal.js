@@ -107,7 +107,7 @@ const menuGroups = [
           {
             route: "reports",
             label: "التقارير",
-            roles: ["teacher", "it_teacher", "parent"],
+            roles: ["teacher", "it_teacher", "parent", "system_admin"],
             any: ["view_reports"],
             roleAny: ["system_admin"]
           }
@@ -878,7 +878,7 @@ function renderReportsHub() {
     links.push(studentHubLink("skill-approval", "تقارير المدير", "مراجعة تقييمات المعلمات واعتمادها أو إعادتها للتعديل"));
   }
 
-  if (has("view_reports") && hasRole("teacher", "it_teacher")) {
+  if (has("view_reports") && hasRole("teacher", "it_teacher", "system_admin")) {
     links.push(studentHubLink("skill-add", "إضافة مهارة", "إضافة مهارات المعلمة حسب الصف والشعبة والفترة"));
     links.push(studentHubLink("skill-entry", "إدخال الدرجات", "اختيار الصف والشعبة والطالب ثم تسجيل التقييم"));
   }
@@ -6870,6 +6870,7 @@ function renderCertificateManager(area) {
 
 const permissionLabels = {
   view_substitution_assignments: "عرض حصص الانتظار",
+  view_reports: "عرض التقارير وإدخال المهارات",
   view_students: "عرض الطلاب", manage_students: "إدارة الطلاب", enter_attendance: "إدخال الغياب", view_attendance: "متابعة الغياب", manage_attendance: "إدارة الغياب", manage_absence: "إدارة بلاغات الغياب", attendance_override: "تجاوز قيد فترة إدخال الغياب", view_schedules: "عرض الجدول", view_all_schedules: "عرض جميع الجداول", manage_schedules: "إدارة الجداول", request_leave: "تقديم إجازة واستئذان", manage_leave_requests: "مراجعة الإجازات – المديرة", manage_leave_hr_requests: "اعتماد الإجازات – الموارد البشرية", request_training: "تقديم دورة", manage_training_requests: "اعتماد الدورات", issue_work_assignments: "إصدار تكليف", view_all_work_assignments: "عرض جميع التكاليف", request_assets: "طلب عهدة", manage_assets: "إدارة العهد", request_loans: "استعلام سلفة", manage_loans: "إدارة السلف", manage_materials: "إدارة المواد", manage_invoices: "رفع الفواتير", manage_employees: "إدارة الموظفات", manage_permissions: "إدارة الصلاحيات", manage_announcements: "إدارة الإعلانات", upload_files: "رفع المرفقات"
 };
 
