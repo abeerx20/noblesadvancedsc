@@ -16,16 +16,31 @@ async function secondPeriodTeacher(classId, date, user) {
   return findAttendanceSchedule(schedules, weekdayKey(date), scheduleTeacherIds(user));
 }
 
+async function secondPeriodCoverage(classId, date, user) {
+  const snapshot = await db.collection("teacherCoverage")
+    .where("date", "==", date)
+    .where("classId", "==", classId)
+    .limit(300)
+    .get();
+  const teacherIds = scheduleTeacherIds(user);
+  return snapshot.docs.map((document) => document.data()).find((coverage) =>
+    coverage.status !== "ملغى"
+    && Number(coverage.periodNumber) === 2
+    && teacherIds.has(coverage.substituteUid)
+  ) ?? null;
+}
+
 export async function attendanceEligibility(user, classId, date) {
   if (!attendanceWindowIsOpen()) {
     return { allowed: false, reason: "إدخال الغياب متاح من 8:20 إلى 9:10 صباحًا بتوقيت مكة.", subject: null };
   }
   await getClassOrThrow(classId);
   const teacher = await secondPeriodTeacher(classId, date, user);
+  const coverage = teacher ? null : await secondPeriodCoverage(classId, date, user);
   return {
-    allowed: Boolean(teacher),
-    subject: teacher?.subject ?? null,
-    reason: teacher ? null : "لا توجد حصة ثانية مسجلة في جدولك لهذا الفصل اليوم."
+    allowed: Boolean(teacher || coverage),
+    subject: teacher?.subject ?? coverage?.subject ?? null,
+    reason: teacher || coverage ? null : "لا توجد حصة ثانية مسجلة في جدولك لهذا الفصل اليوم."
   };
 }
 
