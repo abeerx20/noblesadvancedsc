@@ -25,3 +25,5 @@ services:
         value: "true"
       - key: LOG_LEVEL
         value: info
+      - key: ATTENDANCE_WINDOW_BYPASS
+        value: "true"
