@@ -192,6 +192,7 @@ export async function assignCoverage(user, data) {
         startTime: schedule.startTime,
         endTime: schedule.endTime,
         substituteName: substitute.nameAr,
+        substituteEmployeeId: substitute.id,
         status: data.status ?? "مكلف",
         acknowledgedAt: null,
         assignedBy: user.uid,

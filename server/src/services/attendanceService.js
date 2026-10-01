@@ -22,11 +22,16 @@ async function secondPeriodCoverage(classId, date, user) {
     .where("classId", "==", classId)
     .limit(300)
     .get();
-  const teacherIds = scheduleTeacherIds(user);
+  const teacherIds = new Set([
+    ...scheduleTeacherIds(user),
+    user?.uid,
+    user?.employee?.id,
+    user?.employee?.authUid
+  ].filter((id) => typeof id === "string" && id.length > 0));
   return snapshot.docs.map((document) => document.data()).find((coverage) =>
     coverage.status !== "ملغى"
     && Number(coverage.periodNumber) === 2
-    && teacherIds.has(coverage.substituteUid)
+    && (teacherIds.has(coverage.substituteUid) || teacherIds.has(coverage.substituteEmployeeId))
   ) ?? null;
 }
 
