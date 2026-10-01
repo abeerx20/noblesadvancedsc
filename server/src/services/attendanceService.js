@@ -19,7 +19,6 @@ async function secondPeriodTeacher(classId, date, user) {
 async function secondPeriodCoverage(classId, date, user) {
   const snapshot = await db.collection("teacherCoverage")
     .where("date", "==", date)
-    .where("classId", "==", classId)
     .limit(300)
     .get();
   const teacherIds = new Set([
@@ -28,11 +27,19 @@ async function secondPeriodCoverage(classId, date, user) {
     user?.employee?.id,
     user?.employee?.authUid
   ].filter((id) => typeof id === "string" && id.length > 0));
-  return snapshot.docs.map((document) => document.data()).find((coverage) =>
+  const candidates = snapshot.docs.map((document) => document.data()).filter((coverage) =>
     coverage.status !== "ملغى"
     && Number(coverage.periodNumber) === 2
     && (teacherIds.has(coverage.substituteUid) || teacherIds.has(coverage.substituteEmployeeId))
-  ) ?? null;
+  );
+  for (const coverage of candidates) {
+    if (coverage.classId === classId) return coverage;
+    if (!coverage.classId && coverage.scheduleId) {
+      const schedule = await db.collection("teacherSchedule").doc(coverage.scheduleId).get();
+      if (schedule.exists && schedule.data()?.classId === classId) return coverage;
+    }
+  }
+  return null;
 }
 
 export async function attendanceEligibility(user, classId, date) {
