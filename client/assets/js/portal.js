@@ -511,21 +511,22 @@ async function printPortalPage(button = null) {
   window.print();
 }
 
+function safeErrorMessage(error, fallback = "حدث خطأ. حاولي مرة أخرى لاحقًا.") {
+  const messages = {
+    AUTH_REQUIRED: "يجب تسجيل الدخول للمتابعة.",
+    ACCOUNT_INACTIVE: "الحساب غير نشط. تواصلي مع مسؤولة النظام.",
+    FORBIDDEN: "لا تملكين صلاحية تنفيذ هذه العملية.",
+    NOT_FOUND: "العنصر المطلوب غير موجود أو تم حذفه.",
+    VALIDATION_ERROR: "راجعي البيانات المدخلة وحاولي مرة أخرى."
+  };
+  return messages[error?.code] ?? fallback;
+}
+
 function showError(error) {
   const notice = document.querySelector("#pageNotice");
   if (!notice) return;
 
-  const validationMessages = Array.isArray(error?.details)
-    ? error.details.map((detail) => {
-      const field = { teacherUid: "المعلمة", classId: "الفصل" }[detail.field];
-      return detail.message ? `${field ? `${field}: ` : ""}${detail.message}` : "";
-    }).filter(Boolean).join(" ")
-    : "";
-  const message = error?.code === "NOT_FOUND" || /المسار المطلوب غير موجود/.test(error?.message ?? "")
-    ? "هذا الرابط غير موجود أو تم حذف الموظفة سابقًا."
-    : error?.message ?? "تعذر إكمال العملية.";
-
-  setNotice(notice, "error", validationMessages || message);
+  setNotice(notice, "error", safeErrorMessage(error));
 }
 
 function renderMenu() {
@@ -1181,7 +1182,7 @@ function renderSkillApprovalPage() {
         renderSkillApprovalPage();
       } catch (error) {
         button.disabled = false;
-        setNotice(document.querySelector("#pageNotice"), "error", error.message);
+        setNotice(document.querySelector("#pageNotice"), "error", safeErrorMessage(error));
       }
     });
   });
@@ -2546,22 +2547,25 @@ async function renderCoverage() {
 
     const grade = value("coverageGrade");
     const section = value("coverageSection");
-    const payload = {
-      date: value("coverageDate"),
-      day: value("coverageDay"),
-      period: Number(value("coveragePeriod")) || undefined,
-      absentTeacherUid: value("coverageAbsentTeacher"),
-      subject: value("coverageSubject"),
-      grade,
-      section,
-      substituteUid: value("coverageSubstitute")
-    };
+    const date = value("coverageDate");
+    const absentTeacherUid = value("coverageAbsentTeacher");
+    const substituteUid = value("coverageSubstitute");
+    const period = Number(value("coveragePeriod"));
+    const selectedClass = classes.find((item) => String(item.grade) === String(grade) && String(item.section) === String(section));
 
     try {
       if (form.dataset.coverageEditId) {
-        await api.patch(`/coverage/${encodeURIComponent(form.dataset.coverageEditId)}`, payload);
+        await api.patch(`/coverage/${encodeURIComponent(form.dataset.coverageEditId)}`, { substituteUid });
         setNotice(document.querySelector("#pageNotice"), "success", "تم تعديل بيانات جدول الانتظار.");
       } else {
+        const schedules = await fetchScheduleRows("all", absentTeacherUid);
+        const schedule = schedules.find((item) => Number(item.periodNumber ?? item.period) === period && (!selectedClass || item.classId === selectedClass.id));
+        if (!schedule) {
+          setNotice(document.querySelector("#pageNotice"), "error", "لا توجد حصة دراسية مطابقة للبيانات المختارة.");
+          return;
+        }
+        const absence = await api.post("/coverage/absences", { employeeUid: absentTeacherUid, absenceType: "other", date, reason: "إنشاء تكليف حصة انتظار" });
+        const payload = { date, absenceReportId: absence.data.id, scheduleId: schedule.id, substituteUid };
         await api.post("/coverage", payload);
         setNotice(document.querySelector("#pageNotice"), "success", "تم حفظ بيانات جدول الانتظار.");
       }
@@ -3275,7 +3279,7 @@ async function loadCoverageManageRows(selectedDate, selectedTeacherUid = "") {
   } catch (error) {
     const errorBox = document.createElement("div");
     errorBox.className = "notice notice-error visible";
-    errorBox.textContent = error.message || "تعذّر تحميل جدول الانتظار.";
+    errorBox.textContent = safeErrorMessage(error, "تعذّر تحميل جدول الانتظار.");
     wrap.append(errorBox);
   }
 }
@@ -6857,7 +6861,7 @@ function renderCertificateManager(area) {
         setNotice(
           document.querySelector("#pageNotice"),
           "error",
-          error.message || "فشل إرسال النموذج"
+          safeErrorMessage(error, "فشل إرسال النموذج")
         );
       }
     });
@@ -7279,7 +7283,7 @@ async function renderParentAdd() {
         label.querySelector("input").addEventListener("change", (event) => { if (event.target.checked) selectedStudents.set(student.id, student); else selectedStudents.delete(student.id); });
         studentsArea.append(label);
       });
-    } catch (error) { document.querySelector("#parentStudentsStatus").textContent = "تعذر تنفيذ البحث."; setNotice(document.querySelector("#pageNotice"), "error", error.message); }
+    } catch (error) { document.querySelector("#parentStudentsStatus").textContent = "تعذر تنفيذ البحث."; setNotice(document.querySelector("#pageNotice"), "error", safeErrorMessage(error)); }
   }
   document.querySelector("#parentStudentSearchButton").addEventListener("click", searchStudents);
   document.querySelector("#parentStudentSearch").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); searchStudents(); } });
@@ -7309,7 +7313,7 @@ async function renderParentAdd() {
       studentsArea.replaceChildren();
       document.querySelector("#parentStudentsStatus").textContent = "تم الحفظ. ابحثي لإضافة ولي أمر آخر.";
     } catch (error) {
-      setNotice(document.querySelector("#pageNotice"), "error", error.message);
+      setNotice(document.querySelector("#pageNotice"), "error", safeErrorMessage(error));
     } finally {
       button.disabled = false;
     }
@@ -7463,7 +7467,7 @@ async function renderParentList() {
           const result = await api.patch(`/parent-admin/${encodeURIComponent(parent.id)}/password`, { password });
           setNotice(document.querySelector("#pageNotice"), "success", result.message);
         } catch (error) {
-          setNotice(document.querySelector("#pageNotice"), "error", error.message);
+          setNotice(document.querySelector("#pageNotice"), "error", safeErrorMessage(error));
         } finally {
           resetPasswordButton.disabled = false;
         }
@@ -7482,7 +7486,7 @@ async function renderParentList() {
           await renderParentList();
           setNotice(document.querySelector("#pageNotice"), "success", result.message);
         } catch (error) {
-          setNotice(document.querySelector("#pageNotice"), "error", error.message);
+          setNotice(document.querySelector("#pageNotice"), "error", safeErrorMessage(error));
           deleteButton.disabled = false;
         }
       });
@@ -7493,7 +7497,11 @@ async function renderParentList() {
     });
     area.replaceChildren(table);
   } catch (error) {
-    area.innerHTML = `<div class="notice notice-error visible">${error.message}</div>`;
+    area.replaceChildren();
+    const notice = document.createElement("div");
+    notice.className = "notice notice-error visible";
+    notice.textContent = safeErrorMessage(error);
+    area.append(notice);
   }
 }
 
@@ -7662,7 +7670,7 @@ function renderParentEdit(parent) {
       });
     } catch (error) {
       updateStudentsStatus("تعذر تنفيذ البحث.");
-      setNotice(document.querySelector("#pageNotice"), "error", error.message);
+      setNotice(document.querySelector("#pageNotice"), "error", safeErrorMessage(error));
     }
   }
 
@@ -7690,7 +7698,7 @@ function renderParentEdit(parent) {
       await renderParentList();
       setNotice(document.querySelector("#pageNotice"), "success", result.message);
     } catch (error) {
-      setNotice(document.querySelector("#pageNotice"), "error", error.message);
+      setNotice(document.querySelector("#pageNotice"), "error", safeErrorMessage(error));
       button.disabled = false;
     }
   });
@@ -7971,7 +7979,7 @@ async function init() {
   } catch (error) {
     content.replaceChildren();
     const section = document.createElement("section"); section.className = "content-card page-card";
-    const notice = document.createElement("div"); notice.className = "notice visible notice-error"; notice.textContent = error.message;
+    const notice = document.createElement("div"); notice.className = "notice visible notice-error"; notice.textContent = safeErrorMessage(error);
     section.append(notice); content.append(section);
   }
 }
@@ -8478,7 +8486,7 @@ async function updateAssetStatus(item) {
       loadAllAssets(requestPages.assets);
     }
   } catch (error) {
-    await assetDialogManager.showError('ط®ط·ط£: ' + (error.message || 'فشل تحديث الحالة'));
+    await assetDialogManager.showError(safeErrorMessage(error, "فشل تحديث الحالة"));
   }
 }
 
@@ -8492,7 +8500,7 @@ async function editAsset(item) {
       loadAllAssets(requestPages.assets);
     }
   } catch (error) {
-    await assetDialogManager.showError('ط®ط·ط£: ' + (error.message || 'فشل التعديل'));
+    await assetDialogManager.showError(safeErrorMessage(error, "فشل التعديل"));
   }
 }
 

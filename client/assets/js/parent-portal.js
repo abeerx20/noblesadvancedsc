@@ -247,7 +247,7 @@ function reportPage(title, rows, children, selectedChild = null) {
         button.title = shouldOpen ? "إغلاق التقرير" : "عرض التقرير";
         button.textContent = shouldOpen ? "×" : "عرض التقرير";
     }));
-    const bindForms = () => document.querySelectorAll(".skill-parent-feedback").forEach((form) => form.addEventListener("submit", async (event) => { event.preventDefault(); const textarea = form.querySelector("textarea"); if (!textarea.value.trim()) { textarea.setCustomValidity("تعليق ولي الأمر مطلوب."); textarea.reportValidity(); textarea.focus(); textarea.setCustomValidity(""); return; } if (!form.reportValidity()) return; const button = form.querySelector("button"); button.disabled = true; try { const result = await api.patch(`/parent/reports/${form.dataset.reportId}/feedback`, { comment: textarea.value.trim(), acknowledged: true }); setNotice(document.querySelector("#pageNotice"), "success", result.message); form.replaceChildren(); form.innerHTML = "تم إرسال الإقرار والتعليق."; } catch (error) { setNotice(document.querySelector("#pageNotice"), "error", error.message); button.disabled = false; } }));
+    const bindForms = () => document.querySelectorAll(".skill-parent-feedback").forEach((form) => form.addEventListener("submit", async (event) => { event.preventDefault(); const textarea = form.querySelector("textarea"); if (!textarea.value.trim()) { textarea.setCustomValidity("تعليق ولي الأمر مطلوب."); textarea.reportValidity(); textarea.focus(); textarea.setCustomValidity(""); return; } if (!form.reportValidity()) return; const button = form.querySelector("button"); button.disabled = true; try { const result = await api.patch(`/parent/reports/${form.dataset.reportId}/feedback`, { comment: textarea.value.trim(), acknowledged: true }); setNotice(document.querySelector("#pageNotice"), "success", result.message); form.replaceChildren(); form.innerHTML = "تم إرسال الإقرار والتعليق."; } catch (error) { setNotice(document.querySelector("#pageNotice"), "error", "حدث خطأ. حاولي مرة أخرى لاحقًا."); button.disabled = false; } }));
     bindReportToggles();
     bindForms();
     document.querySelector("#studentFilter")?.addEventListener("change", (event) => { document.querySelector("#reportResults").innerHTML = renderReports(event.target.value); bindReportToggles(); bindForms(); });
@@ -349,7 +349,7 @@ async function route() {
         document.querySelector(".side-home")?.classList.toggle("active", routeName === "children");
     } catch (error) {
         content.innerHTML = `<div class="content-card page-card"><div id="pageNotice" class="notice" role="alert"></div></div>`;
-        setNotice(document.querySelector("#pageNotice"), "error", error.message);
+        setNotice(document.querySelector("#pageNotice"), "error", "حدث خطأ. حاولي مرة أخرى لاحقًا.");
     }
 }
 

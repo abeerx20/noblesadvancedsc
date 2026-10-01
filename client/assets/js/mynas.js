@@ -70,7 +70,7 @@ async function init() {
       addService(grid, service);
     });
   } catch (error) {
-    setNotice(document.querySelector("#pageNotice"), "error", error.message);
+    setNotice(document.querySelector("#pageNotice"), "error", "حدث خطأ. حاولي مرة أخرى لاحقًا.");
   }
 }
 

@@ -32,7 +32,7 @@ export async function loginWithNationalId(nationalId, password) {
       body: JSON.stringify({ nationalId, password })
     });
   } catch {
-    throw new Error("تعذر الاتصال بالخادم. تحققي من اتصالك ثم حاولي مرة أخرى.");
+    throw new Error("حدث خطأ. حاولي مرة أخرى لاحقًا.");
   }
 
   const body = await response.json().catch(() => null);

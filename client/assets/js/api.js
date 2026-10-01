@@ -29,7 +29,7 @@ export async function apiFetch(path, options = {}) {
   try {
     response = await fetch(`${APP_CONFIG.apiBaseUrl}${path}`, { ...options, headers });
   } catch {
-    throw new Error("تعذر الاتصال بالخادم. تأكدي أن الباك إند يعمل على المنفذ 3000.");
+    throw new Error("حدث خطأ. حاولي مرة أخرى لاحقًا.");
   }
 
   const contentType = response.headers.get("content-type") ?? "";
@@ -59,11 +59,11 @@ export async function downloadFile(path, filename) {
   try {
     response = await fetch(`${APP_CONFIG.apiBaseUrl}${path}`, { headers: { Authorization: `Bearer ${await user.getIdToken()}` } });
   } catch {
-    throw new Error("تعذر الاتصال بالخادم.");
+    throw new Error("حدث خطأ. حاولي مرة أخرى لاحقًا.");
   }
   if (!response.ok) {
     const body = (response.headers.get("content-type") ?? "").includes("application/json") ? await response.json() : null;
-    throw new Error(body?.error?.message ?? "تعذر تنزيل الملف.");
+    throw new Error("حدث خطأ. حاولي مرة أخرى لاحقًا.");
   }
   const url = URL.createObjectURL(await response.blob());
   const link = document.createElement("a");

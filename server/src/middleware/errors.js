@@ -21,8 +21,7 @@ export function errorHandler(error, req, res, _next) {
     success: false,
     error: {
       code: known ? error.code : "INTERNAL_ERROR",
-      message: known ? error.message : "حدث خطأ غير متوقع. حاولي مرة أخرى لاحقًا.",
-      details: known ? error.details : undefined,
+      message: "حدث خطأ. حاولي مرة أخرى لاحقًا.",
       requestId: req.requestId
     }
   });

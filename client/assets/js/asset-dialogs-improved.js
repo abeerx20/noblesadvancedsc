@@ -418,7 +418,7 @@ async function updateAssetStatus(item) {
     }
   } catch (error) {
     console.error('Error updating asset:', error);
-    await assetDialog.showError('حدث خطأ: ' + (error.message || 'فشل تحديث الحالة'));
+    await assetDialog.showError('حدث خطأ. حاولي مرة أخرى لاحقًا.');
   }
 }
 
@@ -437,7 +437,7 @@ async function editAsset(item) {
     }
   } catch (error) {
     console.error('Error editing asset:', error);
-    await assetDialog.showError('حدث خطأ: ' + (error.message || 'فشل التعديل'));
+    await assetDialog.showError('حدث خطأ. حاولي مرة أخرى لاحقًا.');
   }
 }
 
@@ -456,7 +456,7 @@ async function deleteAsset(item) {
     }
   } catch (error) {
     console.error('Error deleting asset:', error);
-    await assetDialog.showError('حدث خطأ: ' + (error.message || 'فشل الحذف'));
+    await assetDialog.showError('حدث خطأ. حاولي مرة أخرى لاحقًا.');
   }
 }
 
