@@ -2496,7 +2496,7 @@ async function renderCoverage() {
         </div>
         <div class="field">
           <label for="coverageSubject">المادة</label>
-          <input id="coverageSubject" maxlength="80" required placeholder="اكتب المادة">
+          <select id="coverageSubject" required><option value="">اختر المادة</option></select>
         </div>
         <div class="field">
           <label for="coverageSubstitute">معلمة الانتظار</label>
@@ -2518,12 +2518,15 @@ async function renderCoverage() {
   const grades = [...new Set(classes.map((item) => item.grade).filter(Boolean))].sort();
   const gradeSelect = document.querySelector("#coverageGrade");
   const sectionSelect = document.querySelector("#coverageSection");
+  const subjectSelect = document.querySelector("#coverageSubject");
   fillSelect(gradeSelect, grades, (item) => item, (item) => labels.grade[item] ?? item, "اختر الصف");
 
   gradeSelect.addEventListener("change", () => {
     const selectedGrade = gradeSelect.value;
     const sections = [...new Set(classes.filter((item) => item.grade === selectedGrade).map((item) => item.section).filter(Boolean))].sort();
     fillSelect(sectionSelect, sections, (item) => item, (item) => item, "اختر الفصل");
+    const stage = getStageForClass(classes, selectedGrade);
+    setScheduleSelectOptions(subjectSelect, stageSubjectMap[stage] ?? [], (item) => item, "اختر المادة");
     sectionSelect.disabled = !sections.length;
     if (!sections.length) sectionSelect.value = "";
   });
@@ -2550,6 +2553,7 @@ async function renderCoverage() {
     const date = value("coverageDate");
     const absentTeacherUid = value("coverageAbsentTeacher");
     const substituteUid = value("coverageSubstitute");
+    const subject = value("coverageSubject");
     const period = Number(value("coveragePeriod"));
     const selectedClass = classes.find((item) => String(item.grade) === String(grade) && String(item.section) === String(section));
 
@@ -2559,7 +2563,7 @@ async function renderCoverage() {
         setNotice(document.querySelector("#pageNotice"), "success", "تم تعديل بيانات جدول الانتظار.");
       } else {
         const schedules = await fetchScheduleRows("all", absentTeacherUid);
-        const schedule = schedules.find((item) => Number(item.periodNumber ?? item.period) === period && (!selectedClass || item.classId === selectedClass.id));
+        const schedule = schedules.find((item) => Number(item.periodNumber ?? item.period) === period && (!selectedClass || item.classId === selectedClass.id) && (!subject || item.subject === subject));
         if (!schedule) {
           setNotice(document.querySelector("#pageNotice"), "error", "لا توجد حصة دراسية مطابقة للبيانات المختارة.");
           return;
