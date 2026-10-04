@@ -5,7 +5,7 @@ export function findAttendanceSchedule(schedules, day, teacherUid) {
         ? teacherUid
         : new Set(teacherUid ? [teacherUid] : []);
     return schedules.find((schedule) => schedule.day === day
-        && Number(schedule.periodNumber) === ATTENDANCE_PERIOD_NUMBER
+        && Number(schedule.periodNumber ?? schedule.period) === ATTENDANCE_PERIOD_NUMBER
         && schedule.active !== false
         && (!teacherUids.size || teacherUids.has(schedule.teacherUid) || teacherUids.has(schedule.teacherEmployeeId))) ?? null;
 }

@@ -4,6 +4,7 @@ export function scheduleTeacherIds(user) {
     const ids = [userUid];
     if (employee?.id && (!employee.authUid || employee.authUid === userUid)) {
         ids.push(employee.id);
+        if (typeof employee.employeeUid === "string") ids.push(employee.employeeUid);
     }
     return new Set(ids.filter((id) => typeof id === "string" && id.length > 0));
 }

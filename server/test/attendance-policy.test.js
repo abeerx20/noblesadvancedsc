@@ -16,6 +16,14 @@ test("uses the subject from the current teacher's second-period schedule", () =>
     assert.equal(findAttendanceSchedule(schedules, "sunday", "teacher")?.subject, "رياضيات");
 });
 
+test("recognizes legacy schedules that store the period as period", () => {
+    const schedules = [
+        { day: "sunday", period: 2, teacherUid: "teacher", subject: "رياضيات", active: true }
+    ];
+
+    assert.equal(findAttendanceSchedule(schedules, "sunday", "teacher")?.subject, "رياضيات");
+});
+
 test("matches legacy schedule assignments by linked employee document id", () => {
     const teacherIds = scheduleTeacherIds({ uid: "auth-uid", employee: { id: "employee-doc" } });
     const schedules = [
@@ -25,10 +33,22 @@ test("matches legacy schedule assignments by linked employee document id", () =>
     assert.equal(findAttendanceSchedule(schedules, "monday", teacherIds)?.subject, "رياضيات");
 });
 
+test("matches legacy schedule assignments by linked employee uid", () => {
+    const teacherIds = scheduleTeacherIds({
+        uid: "auth-uid",
+        employee: { id: "employee-doc", authUid: "auth-uid", employeeUid: "legacy-employee-uid" }
+    });
+    const schedules = [
+        { day: "monday", periodNumber: 2, teacherUid: "legacy-employee-uid", subject: "علوم", active: true }
+    ];
+
+    assert.equal(findAttendanceSchedule(schedules, "monday", teacherIds)?.subject, "علوم");
+});
+
 test("does not use an employee id linked to a different authentication uid", () => {
     const teacherIds = scheduleTeacherIds({
         uid: "current-auth-uid",
-        employee: { id: "employee-doc", authUid: "different-auth-uid" }
+        employee: { id: "employee-doc", authUid: "different-auth-uid", employeeUid: "other-legacy-uid" }
     });
 
     assert.deepEqual([...teacherIds], ["current-auth-uid"]);

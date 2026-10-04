@@ -2198,7 +2198,7 @@ async function renderAttendance() {
         <div class="field"><label for="attendanceGrade">الصف</label><select id="attendanceGrade" required><option value="">اختاري الصف</option></select></div>
         <div class="field"><label for="attendanceSection">الشعبة</label><select id="attendanceSection" required disabled><option value="">اختاري الشعبة</option></select></div>
         <div class="field"><label for="attendanceGender">الجنس</label><select id="attendanceGender" required disabled><option value="">اختاري الجنس</option></select></div>
-        <div class="field"><label for="attendanceSubject">المادة</label><input id="attendanceSubject" readonly placeholder="تظهر تلقائيًا من الحصة الثانية"></div>
+        <div class="field"><label for="attendanceSubject">المادة</label><input id="attendanceSubject" readonly placeholder="تظهر تلقائيًا من الحصة المكلفة"></div>
       </div>
     </section>
     <label id="allPresentWrap" class="attendance-all-present hidden no-print"><input id="allPresent" type="checkbox"> <span>جميع الطلاب حاضرين</span></label>
@@ -2208,14 +2208,14 @@ async function renderAttendance() {
   const todayDay = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][new Date(`${today}T12:00:00Z`).getUTCDay()];
   const teacherAssignedClassIds = new Set(
     (await fetchScheduleRows("mine"))
-      .filter((item) => item.blockType === "class" && item.classId && item.day === todayDay && Number(item.periodNumber) === 2)
+      .filter((item) => item.blockType === "class" && item.classId && item.day === todayDay && Number(item.periodNumber ?? item.period) === 2)
       .map((item) => item.classId)
   );
   const classes = allClasses.filter((item) => teacherAssignedClassIds.has(item.id));
   const grade = document.querySelector("#attendanceGrade"); const section = document.querySelector("#attendanceSection"); const gender = document.querySelector("#attendanceGender");
   fillSelect(grade, uniqueValues(classes.map((item) => item.grade)), (x) => x, (x) => labels.grade[x] ?? x, "اختاري الصف");
   if (!classes.length) {
-    const message = "لا توجد حصة ثانية مسجلة في جدولك اليوم.";
+    const message = "لا توجد حصة مسجلة في جدولك اليوم.";
     document.querySelector("#attendanceGrade").disabled = true;
     document.querySelector("#attendanceSection").disabled = true;
     document.querySelector("#attendanceGender").disabled = true;
