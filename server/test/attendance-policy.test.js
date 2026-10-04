@@ -84,3 +84,10 @@ test("attendance opens from 08:20 through 09:10 Riyadh time", () => {
     assert.equal(attendanceWindowIsOpen(new Date("2026-09-27T06:10:00Z")), true);
     assert.equal(attendanceWindowIsOpen(new Date("2026-09-27T06:11:00Z")), false);
 });
+
+test("kindergarten attendance opens from 08:50 through 09:40 Riyadh time", () => {
+    assert.equal(attendanceWindowIsOpen(new Date("2026-09-27T05:49:00Z"), "kindergarten"), false);
+    assert.equal(attendanceWindowIsOpen(new Date("2026-09-27T05:50:00Z"), "kindergarten"), true);
+    assert.equal(attendanceWindowIsOpen(new Date("2026-09-27T06:40:00Z"), "kindergarten"), true);
+    assert.equal(attendanceWindowIsOpen(new Date("2026-09-27T06:41:00Z"), "kindergarten"), false);
+});

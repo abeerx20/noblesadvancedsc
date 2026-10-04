@@ -2187,7 +2187,7 @@ async function renderAttendancePortal() {
 
 async function renderAttendance() {
   page("إدخال الغياب", "تتاح العملية لمعلمة الحصة الثانية أو للمستخدمة المخولة.", `
-    <aside class="attendance-warning"><strong>تنبيه</strong><span>يُتاح إدخال الغياب من 8:20 إلى 9:10 صباحًا. يرجى التأكد من صحة البيانات ومراجعتها قبل الإرسال.</span></aside>
+    <aside class="attendance-warning"><strong>تنبيه</strong><span>نافذة الإدخال: الابتدائي 8:20 إلى 9:10، ورياض الأطفال 8:50 إلى 9:40 بتوقيت مكة. يرجى التأكد من صحة البيانات ومراجعتها قبل الإرسال.</span></aside>
     <div id="attendanceScheduleNotice" class="attendance-schedule-notice hidden" role="status"></div>
     <section class="attendance-data-section"><h2>بيانات الغياب</h2>
       <div class="form-grid attendance-entry-grid">

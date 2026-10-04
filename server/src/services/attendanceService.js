@@ -43,10 +43,11 @@ async function secondPeriodCoverage(classId, date, user) {
 }
 
 export async function attendanceEligibility(user, classId, date) {
-  if (!attendanceWindowIsOpen()) {
-    return { allowed: false, reason: "إدخال الغياب متاح من 8:20 إلى 9:10 صباحًا بتوقيت مكة.", subject: null };
+  const academicClass = await getClassOrThrow(classId);
+  if (!attendanceWindowIsOpen(new Date(), academicClass.stage)) {
+    const window = academicClass.stage === "kindergarten" ? "8:50 إلى 9:40" : "8:20 إلى 9:10";
+    return { allowed: false, reason: `إدخال الغياب متاح من ${window} صباحًا بتوقيت مكة.`, subject: null };
   }
-  await getClassOrThrow(classId);
   const teacher = await secondPeriodTeacher(classId, date, user);
   const coverage = teacher ? null : await secondPeriodCoverage(classId, date, user);
   return {
