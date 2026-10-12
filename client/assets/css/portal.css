@@ -6826,3 +6826,193 @@ label:has(#agreement) {
 #scheduleEntryPanel>.schedule-tabs {
   margin-top: 14px;
 }
+
+.coverage-panel {
+  border-color: #dce8e2;
+  border-radius: 16px;
+  padding: clamp(18px, 3vw, 30px);
+  background:
+    radial-gradient(ellipse at top right, rgba(212, 177, 90, .12), transparent 42%),
+    linear-gradient(145deg, #fff 0%, #fbfdfc 100%);
+  box-shadow: 0 14px 32px rgba(6, 66, 54, .07);
+}
+
+.coverage-section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.coverage-section-heading h2 {
+  margin: 0;
+  color: var(--green-900);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.coverage-section-heading p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.coverage-heading-mark {
+  flex: 0 0 4px;
+  align-self: stretch;
+  min-height: 38px;
+  border-radius: 8px;
+  background: var(--gold, #d4b15a);
+}
+
+.coverage-admin-form {
+  margin-top: 22px;
+  padding: clamp(16px, 2.4vw, 24px);
+  border: 1px solid #e6eeea;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .88);
+}
+
+.coverage-admin-form .field label,
+.coverage-management-filters .field label {
+  color: var(--green-900);
+  font-weight: 600;
+}
+
+.coverage-admin-form .field input,
+.coverage-admin-form .field select,
+.coverage-management-filters .field input,
+.coverage-management-filters .field select {
+  min-height: 42px;
+  border-color: #dbe6e1;
+  border-radius: 9px;
+  background-color: #fff;
+}
+
+.coverage-admin-form .field input:focus,
+.coverage-admin-form .field select:focus,
+.coverage-management-filters .field input:focus,
+.coverage-management-filters .field select:focus {
+  border-color: var(--green-700);
+  box-shadow: 0 0 0 3px rgba(15, 107, 85, .12);
+}
+
+.coverage-admin-form .form-actions {
+  margin-top: 8px;
+}
+
+.coverage-admin-form .form-actions .btn,
+.coverage-add-link {
+  min-width: 156px;
+  min-height: 42px;
+  border: 1px solid var(--green-900);
+  border-radius: 10px;
+  background: var(--green-900);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 5px 12px rgba(6, 66, 54, .14);
+  text-decoration: none;
+}
+
+.coverage-admin-form .form-actions .btn:hover,
+.coverage-add-link:hover {
+  border-color: var(--green-700);
+  background: var(--green-700);
+  color: #fff;
+}
+
+.coverage-management-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 4px 2px 18px;
+  border-bottom: 1px solid #e6eeea;
+}
+
+.schedule-manage-panel#scheduleCoveragePanel {
+  border-color: #dce8e2;
+  border-radius: 16px;
+  padding: clamp(16px, 2.6vw, 26px);
+  background:
+    radial-gradient(ellipse at top right, rgba(212, 177, 90, .1), transparent 42%),
+    linear-gradient(145deg, #fff 0%, #fbfdfc 100%);
+  box-shadow: 0 12px 28px rgba(6, 66, 54, .055);
+}
+
+.coverage-management-heading .coverage-add-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 9px 16px;
+  border: 1px solid var(--green-900);
+  background: var(--green-900);
+  color: #fff;
+  box-shadow: 0 5px 12px rgba(6, 66, 54, .14);
+}
+
+.coverage-management-heading .coverage-add-link:hover {
+  border-color: var(--green-700);
+  background: var(--green-700);
+  color: #fff;
+}
+
+.coverage-management-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr)) auto;
+  align-items: end;
+  gap: 12px;
+  width: 100%;
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid #e6eeea;
+  border-radius: 12px;
+  background: #f7faf8;
+}
+
+.coverage-management-filters .form-actions {
+  margin: 0;
+}
+
+.coverage-management-table {
+  overflow-x: auto;
+  border: 1px solid #e2ebe6;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.coverage-management-table table {
+  min-width: 760px;
+  margin: 0;
+}
+
+.coverage-management-table th {
+  background: #edf4f1;
+  color: var(--green-900);
+  font-weight: 600;
+}
+
+.coverage-management-table tbody tr:hover {
+  background: #fbfdfc;
+}
+
+.coverage-management-table .empty-state {
+  margin: 0;
+  padding: 28px 16px;
+}
+
+@media (max-width: 700px) {
+  .coverage-management-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .coverage-management-heading .coverage-add-link {
+    width: 100%;
+  }
+
+  .coverage-management-filters {
+    grid-template-columns: 1fr;
+  }
+}

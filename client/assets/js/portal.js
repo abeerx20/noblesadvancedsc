@@ -35,6 +35,17 @@ const normalizeRoleKey = (role) => {
   return String(role).trim().toLowerCase().replace(/[\s-]+/g, "_");
 };
 
+const coverageStatusLabels = {
+  مكلف: "تمت إضافة حصة الانتظار",
+  مؤكد: "مؤكد",
+  مكتمل: "مكتمل",
+  ملغى: "ملغى"
+};
+
+function resolveCoverageStatusLabel(status) {
+  return coverageStatusLabels[status] ?? status ?? "تمت إضافة حصة الانتظار";
+}
+
 const labels = {
   role: {
     teacher: "معلمة", principal: "مديرة المدرسة", vice_principal: "وكيلة", hr: "الموارد البشرية", resource_user: "الموارد البشرية والمالية", it: "تقنية المعلومات",
@@ -44,7 +55,7 @@ const labels = {
   grade: { KG1: "المستوى الأول", KG2: "المستوى الثاني", KG3: "المستوى الثالث", Grade1: "الأول ابتدائي", Grade2: "الثاني ابتدائي", Grade3: "الثالث ابتدائي" },
   gender: { mixed: "مختلط", male: "بنين", female: "بنات" },
   attendance: { present: "حاضر", excused: "غائب بعذر", unexcused: "غائب دون عذر", late: "متأخر" },
-  day: { sunday: "الأحد", monday: "الاثنين", tuesday: "الثلاثاء", wednesday: "الأربعاء", thursday: "الخميس" },
+  day: { sunday: "الأحد", monday: "الاثنين", tuesday: "الثلاثاء", wednesday: "الأربعاء", thursday: "الخميس", friday: "الجمعة", saturday: "السبت" },
   leave: { sick: "مرضية", emergency: "اضطرارية", maternity: "وضع", nursing_hour: "ساعة الأمومة", marriage: "زواج", bereavement: "وفاة", unpaid: "بدون راتب", exam: "اختبار" }
 };
 
@@ -667,10 +678,22 @@ function renderNotifications() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = `notification-item${item.read ? " read" : ""}`;
+    let displayTitle = item.title ?? "تنبيه جديد";
+    let displayMessage = item.message || "لديكِ تحديث جديد.";
+    if (item.type === "teacher_coverage") {
+      displayTitle = "حصة انتظار جديدة";
+      const legacyMessage = /^تم تكليفك بتغطية (.+) يوم (.+)\.$/.exec(displayMessage);
+      if (legacyMessage) {
+        displayMessage = `أُضيفت حصة ${legacyMessage[1]} إلى جدول الانتظار يوم ${legacyMessage[2]}.`;
+      }
+    } else if (item.type === "teacher_coverage_acknowledged") {
+      displayTitle = "الاطلاع على حصة الانتظار";
+      displayMessage = displayMessage.replace("اطلعت على تكليف الانتظار.", "اطلعت على حصة الانتظار.");
+    }
     const title = document.createElement("strong");
-    title.textContent = item.title ?? "تنبيه جديد";
+    title.textContent = displayTitle;
     const message = document.createElement("span");
-    message.textContent = item.message || "لديكِ تحديث جديد.";
+    message.textContent = displayMessage;
     const date = document.createElement("small");
     date.textContent = notificationDate(item.createdAt);
     button.append(title, message, date);
@@ -2187,7 +2210,7 @@ async function renderAttendancePortal() {
 
 async function renderAttendance() {
   page("إدخال الغياب", "تتاح العملية لمعلمة الحصة الثانية أو للمستخدمة المخولة.", `
-    <aside class="attendance-warning"><strong>تنبيه</strong><span>نافذة الإدخال: الابتدائي 8:20 إلى 9:10، ورياض الأطفال 8:50 إلى 9:40 بتوقيت مكة. يرجى التأكد من صحة البيانات ومراجعتها قبل الإرسال.</span></aside>
+    <aside class="attendance-warning"><strong>تنبيه</strong><span>نافذة الإدخال: الابتدائي 8:20 إلى 9:10، ورياض الأطفال 8:50 إلى 9:40. يرجى التأكد من صحة البيانات ومراجعتها قبل الإرسال.</span></aside>
     <div id="attendanceScheduleNotice" class="attendance-schedule-notice hidden" role="status"></div>
     <section class="attendance-data-section"><h2>بيانات الغياب</h2>
       <div class="form-grid attendance-entry-grid">
@@ -2438,13 +2461,14 @@ function coverageWeek(dateValue) {
     throw new Error("اختاري تاريخاً صحيحاً لجدول الانتظار.");
   }
   start.setUTCDate(start.getUTCDate() - start.getUTCDay());
-  const days = Array.from({ length: 5 }, (_, index) => {
+  const dayKeys = Object.keys(labels.day);
+  const days = Array.from({ length: dayKeys.length }, (_, index) => {
     const date = new Date(start);
     date.setUTCDate(start.getUTCDate() + index);
     const dateText = [date.getUTCFullYear(), String(date.getUTCMonth() + 1).padStart(2, "0"), String(date.getUTCDate()).padStart(2, "0")].join("-");
-    return { date: dateText, day: Object.keys(labels.day)[index] };
+    return { date: dateText, day: dayKeys[index] };
   });
-  return { from: days[0].date, to: days[4].date, days };
+  return { from: days[0].date, to: days[days.length - 1].date, days };
 }
 
 async function renderCoverage() {
@@ -2459,8 +2483,14 @@ async function renderCoverage() {
   }
 
   page("جدول الانتظار", "إدخال بيانات حصص الانتظار والإقرار من قبل المعلمة المختارة.", `
-    <section class="schedule-manage-panel coverage-panel">
-      <h2>إضافة حصة انتظار</h2>
+    <section class="schedule-manage-panel coverage-panel coverage-add-card">
+      <div class="coverage-section-heading">
+        <span class="coverage-heading-mark" aria-hidden="true"></span>
+        <div>
+          <h2>إضافة حصة انتظار</h2>
+          <p>حددي الحصة والمعلمة البديلة لإضافتها إلى جدول الانتظار.</p>
+        </div>
+      </div>
       <form id="coverageAssignmentForm" class="form-grid schedule-form coverage-admin-form" novalidate>
         <div class="field">
           <label for="coverageDay">اليوم</label>
@@ -2534,13 +2564,17 @@ async function renderCoverage() {
   });
 
   const syncCoverageDay = () => {
-    const chosenDate = value("coverageDate");
-    if (!chosenDate) return;
+    const chosenDate = normalizeDisplayDate(value("coverageDate"));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(chosenDate)) {
+      document.querySelector("#coverageDay").value = "";
+      return;
+    }
     const dayName = new Date(`${chosenDate}T12:00:00Z`);
     const weekday = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][dayName.getUTCDay()];
     document.querySelector("#coverageDay").value = dayName.getUTCDay() < 5 ? weekday : "";
   };
 
+  document.querySelector("#coverageDate").addEventListener("input", syncCoverageDay);
   document.querySelector("#coverageDate").addEventListener("change", syncCoverageDay);
   document.querySelector("#backCoverage").addEventListener("click", () => navigateHome());
   syncCoverageDay();
@@ -2552,12 +2586,16 @@ async function renderCoverage() {
 
     const grade = value("coverageGrade");
     const section = value("coverageSection");
-    const date = value("coverageDate");
+    const date = normalizeDisplayDate(value("coverageDate"));
     const absentTeacherUid = value("coverageAbsentTeacher");
     const substituteUid = value("coverageSubstitute");
     const subject = value("coverageSubject");
     const period = Number(value("coveragePeriod"));
     const selectedClass = classes.find((item) => String(item.grade) === String(grade) && String(item.section) === String(section));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      setNotice(document.querySelector("#pageNotice"), "error", "التاريخ غير صالح. أدخليه بالصيغة سنة/شهر/يوم.");
+      return;
+    }
 
     try {
       if (form.dataset.coverageEditId) {
@@ -2570,8 +2608,7 @@ async function renderCoverage() {
           setNotice(document.querySelector("#pageNotice"), "error", "لا توجد حصة دراسية مطابقة للبيانات المختارة.");
           return;
         }
-        const absence = await api.post("/coverage/absences", { employeeUid: absentTeacherUid, absenceType: "other", date, reason: "إنشاء تكليف حصة انتظار" });
-        const payload = { date, absenceReportId: absence.data.id, scheduleId: schedule.id, substituteUid };
+        const payload = { date, scheduleId: schedule.id, substituteUid };
         await api.post("/coverage", payload);
         setNotice(document.querySelector("#pageNotice"), "success", "تم حفظ بيانات جدول الانتظار.");
       }
@@ -2650,14 +2687,71 @@ async function renderMyCoverage() {
   }
 }
 
+function applyCoverageFilters(rows, dayValue = "", periodValue = "") {
+  return rows.filter((row) => {
+    const matchesDay = !dayValue || row.day === dayValue;
+    const matchesPeriod = !periodValue || String(row.periodNumber ?? row.period ?? "") === String(periodValue);
+    return matchesDay && matchesPeriod;
+  });
+}
+
 function drawCoverageDays(selectedDate, selectedTeacherUid, rows, substitutes) {
   const wrap = document.querySelector("#coverageDays");
   wrap.replaceChildren();
-  const filteredRows = rows.filter((row) => row.date === selectedDate && (!selectedTeacherUid || row.absentTeacherUid === selectedTeacherUid));
+
+  const allRows = rows.filter((row) => row.date === selectedDate && (!selectedTeacherUid || row.absentTeacherUid === selectedTeacherUid));
+  const filters = document.createElement("div");
+  filters.className = "filters";
+  filters.innerHTML = `
+    <div class="field">
+      <label for="coverageDayFilter">اليوم</label>
+      <select id="coverageDayFilter">
+        <option value="">كل الأيام</option>
+        <option value="sunday">الأحد</option>
+        <option value="monday">الاثنين</option>
+        <option value="tuesday">الثلاثاء</option>
+        <option value="wednesday">الأربعاء</option>
+        <option value="thursday">الخميس</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="coveragePeriodFilter">الحصة</label>
+      <select id="coveragePeriodFilter">
+        <option value="">كل الحصص</option>
+      </select>
+    </div>
+  `;
+  wrap.append(filters);
+
+  const periodSelect = document.querySelector("#coveragePeriodFilter");
+  const periods = [...new Set(allRows.map((row) => row.periodNumber).filter((value) => value !== null && value !== undefined && value !== ""))]
+    .sort((a, b) => Number(a) - Number(b));
+  if (!periods.length) {
+    const defaultPeriods = Array.from({ length: 9 }, (_, index) => index + 1);
+    defaultPeriods.forEach((period) => {
+      periodSelect.append(new Option(`الحصة ${period}`, String(period)));
+    });
+  }
+  periods.forEach((period) => {
+    periodSelect.append(new Option(`الحصة ${period}`, String(period)));
+  });
+
+  document.querySelector("#coverageDayFilter")?.addEventListener("change", () => {
+    drawCoverageDays(selectedDate, selectedTeacherUid, rows, substitutes);
+  });
+
+  document.querySelector("#coveragePeriodFilter")?.addEventListener("change", () => {
+    drawCoverageDays(selectedDate, selectedTeacherUid, rows, substitutes);
+  });
+
+  const dayValue = document.querySelector("#coverageDayFilter")?.value || "";
+  const periodValue = document.querySelector("#coveragePeriodFilter")?.value || "";
+  const filteredRows = applyCoverageFilters(allRows, dayValue, periodValue);
+
   if (!filteredRows.length) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "لا توجد حصص مسجلة لهذا اليوم للمعلمة المختارة. تأكدي من إضافة غياب المعلمة أولًا.";
+    empty.textContent = "لا توجد حصص مسجلة لهذا اليوم أو لهذه الحصة. تأكدي من إضافة غياب المعلمة أولًا.";
     wrap.append(empty);
     return;
   }
@@ -2686,7 +2780,7 @@ function drawCoverageDays(selectedDate, selectedTeacherUid, rows, substitutes) {
     substitute.value = row.substituteUid;
 
     const status = document.createElement("select");
-    ["مكلف", "مؤكد", "مكتمل", "ملغى"].forEach((item) => status.append(new Option(item, item)));
+    ["مكلف", "مؤكد", "مكتمل", "ملغى"].forEach((item) => status.append(new Option(resolveCoverageStatusLabel(item), item)));
     status.value = row.assigned ? row.status : "مكلف";
 
     const actionCell = document.createElement("td");
@@ -2856,7 +2950,7 @@ function setupScheduleClassSelectors(classes) {
   const refreshPeriods = () => {
     setScheduleSelectOptions(
       periodNumber,
-      Array.from({ length: 8 }, (_, index) => index + 1),
+      Array.from({ length: 9 }, (_, index) => index + 1),
       (item) => `الحصة ${item}`,
       "اختياري"
     );
@@ -3002,7 +3096,7 @@ async function loadAndDrawSchedule() {
     grid.classList.toggle("schedule-grid-empty", !rows.some((item) => item.blockType === type));
 
     const dayEntries = Object.entries(labels.day);
-    const periodNumbers = Array.from({ length: 8 }, (_, index) => index + 1);
+    const periodNumbers = Array.from({ length: 9 }, (_, index) => index + 1);
     const table = document.createElement("div");
     table.className = "schedule-timetable";
 
@@ -3095,6 +3189,7 @@ async function renderScheduleManage() {
       <div class="schedule-tabs no-print" role="tablist" aria-label="إدارة نوع الجدول">
         <button class="schedule-tab active" type="button" data-schedule-manage="class" role="tab" aria-selected="true">الحصص الدراسية</button>
         <button class="schedule-tab" type="button" data-schedule-manage="break" role="tab" aria-selected="false">المناوبات</button>
+        <button class="schedule-tab" type="button" data-schedule-manage="coverage" role="tab" aria-selected="false">جدول الانتظار</button>
       </div>
 
       <section id="scheduleClassPanel" class="schedule-manage-panel">
@@ -3104,7 +3199,7 @@ async function renderScheduleManage() {
         <div class="field"><label for="classScheduleDay">اليوم</label><select id="classScheduleDay" required><option value="">اختاري اليوم</option><option value="sunday">الأحد</option><option value="monday">الاثنين</option><option value="tuesday">الثلاثاء</option><option value="wednesday">الأربعاء</option><option value="thursday">الخميس</option></select></div>
         <div class="field"><label for="classScheduleGrade">الصف</label><select id="classScheduleGrade" required><option value="">اختاري الصف</option></select></div>
         <div class="field"><label for="classScheduleSection">الفصل</label><select id="classScheduleSection" required disabled><option value="">اختاري الفصل</option></select></div>
-        <div class="field"><label for="classPeriodNumber">الحصة</label><select id="classPeriodNumber"><option value="">اختياري</option>${Array.from({ length: 8 }, (_, index) => `<option value="${index + 1}">الحصة ${index + 1}</option>`).join("")}</select></div>
+        <div class="field"><label for="classPeriodNumber">الحصة</label><select id="classPeriodNumber"><option value="">اختياري</option>${Array.from({ length: 9 }, (_, index) => `<option value="${index + 1}">الحصة ${index + 1}</option>`).join("")}</select></div>
         <div class="field"><label for="classScheduleSubject">المادة</label><select id="classScheduleSubject" required><option value="">اختاري المادة</option></select></div>
         <div class="field"><label for="classStartTime">وقت البداية</label><input id="classStartTime" type="time" min="06:30" max="14:30" required></div>
         <div class="field"><label for="classEndTime">وقت النهاية</label><input id="classEndTime" type="time" min="06:30" max="14:30" required></div>
@@ -3127,6 +3222,25 @@ async function renderScheduleManage() {
   <button id="saveBreakSchedule" class="btn btn-small" type="submit">حفظ</button>
   <button id="cancelBreakScheduleEdit" class="btn btn-secondary btn-small hidden" type="button">إلغاء </button>
 </div>      </form>
+      </section>
+
+      <section id="scheduleCoveragePanel" class="schedule-manage-panel hidden">
+        <div class="coverage-management-heading">
+          <div class="coverage-section-heading">
+            <span class="coverage-heading-mark" aria-hidden="true"></span>
+            <div>
+              <h2>إدارة جدول الانتظار</h2>
+              <p>استعرضي السجلات حسب التاريخ أو المعلمة، ثم عدّليها أو احذفيها.</p>
+            </div>
+          </div>
+          <a class="btn coverage-add-link" href="#coverage">إضافة حصة انتظار</a>
+        </div>
+        <div class="schedule-view-filter coverage-management-filters no-print">
+          <div class="field"><label for="coverageManageDate">التاريخ</label><input id="coverageManageDate" type="date" value="${localDate()}"></div>
+          <div class="field"><label for="coverageManageTeacher">المعلمة</label><select id="coverageManageTeacher"><option value="">كل المعلمات</option></select></div>
+          <div class="form-actions"><button id="loadCoverageManage" class="btn btn-secondary btn-small" type="button">تحميل</button></div>
+        </div>
+        <div id="coverageManageTable" class="table-wrap coverage-management-table"><div class="empty-state">جارٍ التحميل...</div></div>
       </section>
 
     </div>
@@ -3153,6 +3267,10 @@ async function renderScheduleManage() {
   document.querySelector("#scheduleBreakForm").addEventListener("submit", (event) => saveSchedule(event, "break"));
   document.querySelector("#cancelClassScheduleEdit").addEventListener("click", () => resetScheduleEdit("class"));
   document.querySelector("#cancelBreakScheduleEdit").addEventListener("click", () => resetScheduleEdit("break"));
+  document.querySelector("#loadCoverageManage")?.addEventListener("click", async () => {
+    const date = value("coverageManageDate") || localDate();
+    await loadCoverageManageRows(date, value("coverageManageTeacher") || "");
+  });
   document.querySelectorAll("[data-schedule-section]").forEach((button) => {
     button.addEventListener("click", () => {
       const section = button.dataset.scheduleSection;
@@ -3237,7 +3355,7 @@ async function loadCoverageManageRows(selectedDate, selectedTeacherUid = "") {
     filteredRows.forEach((row) => {
       const tr = document.createElement("tr");
       const dayName = labels.day[Object.keys(labels.day).find((key) => row.date === week.days.find((entry) => entry.day === key)?.date)] ?? "—";
-      const cells = [dayName, row.subject || row.periodName || row.location || "—", row.absentTeacherName || "—", row.substituteName || "—", row.status || "مكلف", `${row.startTime || "—"} - ${row.endTime || "—"}`];
+      const cells = [dayName, row.subject || row.periodName || row.location || "—", row.absentTeacherName || "—", row.substituteName || "—", resolveCoverageStatusLabel(row.status || "مكلف"), `${row.startTime || "—"} - ${row.endTime || "—"}`];
       cells.forEach((value) => tr.append(createCell(value)));
 
       const actions = document.createElement("td");

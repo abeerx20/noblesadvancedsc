@@ -52,6 +52,70 @@ function assignmentKey(absenceReportId, scheduleId) {
     return `${absenceReportId}_${scheduleId}`;
 }
 
+export function buildCoverageAssignmentId({ absenceReportId, scheduleId, date, absentTeacherUid }) {
+    const safeAbsenceId = String(absenceReportId ?? "").trim();
+    const safeScheduleId = String(scheduleId ?? "").trim();
+    const safeDate = String(date ?? "").trim();
+    const safeAbsentTeacher = String(absentTeacherUid ?? "").trim();
+    if (safeAbsenceId && safeScheduleId) return `${safeAbsenceId}_${safeScheduleId}`;
+    return `manual_${safeAbsentTeacher || "teacher"}_${safeDate || "date"}_${safeScheduleId || "schedule"}`.replace(/[^a-zA-Z0-9_\-]/g, "_");
+}
+
+function timeToMinutes(value) {
+    if (value == null || value === "") return null;
+    const [hours, minutes] = String(value).split(":").map((part) => Number(part));
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+    return hours * 60 + minutes;
+}
+
+function timeRangesOverlap(startA, endA, startB, endB) {
+    const startAValue = timeToMinutes(startA);
+    const endAValue = timeToMinutes(endA);
+    const startBValue = timeToMinutes(startB);
+    const endBValue = timeToMinutes(endB);
+    if (startAValue == null || endAValue == null || startBValue == null || endBValue == null) return false;
+    return startAValue < endBValue && startBValue < endAValue;
+}
+
+async function validateCoverageAssignment({ substituteUid, date, startTime, endTime, scheduleId, excludeId, absentTeacherUid }) {
+    if (!substituteUid || !date || !startTime || !endTime) return;
+    const normalizedSubstituteUid = getComparableEmployeeUid({ authUid: substituteUid, id: substituteUid }) || String(substituteUid).trim();
+    const snapshot = await db.collection("teacherCoverage")
+        .where("date", "==", date)
+        .limit(500)
+        .get();
+    const conflict = snapshot.docs
+        .map((doc) => publicDocument(doc))
+        .filter((item) => item.id !== excludeId)
+        .find((item) => {
+            if (item.status === "ملغى" || item.deletedAt) return false;
+            const sameTeacher = [item.substituteUid, item.substituteEmployeeId].some((value) => String(value ?? "").trim() === normalizedSubstituteUid || String(value ?? "").trim() === String(substituteUid).trim());
+            if (!sameTeacher) return false;
+            return timeRangesOverlap(startTime, endTime, item.startTime, item.endTime);
+        });
+    if (conflict) {
+        throw new AppError(409, "COVERAGE_CONFLICT", "تعارض في الوقت: هذه المعلمة لديها حصة أو انتظار مسجّل في نفس الوقت.");
+    }
+    const scheduleSnapshot = await db.collection("teacherSchedule")
+        .where("day", "==", dayName(date))
+        .limit(500)
+        .get();
+    const scheduleConflict = scheduleSnapshot.docs
+        .map((doc) => publicDocument(doc))
+        .find((item) => {
+            const itemTeacherUid = getComparableEmployeeUid({ authUid: item.teacherUid, id: item.teacherUid }) || String(item.teacherUid ?? "").trim();
+            if (itemTeacherUid !== normalizedSubstituteUid && itemTeacherUid !== String(substituteUid).trim()) return false;
+            if (item.id === scheduleId) return false;
+            return timeRangesOverlap(startTime, endTime, item.startTime, item.endTime);
+        });
+    if (scheduleConflict) {
+        throw new AppError(409, "COVERAGE_CONFLICT", "تعارض في وقت حصة المعلمة البديلة مع جدولها الدراسي.");
+    }
+    if (absentTeacherUid && absentTeacherUid === substituteUid) {
+        throw new AppError(409, "COVERAGE_SELF_CONFLICT", "لا يمكن إسناد الحصة لنفس المعلمة الغائبة.");
+    }
+}
+
 export function getComparableEmployeeUid(employee) {
     if (!employee || typeof employee !== "object") return "";
     const candidates = [employee.authUid, employee.id, employee.employeeUid].filter((value) => typeof value === "string" && value.trim());
@@ -76,74 +140,54 @@ function buildEmployeeAliasMap(employees) {
 }
 
 export async function listCoverage(from, to) {
-    const [absenceSnapshot, scheduleSnapshot, employeeSnapshot, assignmentSnapshot] = await Promise.all([
-        db.collection("absenceReports").limit(500).get(),
-        db.collection("teacherSchedule").limit(500).get(),
+    const [employeeSnapshot, scheduleSnapshot, assignmentSnapshot] = await Promise.all([
         db.collection("employees").limit(500).get(),
+        db.collection("teacherSchedule").limit(500).get(),
         db.collection("teacherCoverage").where("date", ">=", from).where("date", "<=", to).limit(500).get()
     ]);
-    const dates = new Set(dateRange(from, to).map((item) => item.value));
     const employees = employeeSnapshot.docs.map(publicDocument).filter((item) => item.status !== "inactive");
+    const schedulesById = new Map(scheduleSnapshot.docs.map((doc) => [doc.id, publicDocument(doc)]));
     const employeeByUid = buildEmployeeAliasMap(employees);
-    const employeeByName = new Map(employees.map((item) => [normalizeName(item.nameAr), item]));
-    const employeeByEmail = new Map(employees.map((item) => [String(item.email ?? "").toLowerCase(), item]));
-    const schedules = scheduleSnapshot.docs
-        .map(publicDocument)
-        .filter((item) => item.active !== false);
-    const schedulesByTeacherAndDate = new Map();
-    schedules.forEach((schedule) => {
-        const teacher = employeeByUid.get(schedule.teacherUid)
-            ?? employeeByName.get(normalizeName(schedule.teacherName))
-            ?? employeeByEmail.get(String(schedule.teacherEmail ?? "").toLowerCase());
-        if (!teacher) return;
-        const teacherUid = getComparableEmployeeUid(teacher) || String(schedule.teacherUid ?? "").trim();
-        dateRange(from, to).forEach((date) => {
-            if (date.day !== normalizeDay(schedule.day)) return;
-            const key = `${teacherUid}:${date.value}`;
-            const rows = schedulesByTeacherAndDate.get(key) ?? [];
-            rows.push({ ...schedule, teacherUid, date: date.value });
-            schedulesByTeacherAndDate.set(key, rows);
+
+    const rows = assignmentSnapshot.docs
+        .map((doc) => publicDocument(doc))
+        .filter((item) => item.status !== "ملغى" && !item.deletedAt)
+        .map((assignment) => {
+            const schedule = schedulesById.get(assignment.scheduleId) ?? {};
+            const absentTeacher = assignment.absentTeacherUid
+                ? employeeByUid.get(assignment.absentTeacherUid)
+                : null;
+            const substitute = assignment.substituteUid
+                ? employeeByUid.get(assignment.substituteUid)
+                : null;
+            const absentTeacherUid = assignment.absentTeacherUid ?? getComparableEmployeeUid(absentTeacher) ?? "";
+            const substituteUid = assignment.substituteUid ?? "";
+            return {
+                id: assignment.id,
+                date: assignment.date,
+                day: assignment.day ?? dayName(assignment.date),
+                absenceReportId: assignment.absenceReportId ?? null,
+                scheduleId: assignment.scheduleId ?? schedule.id ?? null,
+                blockType: assignment.blockType ?? schedule.blockType ?? "",
+                periodNumber: assignment.periodNumber ?? schedule.periodNumber ?? null,
+                periodName: assignment.periodName ?? schedule.periodName ?? "",
+                subject: assignment.subject ?? schedule.subject ?? "",
+                classId: assignment.classId ?? schedule.classId ?? "",
+                location: assignment.location ?? schedule.location ?? "",
+                startTime: assignment.startTime ?? schedule.startTime ?? "",
+                endTime: assignment.endTime ?? schedule.endTime ?? "",
+                absentTeacherUid,
+                absentTeacherName: assignment.absentTeacherName ?? absentTeacher?.nameAr ?? "—",
+                assigned: true,
+                substituteUid,
+                substituteName: assignment.substituteName ?? substitute?.nameAr ?? "",
+                status: assignment.status ?? "مكلف",
+                notes: assignment.notes ?? "",
+                recordedBy: assignment.recordedBy ?? assignment.createdBy ?? "",
+                recordedAt: assignment.recordedAt ?? assignment.createdAt ?? null
+            };
         });
-    });
-    const assignments = new Map(assignmentSnapshot.docs.map((doc) => [doc.id, publicDocument(doc)]));
-    const rows = [];
-    absenceSnapshot.docs.map(publicDocument)
-        .filter((item) => dates.has(item.date) && item.status !== "مرفوض")
-        .forEach((absence) => {
-            const absentTeacher = employeeByUid.get(absence.employeeUid)
-                ?? employeeByName.get(normalizeName(absence.employeeName ?? ""))
-                ?? employeeByEmail.get(String(absence.employeeEmail ?? "").toLowerCase());
-            const absentTeacherUid = getComparableEmployeeUid(absentTeacher) || String(absence.employeeUid ?? "").trim();
-            const teacherSchedules = schedulesByTeacherAndDate.get(`${absentTeacherUid}:${absence.date}`)
-                ?? schedulesByTeacherAndDate.get(`${absence.employeeUid}:${absence.date}`)
-                ?? [];
-            teacherSchedules.forEach((schedule) => {
-                const assignment = assignments.get(assignmentKey(absence.id, schedule.id));
-                const substitute = assignment?.substituteUid ? employeeByUid.get(assignment.substituteUid) : null;
-                rows.push({
-                    id: assignment?.id ?? assignmentKey(absence.id, schedule.id),
-                    date: absence.date,
-                    day: dayName(absence.date),
-                    absenceReportId: absence.id,
-                    scheduleId: schedule.id,
-                    blockType: schedule.blockType,
-                    periodNumber: schedule.periodNumber ?? null,
-                    periodName: schedule.periodName,
-                    subject: schedule.subject ?? "",
-                    classId: schedule.classId ?? "",
-                    location: schedule.location ?? "",
-                    startTime: schedule.startTime,
-                    endTime: schedule.endTime,
-                    absentTeacherUid: absentTeacherUid,
-                    absentTeacherName: absence.employeeName ?? absentTeacher?.nameAr ?? "—",
-                    assigned: Boolean(assignment),
-                    substituteUid: assignment?.substituteUid ?? "",
-                    substituteName: assignment?.substituteName ?? substitute?.nameAr ?? "",
-                    status: assignment?.status ?? "جديد",
-                    notes: assignment?.notes ?? ""
-                });
-            });
-        });
+
     return {
         rows: rows.sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`)),
         substitutes: employees
@@ -154,21 +198,22 @@ export async function listCoverage(from, to) {
 }
 
 export async function assignCoverage(user, data) {
-    const absenceSnapshot = await db.collection("absenceReports").doc(data.absenceReportId).get();
-    if (!absenceSnapshot.exists || absenceSnapshot.data()?.date !== data.date) {
-        throw new AppError(404, "ABSENCE_REPORT_NOT_FOUND", "بلاغ غياب الموظفة غير موجود لهذا التاريخ.");
-    }
-    const absence = publicDocument(absenceSnapshot);
     const scheduleSnapshot = await db.collection("teacherSchedule").doc(data.scheduleId).get();
     if (!scheduleSnapshot.exists) {
         throw new AppError(404, "SCHEDULE_NOT_FOUND", "الحصة أو المناوبة غير مرتبطة بالمعلمة الغائبة.");
     }
+
     const schedule = publicDocument(scheduleSnapshot);
-    const scheduleTeacherUid = getComparableEmployeeUid({ authUid: schedule.teacherUid, id: schedule.teacherUid }) || schedule.teacherUid;
-    const absenceTeacherUid = getComparableEmployeeUid({ authUid: absence.employeeUid, id: absence.employeeUid }) || absence.employeeUid;
-    if (scheduleTeacherUid !== absenceTeacherUid && !employeeMatchesUid({ authUid: schedule.teacherUid, id: schedule.teacherUid }, absenceTeacherUid)) {
-        throw new AppError(404, "SCHEDULE_NOT_FOUND", "الحصة أو المناوبة غير مرتبطة بالمعلمة الغائبة.");
+    const absentTeacherUid = getComparableEmployeeUid({ authUid: schedule.teacherUid, id: schedule.teacherUid }) || String(schedule.teacherUid ?? "").trim();
+    const absenceReportId = data.absenceReportId ? String(data.absenceReportId).trim() : "";
+
+    if (absenceReportId) {
+        const absenceSnapshot = await db.collection("absenceReports").doc(absenceReportId).get();
+        if (!absenceSnapshot.exists || absenceSnapshot.data()?.status === "مرفوض") {
+            throw new AppError(404, "ABSENCE_NOT_FOUND", "تقرير غياب المعلمة غير موجود أو تم رفضه.");
+        }
     }
+
     let substituteSnapshot = await db.collection("employees").doc(data.substituteUid).get();
     if (!substituteSnapshot.exists) {
         const authMatches = await db.collection("employees").where("authUid", "==", data.substituteUid).limit(1).get();
@@ -178,32 +223,58 @@ export async function assignCoverage(user, data) {
         throw new AppError(404, "SUBSTITUTE_NOT_FOUND", "المعلمة البديلة غير موجودة أو غير نشطة.");
     }
     const substitute = publicDocument(substituteSnapshot);
-    const id = assignmentKey(data.absenceReportId, data.scheduleId);
-    await db.collection("teacherCoverage").doc(id).set({
-        ...data,
-        absentTeacherUid: absence.employeeUid,
-        absentTeacherName: absence.employeeName,
+    const id = buildCoverageAssignmentId({ absenceReportId, scheduleId: data.scheduleId, date: data.date, absentTeacherUid });
+    await validateCoverageAssignment({
+        substituteUid: data.substituteUid,
+        date: data.date,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        scheduleId: data.scheduleId,
+        excludeId: id,
+        absentTeacherUid
+    });
+
+    const docRef = db.collection("teacherCoverage").doc(id);
+    const existing = await docRef.get();
+    const coveragePayload = {
+        date: data.date,
+        day: dayName(data.date),
+        absenceReportId: absenceReportId || null,
+        scheduleId: data.scheduleId,
+        absentTeacherUid,
+        absentTeacherName: schedule.teacherName ?? substitute.nameAr,
         blockType: schedule.blockType,
         periodNumber: schedule.periodNumber ?? null,
-        periodName: schedule.periodName,
+        periodName: schedule.periodName ?? "",
         subject: schedule.subject ?? "",
         classId: schedule.classId ?? "",
         location: schedule.location ?? "",
         startTime: schedule.startTime,
         endTime: schedule.endTime,
+        substituteUid: data.substituteUid,
         substituteName: substitute.nameAr,
         substituteEmployeeId: substitute.id,
         status: data.status ?? "مكلف",
+        notes: data.notes ?? "",
         acknowledgedAt: null,
         assignedBy: user.uid,
+        recordedBy: user.uid,
         updatedAt: FieldValue.serverTimestamp(),
-        createdAt: FieldValue.serverTimestamp()
-    }, { merge: true });
+        createdAt: existing.exists ? existing.data()?.createdAt ?? FieldValue.serverTimestamp() : FieldValue.serverTimestamp(),
+        deletedAt: null,
+        deletedBy: null,
+        isDeleted: false
+    };
+    if (existing.exists) {
+        await docRef.update(coveragePayload);
+    } else {
+        await docRef.set(coveragePayload, { merge: true });
+    }
     await notifyEmployee({
         recipientUid: data.substituteUid,
         type: "teacher_coverage",
-        title: "تكليف انتظار جديد",
-        message: `تم تكليفك بتغطية ${schedule.subject ?? schedule.periodName} يوم ${data.date}.`,
+        title: "حصة انتظار جديدة",
+        message: `أُضيفت حصة ${schedule.subject ?? schedule.periodName ?? "انتظار"} إلى جدول الانتظار يوم ${data.date}.`,
         coverageId: id,
         date: data.date
     });
@@ -238,8 +309,8 @@ export async function acknowledgeCoverage(user, id) {
         .map((employee) => notifyEmployee({
             recipientUid: employee.authUid ?? employee.id,
             type: "teacher_coverage_acknowledged",
-            title: "تم الاطلاع على تكليف الانتظار",
-            message: `${snapshot.data().substituteName ?? "المعلمة البديلة"} اطلعت على تكليف الانتظار.`,
+            title: "الاطلاع على حصة الانتظار",
+            message: `${snapshot.data().substituteName ?? "المعلمة البديلة"} اطلعت على حصة الانتظار.`,
             coverageId: id
         })));
 }
@@ -275,16 +346,43 @@ export async function updateCoverage(user, id, data) {
     const ref = db.collection("teacherCoverage").doc(id);
     const snapshot = await ref.get();
     if (!snapshot.exists) throw new AppError(404, "COVERAGE_NOT_FOUND", "تكليف الانتظار غير موجود.");
-    const changes = { ...data, updatedBy: user.uid, updatedAt: FieldValue.serverTimestamp() };
-    if (data.substituteUid) {
-        let substituteSnapshot = await db.collection("employees").doc(data.substituteUid).get();
+
+    const existing = publicDocument(snapshot);
+    const nextSubstituteUid = data.substituteUid ? String(data.substituteUid).trim() : existing.substituteUid;
+    if (nextSubstituteUid) {
+        let substituteSnapshot = await db.collection("employees").doc(nextSubstituteUid).get();
         if (!substituteSnapshot.exists) {
-            const authMatches = await db.collection("employees").where("authUid", "==", data.substituteUid).limit(1).get();
+            const authMatches = await db.collection("employees").where("authUid", "==", nextSubstituteUid).limit(1).get();
             if (!authMatches.empty) substituteSnapshot = authMatches.docs[0];
         }
         if (!substituteSnapshot.exists) throw new AppError(404, "SUBSTITUTE_NOT_FOUND", "المعلمة البديلة غير موجودة.");
-        changes.substituteName = publicDocument(substituteSnapshot).nameAr;
+        const substitute = publicDocument(substituteSnapshot);
+        const scheduleSnapshot = await db.collection("teacherSchedule").doc(existing.scheduleId).get();
+        if (scheduleSnapshot.exists) {
+            const schedule = publicDocument(scheduleSnapshot);
+            await validateCoverageAssignment({
+                substituteUid: nextSubstituteUid,
+                date: existing.date,
+                startTime: existing.startTime ?? schedule.startTime,
+                endTime: existing.endTime ?? schedule.endTime,
+                scheduleId: existing.scheduleId,
+                excludeId: id,
+                absentTeacherUid: existing.absentTeacherUid
+            });
+        }
+        data.substituteName = substitute.nameAr;
+        data.substituteEmployeeId = substitute.id;
     }
+
+    const changes = {
+        ...data,
+        updatedBy: user.uid,
+        updatedAt: FieldValue.serverTimestamp(),
+        isDeleted: false,
+        deletedAt: null,
+        deletedBy: null,
+        status: data.status ?? existing.status ?? "مكلف"
+    };
     await ref.update(changes);
 }
 
@@ -292,7 +390,12 @@ export async function deleteCoverage(user, id) {
     const ref = db.collection("teacherCoverage").doc(id);
     const snapshot = await ref.get();
     if (!snapshot.exists) throw new AppError(404, "COVERAGE_NOT_FOUND", "تكليف الانتظار غير موجود.");
-    await ref.delete();
-    await db.collection("teacherCoverage").doc(id).delete();
-    return { id, deletedBy: user.uid };
+    await ref.update({
+        status: "ملغى",
+        isDeleted: true,
+        deletedAt: FieldValue.serverTimestamp(),
+        deletedBy: user.uid,
+        updatedAt: FieldValue.serverTimestamp()
+    });
+    return { id, deletedBy: user.uid, softDeleted: true };
 }
