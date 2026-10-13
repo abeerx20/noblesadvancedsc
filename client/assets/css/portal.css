@@ -6850,6 +6850,33 @@ label:has(#agreement) {
   font-weight: 600;
 }
 
+.coverage-add-card {
+  overflow: hidden;
+  border: 1px solid #dce8e2;
+  border-radius: 18px;
+  padding: clamp(18px, 3vw, 30px);
+  background:
+    radial-gradient(ellipse at top right, rgba(212, 177, 90, .12), transparent 38%),
+    linear-gradient(145deg, #fff 0%, #f8fbf9 100%);
+  box-shadow: 0 14px 32px rgba(6, 66, 54, .07);
+}
+
+.coverage-add-card .coverage-section-heading {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.coverage-add-card .coverage-section-heading h2 {
+  font-size: 19px;
+}
+
+.coverage-add-card .coverage-section-heading p {
+  max-width: 620px;
+  font-size: 13px;
+}
+
 .coverage-section-heading p {
   margin: 5px 0 0;
   color: var(--muted);
@@ -6866,11 +6893,12 @@ label:has(#agreement) {
 }
 
 .coverage-admin-form {
-  margin-top: 22px;
+  margin-top: 0;
   padding: clamp(16px, 2.4vw, 24px);
   border: 1px solid #e6eeea;
   border-radius: 14px;
-  background: rgba(255, 255, 255, .88);
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 4px 14px rgba(6, 66, 54, .035);
 }
 
 .coverage-admin-form .field label,

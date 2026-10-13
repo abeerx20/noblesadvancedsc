@@ -55,7 +55,7 @@ const labels = {
   grade: { KG1: "المستوى الأول", KG2: "المستوى الثاني", KG3: "المستوى الثالث", Grade1: "الأول ابتدائي", Grade2: "الثاني ابتدائي", Grade3: "الثالث ابتدائي" },
   gender: { mixed: "مختلط", male: "بنين", female: "بنات" },
   attendance: { present: "حاضر", excused: "غائب بعذر", unexcused: "غائب دون عذر", late: "متأخر" },
-  day: { sunday: "الأحد", monday: "الاثنين", tuesday: "الثلاثاء", wednesday: "الأربعاء", thursday: "الخميس", friday: "الجمعة", saturday: "السبت" },
+  day: { sunday: "الأحد", monday: "الاثنين", tuesday: "الثلاثاء", wednesday: "الأربعاء", thursday: "الخميس" },
   leave: { sick: "مرضية", emergency: "اضطرارية", maternity: "وضع", nursing_hour: "ساعة الأمومة", marriage: "زواج", bereavement: "وفاة", unpaid: "بدون راتب", exam: "اختبار" }
 };
 
@@ -2515,7 +2515,7 @@ async function renderCoverage() {
           <label for="coveragePeriod">الحصة</label>
           <select id="coveragePeriod" required>
             <option value="">اختر الحصة</option>
-            ${Array.from({ length: 9 }, (_, index) => `<option value="${index + 1}">${index + 1}</option>`).join("")}
+            ${Array.from({ length: 8 }, (_, index) => `<option value="${index + 1}">${index + 1}</option>`).join("")}
           </select>
         </div>
         <div class="field">
@@ -2727,7 +2727,7 @@ function drawCoverageDays(selectedDate, selectedTeacherUid, rows, substitutes) {
   const periods = [...new Set(allRows.map((row) => row.periodNumber).filter((value) => value !== null && value !== undefined && value !== ""))]
     .sort((a, b) => Number(a) - Number(b));
   if (!periods.length) {
-    const defaultPeriods = Array.from({ length: 9 }, (_, index) => index + 1);
+    const defaultPeriods = Array.from({ length: 8 }, (_, index) => index + 1);
     defaultPeriods.forEach((period) => {
       periodSelect.append(new Option(`الحصة ${period}`, String(period)));
     });
@@ -2950,7 +2950,7 @@ function setupScheduleClassSelectors(classes) {
   const refreshPeriods = () => {
     setScheduleSelectOptions(
       periodNumber,
-      Array.from({ length: 9 }, (_, index) => index + 1),
+      Array.from({ length: 8 }, (_, index) => index + 1),
       (item) => `الحصة ${item}`,
       "اختياري"
     );
@@ -3096,7 +3096,7 @@ async function loadAndDrawSchedule() {
     grid.classList.toggle("schedule-grid-empty", !rows.some((item) => item.blockType === type));
 
     const dayEntries = Object.entries(labels.day);
-    const periodNumbers = Array.from({ length: 9 }, (_, index) => index + 1);
+    const periodNumbers = Array.from({ length: 8 }, (_, index) => index + 1);
     const table = document.createElement("div");
     table.className = "schedule-timetable";
 
@@ -3199,7 +3199,7 @@ async function renderScheduleManage() {
         <div class="field"><label for="classScheduleDay">اليوم</label><select id="classScheduleDay" required><option value="">اختاري اليوم</option><option value="sunday">الأحد</option><option value="monday">الاثنين</option><option value="tuesday">الثلاثاء</option><option value="wednesday">الأربعاء</option><option value="thursday">الخميس</option></select></div>
         <div class="field"><label for="classScheduleGrade">الصف</label><select id="classScheduleGrade" required><option value="">اختاري الصف</option></select></div>
         <div class="field"><label for="classScheduleSection">الفصل</label><select id="classScheduleSection" required disabled><option value="">اختاري الفصل</option></select></div>
-        <div class="field"><label for="classPeriodNumber">الحصة</label><select id="classPeriodNumber"><option value="">اختياري</option>${Array.from({ length: 9 }, (_, index) => `<option value="${index + 1}">الحصة ${index + 1}</option>`).join("")}</select></div>
+        <div class="field"><label for="classPeriodNumber">الحصة</label><select id="classPeriodNumber"><option value="">اختياري</option>${Array.from({ length: 8 }, (_, index) => `<option value="${index + 1}">الحصة ${index + 1}</option>`).join("")}</select></div>
         <div class="field"><label for="classScheduleSubject">المادة</label><select id="classScheduleSubject" required><option value="">اختاري المادة</option></select></div>
         <div class="field"><label for="classStartTime">وقت البداية</label><input id="classStartTime" type="time" min="06:30" max="14:30" required></div>
         <div class="field"><label for="classEndTime">وقت النهاية</label><input id="classEndTime" type="time" min="06:30" max="14:30" required></div>
